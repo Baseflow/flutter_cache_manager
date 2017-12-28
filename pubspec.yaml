@@ -4,6 +4,9 @@ version: 0.0.1
 author: Rene Floor <pub@renefloor.nl>
 homepage: https://github.com/renefloor/flutter_cache_manager
 
+environment:
+  sdk: ">=1.8.0 <2.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
