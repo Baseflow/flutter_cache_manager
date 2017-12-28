@@ -13,3 +13,12 @@ packages
 
 # Include when developing application packages.
 pubspec.lock
+
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+\.DS_Store
