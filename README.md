@@ -1,9 +1,14 @@
 # flutter_cache_manager
 
-A new flutter package project.
+[![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
 
-## Getting Started
+*WORK IN PROGRESS*
 
-For help getting started with Flutter, view our online [documentation](http://flutter.io/).
+Cache manager extracted from [Cached Network Image](https://pub.dartlang.org/packages/cached_network_image)
 
-For help on editing package code, view the [documentation](https://flutter.io/developing-packages/).
+## Usage
+
+```
+    var cacheManager = await CacheManager.getInstance();
+    var file = await cacheManager.getFile(url);
+```

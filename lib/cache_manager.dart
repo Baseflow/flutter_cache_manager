@@ -1,6 +1,7 @@
 // CacheManager for Flutter
 // Copyright (c) 2017 Rene Floor
 // Released under MIT License.
+library flutter_cache_manager;
 
 import 'dart:async';
 import 'dart:convert';
@@ -10,7 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:synchronized/synchronized.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'cache_object.dart';
+import 'src/cache_object.dart';
 
 class CacheManager {
   static Duration inbetweenCleans = new Duration(days: 7);

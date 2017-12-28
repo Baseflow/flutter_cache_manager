@@ -1,5 +1,5 @@
 name: flutter_cache_manager
-description: A new flutter package project.
+description: Generic cache manager for flutter
 version: 0.0.1
 author: Rene Floor <pub@renefloor.nl>
 homepage: https://github.com/renefloor/flutter_cache_manager
