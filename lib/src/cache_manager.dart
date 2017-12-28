@@ -41,7 +41,15 @@ class CacheManager {
   ///Shared preferences is used to keep track of the information about the files
   _init() async {
     _prefs = await SharedPreferences.getInstance();
+    _getSavedCacheDataFromPreferences();
+    _getLastCleanTimestampFromPreferences();
+  }
 
+  bool _isStoringData = false;
+  bool _shouldStoreDataAgain = false;
+  Object _storeLock = new Object();
+
+  _getSavedCacheDataFromPreferences(){
     //get saved cache data from shared prefs
     var jsonCacheString = _prefs.getString("lib_cached_image_data");
     _cacheData = new Map();
@@ -51,21 +59,7 @@ class CacheManager {
         _cacheData[key] = new CacheObject.fromMap(key, data);
       });
     }
-
-    // Get data about when the last clean action has been performed
-    var cleanMillis = _prefs.getInt("lib_cached_image_data_last_clean");
-    if (cleanMillis != null) {
-      lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
-    } else {
-      lastCacheClean = new DateTime.now();
-      _prefs.setInt("lib_cached_image_data_last_clean",
-          lastCacheClean.millisecondsSinceEpoch);
-    }
   }
-
-  bool _isStoringData = false;
-  bool _shouldStoreDataAgain = false;
-  Object _storeLock = new Object();
 
   ///Store all data to shared preferences
   _save() async {
@@ -114,6 +108,18 @@ class CacheManager {
     }
   }
 
+  _getLastCleanTimestampFromPreferences(){
+    // Get data about when the last clean action has been performed
+    var cleanMillis = _prefs.getInt("lib_cached_image_data_last_clean");
+    if (cleanMillis != null) {
+      lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
+    } else {
+      lastCacheClean = new DateTime.now();
+      _prefs.setInt("lib_cached_image_data_last_clean",
+          lastCacheClean.millisecondsSinceEpoch);
+    }
+  }
+
   _cleanCache({force: false}) async {
     var sinceLastClean = new DateTime.now().difference(lastCacheClean);
 
@@ -121,29 +127,34 @@ class CacheManager {
         sinceLastClean > inbetweenCleans ||
         _cacheData.length > maxNrOfCacheObjects) {
       await synchronized(_lock, () async {
-        var oldestDateAllowed = new DateTime.now().subtract(maxAgeCacheObject);
-
-        //Remove old objects
-        var oldValues = _cacheData.values
-            .where((c) => c.touched.isBefore(oldestDateAllowed));
-        for (var oldValue in oldValues) {
-          await _removeFile(oldValue);
-        }
-
-        //Remove oldest objects when cache contains to many items
-        if (_cacheData.length > maxNrOfCacheObjects) {
-          var allValues = _cacheData.values.toList();
-          allValues.sort((c1, c2) => c1.touched.compareTo(c2.touched));
-          for (var i = allValues.length; i > maxNrOfCacheObjects; i--) {
-            var lastItem = allValues[i - 1];
-            await _removeFile(lastItem);
-          }
-        }
+        await _removeOldObjectsFromCache();
+        await _shrinkLargeCache();
 
         lastCacheClean = new DateTime.now();
         _prefs.setInt("lib_cached_image_data_last_clean",
             lastCacheClean.millisecondsSinceEpoch);
       });
+    }
+  }
+
+  _removeOldObjectsFromCache() async {
+    var oldestDateAllowed = new DateTime.now().subtract(maxAgeCacheObject);
+
+    //Remove old objects
+    var oldValues = _cacheData.values
+        .where((c) => c.touched.isBefore(oldestDateAllowed));
+    for (var oldValue in oldValues) {
+      await _removeFile(oldValue);
+    }
+  }
+
+  _shrinkLargeCache() async{
+    //Remove oldest objects when cache contains to many items
+    if (_cacheData.length > maxNrOfCacheObjects) {
+      var allValues = _cacheData.values.toList();
+      allValues.sort((c1, c2) => c2.touched.compareTo(c1.touched));  // sort OLDEST first
+      var oldestValues = allValues.take( _cacheData.length - maxNrOfCacheObjects);      // get them
+      oldestValues.forEach( (item) async {await _removeFile(item);} );  //remove them
     }
   }
 
@@ -216,10 +227,6 @@ class CacheManager {
     if (response != null) {
       if (response.statusCode == 200) {
         await newCache.setDataFromHeaders(response.headers);
-        var folder = new File(newCache.filePath).parent;
-        if (!(await folder.exists())) {
-          folder.createSync(recursive: true);
-        }
         await new File(newCache.filePath).writeAsBytes(response.bodyBytes);
 
         return newCache;

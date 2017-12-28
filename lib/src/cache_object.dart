@@ -105,11 +105,13 @@ class CacheObject {
     if (filePath == null) {
       Directory directory = await getTemporaryDirectory();
       var folder = new Directory("${directory.path}/cache");
-      if (!(await folder.exists())) {
-        folder.createSync();
-      }
       var fileName = "${new Uuid().v1()}${fileExtension}";
       _map["path"] = "${folder.path}/${fileName}";
+    }
+
+    var folder = new File(filePath).parent;
+    if (!(await folder.exists())) {
+      folder.createSync(recursive: true);
     }
   }
 
