@@ -14,7 +14,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'src/cache_object.dart';
 
 class CacheManager {
-  static Duration inbetweenCleans = new Duration(days: 7);
+
+  static const _keyCacheData = "lib_cached_image_data";
+  static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
+
+
+  static Duration inBetweenCleans = new Duration(days: 7);
   static Duration maxAgeCacheObject = new Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
 
@@ -52,7 +57,7 @@ class CacheManager {
 
   _getSavedCacheDataFromPreferences(){
     //get saved cache data from shared prefs
-    var jsonCacheString = _prefs.getString("lib_cached_image_data");
+    var jsonCacheString = _prefs.getString(_keyCacheData);
     _cacheData = new Map();
     if (jsonCacheString != null) {
       Map jsonCache = JSON.decode(jsonCacheString);
@@ -102,7 +107,7 @@ class CacheManager {
         json[key] = cache.toMap();
       });
     });
-    _prefs.setString("lib_cached_image_data", JSON.encode(json));
+    _prefs.setString(_keyCacheData, JSON.encode(json));
 
     if (await _shouldSaveAgain()) {
       await _saveDataInPrefs();
@@ -111,12 +116,12 @@ class CacheManager {
 
   _getLastCleanTimestampFromPreferences(){
     // Get data about when the last clean action has been performed
-    var cleanMillis = _prefs.getInt("lib_cached_image_data_last_clean");
+    var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
     if (cleanMillis != null) {
       lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
     } else {
       lastCacheClean = new DateTime.now();
-      _prefs.setInt("lib_cached_image_data_last_clean",
+      _prefs.setInt(_keyCacheCleanDate,
           lastCacheClean.millisecondsSinceEpoch);
     }
   }
@@ -125,14 +130,14 @@ class CacheManager {
     var sinceLastClean = new DateTime.now().difference(lastCacheClean);
 
     if (force ||
-        sinceLastClean > inbetweenCleans ||
+        sinceLastClean > inBetweenCleans ||
         _cacheData.length > maxNrOfCacheObjects) {
       await synchronized(_lock, () async {
         await _removeOldObjectsFromCache();
         await _shrinkLargeCache();
 
         lastCacheClean = new DateTime.now();
-        _prefs.setInt("lib_cached_image_data_last_clean",
+        _prefs.setInt(_keyCacheCleanDate,
             lastCacheClean.millisecondsSinceEpoch);
       });
     }

@@ -8,23 +8,28 @@ import 'package:uuid/uuid.dart';
 
 ///Cache information of one file
 class CacheObject {
+  static const _keyFilePath = "path";
+  static const _keyValidTill = "validTill";
+  static const _keyETag = "ETag";
+  static const _keyTouched = "touched";
+
   String get filePath {
-    if (_map.containsKey("path")) {
-      return _map["path"];
+    if (_map.containsKey(_keyFilePath)) {
+      return _map[_keyFilePath];
     }
     return null;
   }
 
   DateTime get validTill {
-    if (_map.containsKey("validTill")) {
-      return new DateTime.fromMillisecondsSinceEpoch(_map["validTill"]);
+    if (_map.containsKey(_keyValidTill)) {
+      return new DateTime.fromMillisecondsSinceEpoch(_map[_keyValidTill]);
     }
     return null;
   }
 
   String get eTag {
-    if (_map.containsKey("ETag")) {
-      return _map["ETag"];
+    if (_map.containsKey(_keyETag)) {
+      return _map[_keyETag];
     }
     return null;
   }
@@ -46,8 +51,8 @@ class CacheObject {
     this.url = url;
     _map = map;
 
-    if (_map.containsKey("touched")) {
-      touched = new DateTime.fromMillisecondsSinceEpoch(_map["touched"]);
+    if (_map.containsKey(_keyTouched)) {
+      touched = new DateTime.fromMillisecondsSinceEpoch(_map[_keyTouched]);
     } else {
       touch();
     }
@@ -61,7 +66,7 @@ class CacheObject {
 
   touch() {
     touched = new DateTime.now();
-    _map["touched"] = touched.millisecondsSinceEpoch;
+    _map[_keyTouched] = touched.millisecondsSinceEpoch;
   }
 
   setDataFromHeaders(Map<String, String> headers) async {
@@ -82,11 +87,11 @@ class CacheObject {
       });
     }
 
-    _map["validTill"] =
+    _map[_keyValidTill] =
         new DateTime.now().add(ageDuration).millisecondsSinceEpoch;
 
     if (headers.containsKey("etag")) {
-      _map["ETag"] = headers["etag"];
+      _map[_keyETag] = headers["etag"];
     }
 
     var fileExtension = "";
@@ -99,14 +104,14 @@ class CacheObject {
 
     if (filePath != null && !filePath.endsWith(fileExtension)) {
       removeOldFile(filePath);
-      _map["path"] = null;
+      _map[_keyFilePath] = null;
     }
 
     if (filePath == null) {
       Directory directory = await getTemporaryDirectory();
       var folder = new Directory("${directory.path}/cache");
       var fileName = "${new Uuid().v1()}${fileExtension}";
-      _map["path"] = "${folder.path}/${fileName}";
+      _map[_keyFilePath] = "${folder.path}/${fileName}";
     }
 
     var folder = new File(filePath).parent;
@@ -123,6 +128,6 @@ class CacheObject {
   }
 
   setPath(String path) {
-    _map["path"] = path;
+    _map[_keyFilePath] = path;
   }
 }
