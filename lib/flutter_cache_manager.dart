@@ -22,6 +22,7 @@ class CacheManager {
   static Duration inBetweenCleans = new Duration(days: 7);
   static Duration maxAgeCacheObject = new Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
+  static bool showDebugLogs = false;
 
   static CacheManager _instance;
   static Future<CacheManager> getInstance() async {
@@ -174,6 +175,7 @@ class CacheManager {
 
   ///Get the file from the cache or online. Depending on availability and age
   Future<File> getFile(String url) async {
+    String log = "[Flutter Cache Manager] Loading $url";
     if (!_cacheData.containsKey(url)) {
       await synchronized(_lock, () {
         if (!_cacheData.containsKey(url)) {
@@ -190,6 +192,7 @@ class CacheManager {
       var filePath = await cacheObject.getFilePath();
       //If we have never downloaded this file, do download
       if (filePath == null) {
+        log = "$log\nDownloading for first time.";
         _cacheData[url] = await downloadFile(url);
         return;
       }
@@ -197,23 +200,31 @@ class CacheManager {
       var cachedFile = new File(filePath);
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
+        log = "$log\nDownloading because file does not exist.";
         _cacheData[url] = await downloadFile(url, path: filePath);
+
+        log = "$log\Cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
       }
       //If file is old, download if server has newer one
       if (cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
+        log = "$log\nUpdating file in cache.";
         var newCacheData = await downloadFile(url,
             path: filePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
+        log = "$log\nNew cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
       }
+      log = "$log\nUsing file from cache.\nCache valid till ${cacheObject.validTill.toIso8601String()}";
     });
 
     //If non of the above is true, than we don't have to download anything.
     _save();
+    if(showDebugLogs)
+      print(log);
     return new File(await _cacheData[url].getFilePath());
   }
 
