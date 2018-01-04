@@ -201,7 +201,7 @@ class CacheManager {
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
-        _cacheData[url] = await downloadFile(url, path: filePath);
+        _cacheData[url] = await downloadFile(url, relativePath: cacheObject.relativePath);
 
         log = "$log\Cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
@@ -211,7 +211,7 @@ class CacheManager {
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
         var newCacheData = await downloadFile(url,
-            path: filePath, eTag: cacheObject.eTag);
+            relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
@@ -230,9 +230,9 @@ class CacheManager {
 
   ///Download the file from the url
   Future<CacheObject> downloadFile(String url,
-      {String path, String eTag}) async {
+      {String relativePath, String eTag}) async {
     var newCache = new CacheObject(url);
-    newCache.setPath(path);
+    newCache.setRelativePath(relativePath);
     var headers = new Map<String, String>();
     if (eTag != null) {
       headers["If-None-Match"] = eTag;

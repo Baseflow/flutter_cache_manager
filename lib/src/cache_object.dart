@@ -131,7 +131,7 @@ class CacheObject {
     }
   }
 
-  setPath(String path) {
+  setRelativePath(String path) {
     _map[_keyFilePath] = path;
   }
 }
