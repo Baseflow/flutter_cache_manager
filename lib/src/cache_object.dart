@@ -2,18 +2,27 @@
 // Copyright (c) 2017 Rene Floor
 // Released under MIT License.
 
+import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 ///Cache information of one file
 class CacheObject {
-  static const _keyFilePath = "path";
+  static const _keyFilePath = "relativePath";
   static const _keyValidTill = "validTill";
   static const _keyETag = "ETag";
   static const _keyTouched = "touched";
 
-  String get filePath {
+  Future<String> getFilePath() async {
+    if(relativePath == null){
+      return null;
+    }
+    Directory directory = await getTemporaryDirectory();
+    return directory.path + relativePath;
+  }
+
+  String get relativePath {
     if (_map.containsKey(_keyFilePath)) {
       return _map[_keyFilePath];
     }
@@ -102,22 +111,17 @@ class CacheObject {
       }
     }
 
-    if (filePath != null && !filePath.endsWith(fileExtension)) {
-      removeOldFile(filePath);
+    var oldPath = await getFilePath();
+    if (oldPath != null && !oldPath.endsWith(fileExtension)) {
+      removeOldFile(oldPath);
       _map[_keyFilePath] = null;
     }
 
-    if (filePath == null) {
-      Directory directory = await getTemporaryDirectory();
-      var folder = new Directory("${directory.path}/cache");
-      var fileName = "${new Uuid().v1()}${fileExtension}";
-      _map[_keyFilePath] = "${folder.path}/${fileName}";
+    if (relativePath == null) {
+      var fileName = "cache/${new Uuid().v1()}${fileExtension}";
+      _map[_keyFilePath] = "${fileName}";
     }
 
-    var folder = new File(filePath).parent;
-    if (!(await folder.exists())) {
-      folder.createSync(recursive: true);
-    }
   }
 
   removeOldFile(String filePath) async {

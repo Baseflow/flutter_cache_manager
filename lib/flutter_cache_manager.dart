@@ -165,7 +165,7 @@ class CacheManager {
   }
 
   _removeFile(CacheObject cacheObject) async {
-    var file = new File(cacheObject.filePath);
+    var file = new File(await cacheObject.getFilePath());
     if (await file.exists()) {
       file.delete();
     }
@@ -187,23 +187,24 @@ class CacheManager {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
 
+      var filePath = await cacheObject.getFilePath();
       //If we have never downloaded this file, do download
-      if (cacheObject.filePath == null) {
+      if (filePath == null) {
         _cacheData[url] = await downloadFile(url);
         return;
       }
       //If file is removed from the cache storage, download again
-      var cachedFile = new File(cacheObject.filePath);
+      var cachedFile = new File(filePath);
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
-        _cacheData[url] = await downloadFile(url, path: cacheObject.filePath);
+        _cacheData[url] = await downloadFile(url, path: filePath);
         return;
       }
       //If file is old, download if server has newer one
       if (cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
         var newCacheData = await downloadFile(url,
-            path: cacheObject.filePath, eTag: cacheObject.eTag);
+            path: filePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
@@ -213,7 +214,7 @@ class CacheManager {
 
     //If non of the above is true, than we don't have to download anything.
     _save();
-    return new File(_cacheData[url].filePath);
+    return new File(await _cacheData[url].getFilePath());
   }
 
   ///Download the file from the url
@@ -233,7 +234,13 @@ class CacheManager {
     if (response != null) {
       if (response.statusCode == 200) {
         await newCache.setDataFromHeaders(response.headers);
-        await new File(newCache.filePath).writeAsBytes(response.bodyBytes);
+
+        var filePath = await newCache.getFilePath();
+        var folder = new File(filePath).parent;
+        if (!(await folder.exists())) {
+          folder.createSync(recursive: true);
+        }
+        await new File(filePath).writeAsBytes(response.bodyBytes);
 
         return newCache;
       }
