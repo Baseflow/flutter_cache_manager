@@ -1,6 +1,7 @@
 # flutter_cache_manager
 
 [![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/renefloor)
 
 A CacheManager to download and cache files in the cache directory of the app. Various settings on how long to keep a file can be changed.
 
@@ -17,6 +18,11 @@ It uses the cache-control http header to efficiently retrieve files.
 ## Settings
 Some settings of the CacheManager can be changed.
 All these preferences are statics and should be set before the first use of the CacheManager, so preferably directly on start of your app.
+
+For extra logging set:
+```
+  CacheManager.showDebugLogs = true;
+```
 
 The cache can be cleaned after it is used to get a file. By default this happens once every week. You can change this by setting `inBetweenCleans`. 
 ```
