@@ -22,6 +22,7 @@ class CacheManager {
   static Duration inBetweenCleans = new Duration(days: 7);
   static Duration maxAgeCacheObject = new Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
+  static bool showDebugLogs = false;
 
   static CacheManager _instance;
   static Future<CacheManager> getInstance() async {
@@ -165,7 +166,7 @@ class CacheManager {
   }
 
   _removeFile(CacheObject cacheObject) async {
-    var file = new File(cacheObject.filePath);
+    var file = new File(await cacheObject.getFilePath());
     if (await file.exists()) {
       file.delete();
     }
@@ -174,6 +175,7 @@ class CacheManager {
 
   ///Get the file from the cache or online. Depending on availability and age
   Future<File> getFile(String url) async {
+    String log = "[Flutter Cache Manager] Loading $url";
     if (!_cacheData.containsKey(url)) {
       await synchronized(_lock, () {
         if (!_cacheData.containsKey(url)) {
@@ -187,40 +189,50 @@ class CacheManager {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
 
+      var filePath = await cacheObject.getFilePath();
       //If we have never downloaded this file, do download
-      if (cacheObject.filePath == null) {
+      if (filePath == null) {
+        log = "$log\nDownloading for first time.";
         _cacheData[url] = await downloadFile(url);
         return;
       }
       //If file is removed from the cache storage, download again
-      var cachedFile = new File(cacheObject.filePath);
+      var cachedFile = new File(filePath);
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
-        _cacheData[url] = await downloadFile(url, path: cacheObject.filePath);
+        log = "$log\nDownloading because file does not exist.";
+        _cacheData[url] = await downloadFile(url, relativePath: cacheObject.relativePath);
+
+        log = "$log\Cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
       }
       //If file is old, download if server has newer one
       if (cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
+        log = "$log\nUpdating file in cache.";
         var newCacheData = await downloadFile(url,
-            path: cacheObject.filePath, eTag: cacheObject.eTag);
+            relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
+        log = "$log\nNew cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
       }
+      log = "$log\nUsing file from cache.\nCache valid till ${cacheObject.validTill.toIso8601String()}";
     });
 
     //If non of the above is true, than we don't have to download anything.
     _save();
-    return new File(_cacheData[url].filePath);
+    if(showDebugLogs)
+      print(log);
+    return new File(await _cacheData[url].getFilePath());
   }
 
   ///Download the file from the url
   Future<CacheObject> downloadFile(String url,
-      {String path, String eTag}) async {
+      {String relativePath, String eTag}) async {
     var newCache = new CacheObject(url);
-    newCache.setPath(path);
+    newCache.setRelativePath(relativePath);
     var headers = new Map<String, String>();
     if (eTag != null) {
       headers["If-None-Match"] = eTag;
@@ -233,7 +245,13 @@ class CacheManager {
     if (response != null) {
       if (response.statusCode == 200) {
         await newCache.setDataFromHeaders(response.headers);
-        await new File(newCache.filePath).writeAsBytes(response.bodyBytes);
+
+        var filePath = await newCache.getFilePath();
+        var folder = new File(filePath).parent;
+        if (!(await folder.exists())) {
+          folder.createSync(recursive: true);
+        }
+        await new File(filePath).writeAsBytes(response.bodyBytes);
 
         return newCache;
       }
