@@ -1,3 +1,7 @@
+## [0.0.4] - 2018-01-31
+
+* Fixed issues with cache cleaning
+
 ## [0.0.3] - 2018-01-08
 
 * Fixed relative paths on iOS.

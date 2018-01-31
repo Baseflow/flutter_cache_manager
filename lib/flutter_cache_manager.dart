@@ -159,18 +159,24 @@ class CacheManager {
     //Remove oldest objects when cache contains to many items
     if (_cacheData.length > maxNrOfCacheObjects) {
       var allValues = _cacheData.values.toList();
-      allValues.sort((c1, c2) => c2.touched.compareTo(c1.touched));  // sort OLDEST first
+      allValues.sort((c1, c2) => c1.touched.compareTo(c2.touched));  // sort OLDEST first
       var oldestValues = allValues.take( _cacheData.length - maxNrOfCacheObjects);      // get them
       oldestValues.forEach( (item) async {await _removeFile(item);} );  //remove them
     }
   }
 
   _removeFile(CacheObject cacheObject) async {
+    //Ensure the file has been downloaded
+    if (cacheObject.relativePath == null) {
+      return;
+    }
+
+    _cacheData.remove(cacheObject.url);
+
     var file = new File(await cacheObject.getFilePath());
     if (await file.exists()) {
       file.delete();
     }
-    _cacheData.remove(cacheObject.url);
   }
 
   ///Get the file from the cache or online. Depending on availability and age
