@@ -224,7 +224,7 @@ class CacheManager {
         log = "$log\nNew cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
       }
-      log = "$log\nUsing file from cache.\nCache valid till ${cacheObject.validTill.toIso8601String()}";
+      log = "$log\nNew cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
     });
 
     //If non of the above is true, than we don't have to download anything.
