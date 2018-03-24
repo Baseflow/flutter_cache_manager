@@ -148,8 +148,8 @@ class CacheManager {
     var oldestDateAllowed = new DateTime.now().subtract(maxAgeCacheObject);
 
     //Remove old objects
-    var oldValues = _cacheData.values
-        .where((c) => c.touched.isBefore(oldestDateAllowed));
+    var oldValues = List.from(_cacheData.values
+        .where((c) => c.touched.isBefore(oldestDateAllowed)));
     for (var oldValue in oldValues) {
       await _removeFile(oldValue);
     }
@@ -160,7 +160,7 @@ class CacheManager {
     if (_cacheData.length > maxNrOfCacheObjects) {
       var allValues = _cacheData.values.toList();
       allValues.sort((c1, c2) => c1.touched.compareTo(c2.touched));  // sort OLDEST first
-      var oldestValues = allValues.take( _cacheData.length - maxNrOfCacheObjects);      // get them
+      var oldestValues = List.from(allValues.take( _cacheData.length - maxNrOfCacheObjects));      // get them
       oldestValues.forEach( (item) async {await _removeFile(item);} );  //remove them
     }
   }
