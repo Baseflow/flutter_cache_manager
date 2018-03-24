@@ -15,7 +15,7 @@ class CacheObject {
   static const _keyTouched = "touched";
 
   Future<String> getFilePath() async {
-    if(relativePath == null){
+    if (relativePath == null) {
       return null;
     }
     Directory directory = await getTemporaryDirectory();
@@ -121,7 +121,6 @@ class CacheObject {
       var fileName = "cache/${new Uuid().v1()}${fileExtension}";
       _map[_keyFilePath] = "${fileName}";
     }
-
   }
 
   removeOldFile(String filePath) async {

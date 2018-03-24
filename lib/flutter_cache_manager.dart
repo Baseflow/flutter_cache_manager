@@ -14,10 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'src/cache_object.dart';
 
 class CacheManager {
-
   static const _keyCacheData = "lib_cached_image_data";
   static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
-
 
   static Duration inBetweenCleans = new Duration(days: 7);
   static Duration maxAgeCacheObject = new Duration(days: 30);
@@ -56,7 +54,7 @@ class CacheManager {
   bool _shouldStoreDataAgain = false;
   Object _storeLock = new Object();
 
-  _getSavedCacheDataFromPreferences(){
+  _getSavedCacheDataFromPreferences() {
     //get saved cache data from shared prefs
     var jsonCacheString = _prefs.getString(_keyCacheData);
     _cacheData = new Map();
@@ -115,15 +113,14 @@ class CacheManager {
     }
   }
 
-  _getLastCleanTimestampFromPreferences(){
+  _getLastCleanTimestampFromPreferences() {
     // Get data about when the last clean action has been performed
     var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
     if (cleanMillis != null) {
       lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
     } else {
       lastCacheClean = new DateTime.now();
-      _prefs.setInt(_keyCacheCleanDate,
-          lastCacheClean.millisecondsSinceEpoch);
+      _prefs.setInt(_keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
     }
   }
 
@@ -138,8 +135,8 @@ class CacheManager {
         await _shrinkLargeCache();
 
         lastCacheClean = new DateTime.now();
-        _prefs.setInt(_keyCacheCleanDate,
-            lastCacheClean.millisecondsSinceEpoch);
+        _prefs.setInt(
+            _keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
       });
     }
   }
@@ -148,20 +145,24 @@ class CacheManager {
     var oldestDateAllowed = new DateTime.now().subtract(maxAgeCacheObject);
 
     //Remove old objects
-    var oldValues = List.from(_cacheData.values
-        .where((c) => c.touched.isBefore(oldestDateAllowed)));
+    var oldValues = List.from(
+        _cacheData.values.where((c) => c.touched.isBefore(oldestDateAllowed)));
     for (var oldValue in oldValues) {
       await _removeFile(oldValue);
     }
   }
 
-  _shrinkLargeCache() async{
+  _shrinkLargeCache() async {
     //Remove oldest objects when cache contains to many items
     if (_cacheData.length > maxNrOfCacheObjects) {
       var allValues = _cacheData.values.toList();
-      allValues.sort((c1, c2) => c1.touched.compareTo(c2.touched));  // sort OLDEST first
-      var oldestValues = List.from(allValues.take( _cacheData.length - maxNrOfCacheObjects));      // get them
-      oldestValues.forEach( (item) async {await _removeFile(item);} );  //remove them
+      allValues.sort(
+          (c1, c2) => c1.touched.compareTo(c2.touched)); // sort OLDEST first
+      var oldestValues = List.from(
+          allValues.take(_cacheData.length - maxNrOfCacheObjects)); // get them
+      oldestValues.forEach((item) async {
+        await _removeFile(item);
+      }); //remove them
     }
   }
 
@@ -180,7 +181,8 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url, {Map<String, String> headers : const {}}) async {
+  Future<File> getFile(String url,
+      {Map<String, String> headers: const {}}) async {
     String log = "[Flutter Cache Manager] Loading $url";
     if (!_cacheData.containsKey(url)) {
       await synchronized(_lock, () {
@@ -207,9 +209,11 @@ class CacheManager {
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
-        _cacheData[url] = await downloadFile(url, headers, relativePath: cacheObject.relativePath);
+        _cacheData[url] = await downloadFile(url, headers,
+            relativePath: cacheObject.relativePath);
 
-        log = "$log\Cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+        log =
+            "$log\Cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
       //If file is old, download if server has newer one
@@ -221,16 +225,17 @@ class CacheManager {
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
-        log = "$log\nNew cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+        log =
+            "$log\nNew cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
-      log = "$log\nUsing file from cache.\nCache valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+      log =
+          "$log\nUsing file from cache.\nCache valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
     });
 
     //If non of the above is true, than we don't have to download anything.
     _save();
-    if(showDebugLogs)
-      print(log);
+    if (showDebugLogs) print(log);
     return new File(await _cacheData[url].getFilePath());
   }
 
