@@ -209,7 +209,7 @@ class CacheManager {
         log = "$log\nDownloading because file does not exist.";
         _cacheData[url] = await downloadFile(url, headers, relativePath: cacheObject.relativePath);
 
-        log = "$log\Cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
+        log = "$log\Cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
       //If file is old, download if server has newer one
@@ -221,10 +221,10 @@ class CacheManager {
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
-        log = "$log\nNew cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
+        log = "$log\nNew cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
-      log = "$log\nUsing file from cache.\nCache valid till ${cacheObject.validTill.toIso8601String()}";
+      log = "$log\nUsing file from cache.\nCache valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
     });
 
     //If non of the above is true, than we don't have to download anything.
@@ -262,7 +262,7 @@ class CacheManager {
         return newCache;
       }
       if (response.statusCode == 304) {
-        newCache.setDataFromHeaders(response.headers);
+        await newCache.setDataFromHeaders(response.headers);
         return newCache;
       }
     }

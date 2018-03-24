@@ -1,3 +1,7 @@
+## [0.0.4+1] - 2018-02-16
+
+* Fixed nullpointer when non-updated file (a 304 response) has no cache-control period. 
+
 ## [0.0.4] - 2018-01-31
 
 * Fixed issues with cache cleaning
