@@ -1,3 +1,9 @@
+## [0.1.0-rc.1] - 2018-03-24
+
+* Fixed ConcurrentModificationError in cache cleaning
+* Added optional headers
+* Moved to Dart 2.0
+
 ## [0.0.4+1] - 2018-02-16
 
 * Fixed nullpointer when non-updated file (a 304 response) has no cache-control period. 
