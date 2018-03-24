@@ -180,7 +180,7 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url) async {
+  Future<File> getFile(String url, {Map<String, String> headers : const {}}) async {
     String log = "[Flutter Cache Manager] Loading $url";
     if (!_cacheData.containsKey(url)) {
       await synchronized(_lock, () {
@@ -199,7 +199,7 @@ class CacheManager {
       //If we have never downloaded this file, do download
       if (filePath == null) {
         log = "$log\nDownloading for first time.";
-        _cacheData[url] = await downloadFile(url);
+        _cacheData[url] = await downloadFile(url, headers);
         return;
       }
       //If file is removed from the cache storage, download again
@@ -207,7 +207,7 @@ class CacheManager {
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
-        _cacheData[url] = await downloadFile(url, relativePath: cacheObject.relativePath);
+        _cacheData[url] = await downloadFile(url, headers, relativePath: cacheObject.relativePath);
 
         log = "$log\Cache file valid till ${_cacheData[url].validTill.toIso8601String()}";
         return;
@@ -216,7 +216,7 @@ class CacheManager {
       if (cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
-        var newCacheData = await downloadFile(url,
+        var newCacheData = await downloadFile(url, headers,
             relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
@@ -235,11 +235,11 @@ class CacheManager {
   }
 
   ///Download the file from the url
-  Future<CacheObject> downloadFile(String url,
+  Future<CacheObject> downloadFile(String url, Map<String, String> headers,
       {String relativePath, String eTag}) async {
     var newCache = new CacheObject(url);
     newCache.setRelativePath(relativePath);
-    var headers = new Map<String, String>();
+
     if (eTag != null) {
       headers["If-None-Match"] = eTag;
     }
