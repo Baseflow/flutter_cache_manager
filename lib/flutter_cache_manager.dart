@@ -183,8 +183,9 @@ class CacheManager {
 
   ///Get the file from the cache or online. Depending on availability and age
   Future<File> getFile(String url,
-      {Map<String, String> headers: const {}}) async {
+      {Map<String, String> headers}) async {
     String log = "[Flutter Cache Manager] Loading $url";
+
     if (!_cacheData.containsKey(url)) {
       await synchronized(_lock, () {
         if (!_cacheData.containsKey(url)) {
@@ -197,6 +198,10 @@ class CacheManager {
     await synchronized(cacheObject.lock, () async {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
+
+      if(headers == null){
+        headers = new Map();
+      }
 
       var filePath = await cacheObject.getFilePath();
       //If we have never downloaded this file, do download
