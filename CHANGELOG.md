@@ -1,4 +1,4 @@
-## [0.1.0-rc.1] - 2018-03-24
+## [0.1.0] - 2018-04-14
 
 * Fixed ConcurrentModificationError in cache cleaning
 * Added optional headers
