@@ -103,9 +103,10 @@ class CacheManager {
 
     await synchronized(_lock, () {
       _cacheData.forEach((key, cache) {
-        json[key] = cache.toMap();
+        json[key] = cache?.toMap();
       });
     });
+
     _prefs.setString(_keyCacheData, JSON.encode(json));
 
     if (await _shouldSaveAgain()) {
