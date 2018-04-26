@@ -61,7 +61,9 @@ class CacheManager {
     if (jsonCacheString != null) {
       Map jsonCache = JSON.decode(jsonCacheString);
       jsonCache.forEach((key, data) {
-        _cacheData[key] = new CacheObject.fromMap(key, data);
+        if (null != data) {
+          _cacheData[key] = new CacheObject.fromMap(key, data);
+        }
       });
     }
   }
