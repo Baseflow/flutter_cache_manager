@@ -1,3 +1,7 @@
+## [0.1.1] - 2018-04-27
+
+* Fixed some issues when file could not be downloaded the first time it is trying to be retrieved.
+
 ## [0.1.0] - 2018-04-14
 
 * Fixed ConcurrentModificationError in cache cleaning

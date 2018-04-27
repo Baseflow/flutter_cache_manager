@@ -8,8 +8,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:synchronized/synchronized.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:synchronized/synchronized.dart';
 
 import 'src/cache_object.dart';
 
@@ -59,9 +59,11 @@ class CacheManager {
     var jsonCacheString = _prefs.getString(_keyCacheData);
     _cacheData = new Map();
     if (jsonCacheString != null) {
-      Map jsonCache = JSON.decode(jsonCacheString);
+      Map jsonCache = const JsonDecoder().convert(jsonCacheString);
       jsonCache.forEach((key, data) {
-        _cacheData[key] = new CacheObject.fromMap(key, data);
+        if (data != null) {
+          _cacheData[key] = new CacheObject.fromMap(key, data);
+        }
       });
     }
   }
@@ -107,7 +109,7 @@ class CacheManager {
       });
     });
 
-    _prefs.setString(_keyCacheData, JSON.encode(json));
+    _prefs.setString(_keyCacheData, const JsonEncoder().convert(json));
 
     if (await _shouldSaveAgain()) {
       await _saveDataInPrefs();
@@ -182,8 +184,7 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url,
-      {Map<String, String> headers}) async {
+  Future<File> getFile(String url, {Map<String, String> headers}) async {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
@@ -199,7 +200,7 @@ class CacheManager {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
 
-      if(headers == null){
+      if (headers == null) {
         headers = new Map();
       }
 
@@ -207,7 +208,10 @@ class CacheManager {
       //If we have never downloaded this file, do download
       if (filePath == null) {
         log = "$log\nDownloading for first time.";
-        _cacheData[url] = await downloadFile(url, headers);
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock);
+        if (newCacheData != null) {
+          _cacheData[url] = newCacheData;
+        }
         return;
       }
       //If file is removed from the cache storage, download again
@@ -215,8 +219,11 @@ class CacheManager {
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
-        _cacheData[url] = await downloadFile(url, headers,
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
             relativePath: cacheObject.relativePath);
+        if (newCacheData != null) {
+          _cacheData[url] = newCacheData;
+        }
 
         log =
             "$log\Cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
@@ -226,7 +233,7 @@ class CacheManager {
       if (cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
-        var newCacheData = await downloadFile(url, headers,
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
             relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
@@ -242,13 +249,19 @@ class CacheManager {
     //If non of the above is true, than we don't have to download anything.
     _save();
     if (showDebugLogs) print(log);
-    return new File(await _cacheData[url].getFilePath());
+
+    var path = await _cacheData[url].getFilePath();
+    if (path == null) {
+      return null;
+    }
+    return new File(path);
   }
 
   ///Download the file from the url
-  Future<CacheObject> downloadFile(String url, Map<String, String> headers,
+  Future<CacheObject> _downloadFile(
+      String url, Map<String, String> headers, Object lock,
       {String relativePath, String eTag}) async {
-    var newCache = new CacheObject(url);
+    var newCache = new CacheObject(url, lock: lock);
     newCache.setRelativePath(relativePath);
 
     if (eTag != null) {
