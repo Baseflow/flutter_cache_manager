@@ -183,6 +183,26 @@ class CacheManager {
     }
   }
 
+  /// Get the file from the cache if previously loaded from [url]. If the file
+  /// is not cached, Future returns null.
+  Future<File> getFileIfCached(String url) async {
+    var cacheObject = _cacheData[url];
+    if (cacheObject == null) {
+      return null;
+    }
+
+    return await synchronized(cacheObject.lock, () async {
+      cacheObject.touch();
+      var filePath = await cacheObject.getFilePath();
+      if (filePath == null) {
+        return null;
+      }
+
+      File cachedFile = new File(filePath);
+      return cachedFile.existsSync() ? cachedFile : null;
+    });
+  }
+
   ///Get the file from the cache or online. Depending on availability and age
   Future<File> getFile(String url, {Map<String, String> headers}) async {
     String log = "[Flutter Cache Manager] Loading $url";
