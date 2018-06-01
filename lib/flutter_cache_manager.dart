@@ -249,7 +249,7 @@ class CacheManager {
           "$log\nUsing file from cache.\nCache valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
     });
 
-    //If non of the above is true, than we don't have to download anything.
+    //If none of the above is true, then we don't have to download anything.
     _save();
     if (showDebugLogs) print(log);
 
