@@ -274,23 +274,30 @@ class CacheManager {
     } catch (e) {}
     if (response != null) {
       if (response.statusCode == 200) {
+        _saveToCacheObject(newCache, response.bodyBytes, response.headers);
+      } else if (response.statusCode == 304) {
         await newCache.setDataFromHeaders(response.headers);
-
-        var filePath = await newCache.getFilePath();
-        var folder = new File(filePath).parent;
-        if (!(await folder.exists())) {
-          folder.createSync(recursive: true);
-        }
-        await new File(filePath).writeAsBytes(response.bodyBytes);
-
-        return newCache;
       }
-      if (response.statusCode == 304) {
-        await newCache.setDataFromHeaders(response.headers);
-        return newCache;
-      }
+      return newCache;
     }
 
     return null;
   }
+  void _saveToCacheObject(CacheObject newCache, List<int> bodyBytes,
+      Map<String, String>rHeaders) async {
+
+    if (bodyBytes==null)
+      return;
+
+    await newCache.setDataFromHeaders(rHeaders ?? new Map());
+
+    var filePath = await newCache.getFilePath();
+    var folder = new File(filePath).parent;
+    if (!(await folder.exists())) {
+      folder.createSync(recursive: true);
+    }
+
+    await new File(filePath).writeAsBytes(bodyBytes);
+  }
+
 }
