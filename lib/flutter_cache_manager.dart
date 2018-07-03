@@ -293,6 +293,29 @@ class CacheManager {
   }
 
 
+  ///Removes the file from [url] if it exists in the cache
+  Future<bool> removeFile(String url) async {
+    String log = "[Flutter Cache Manager] Removing at $url";
+
+    if (_cacheData.containsKey(url)) {
+      await synchronized(_lock, () {
+        if (_cacheData.containsKey(url)) {
+          _cacheData.remove(url);
+
+          log = '$log\nRemoved $url from cache';
+          if (showDebugLogs) print(log);
+
+          return true;
+        }
+      });
+    }
+
+    log = '$log\n$url does not exist in cache';
+    if (showDebugLogs) print(log);
+
+    return false;
+  }
+
   ///Download the file from the url
   Future<CacheObject> _downloadFile(
       String url, Map<String, String> headers, Object lock,
