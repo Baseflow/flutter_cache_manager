@@ -300,7 +300,7 @@ class CacheManager {
     if (_cacheData.containsKey(url)) {
       await synchronized(_lock, () {
         if (_cacheData.containsKey(url)) {
-          _cacheData.remove(url);
+          _removeFile(_cacheData[url]);
 
           log = '$log\nRemoved $url from cache';
           if (showDebugLogs) print(log);
