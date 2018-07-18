@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as p;
 
 ///Cache information of one file
 class CacheObject {
@@ -20,7 +21,7 @@ class CacheObject {
       return null;
     }
     Directory directory = await getTemporaryDirectory();
-    return directory.path + relativePath;
+    return p.join(directory.path, relativePath);
   }
 
   String get relativePath {
