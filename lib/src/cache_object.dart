@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
 
 ///Cache information of one file
@@ -47,7 +48,7 @@ class CacheObject {
   DateTime touched;
   String url;
 
-  Object lock;
+  Lock lock;
   Map _map;
 
   CacheObject(String url, {this.lock}) {
@@ -55,7 +56,7 @@ class CacheObject {
     _map = new Map();
     touch();
     if (lock == null) {
-      lock = new Object();
+      lock = new Lock();
     }
   }
 
@@ -69,7 +70,7 @@ class CacheObject {
       touch();
     }
     if (lock == null) {
-      lock = new Object();
+      lock = new Lock();
     }
   }
 
@@ -91,8 +92,7 @@ class CacheObject {
       var controlSettings = cacheControl.split(", ");
       controlSettings.forEach((setting) {
         if (setting.startsWith("max-age=")) {
-          var validSeconds =
-              int.parse(setting.split("=")[1], onError: (source) => 0);
+          var validSeconds = int.parse(setting.split("=")[1], radix: 0);
           if (validSeconds > 0) {
             ageDuration = new Duration(seconds: validSeconds);
           }
@@ -122,8 +122,8 @@ class CacheObject {
     }
 
     if (relativePath == null) {
-      var fileName = "cache/${new Uuid().v1()}${fileExtension}";
-      _map[_keyFilePath] = "${fileName}";
+      var fileName = "cache/${new Uuid().v1()}$fileExtension";
+      _map[_keyFilePath] = "$fileName";
     }
   }
 
