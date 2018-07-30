@@ -13,6 +13,8 @@ import 'package:synchronized/synchronized.dart';
 
 import 'src/cache_object.dart';
 
+typedef Future<String> ConvertUrl(String url);
+
 class CacheManager {
   static const _keyCacheData = "lib_cached_image_data";
   static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
@@ -21,8 +23,10 @@ class CacheManager {
   static Duration maxAgeCacheObject = new Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
   static bool showDebugLogs = false;
+  static ConvertUrl convertUrl;
 
   static CacheManager _instance;
+
   static Future<CacheManager> getInstance() async {
     if (_instance == null) {
       await synchronized(_lock, () async {
@@ -266,6 +270,10 @@ class CacheManager {
 
     if (eTag != null) {
       headers["If-None-Match"] = eTag;
+    }
+
+    if (convertUrl != null) {
+      url = await convertUrl(url) ?? url;
     }
 
     var response;
