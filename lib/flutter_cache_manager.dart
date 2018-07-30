@@ -23,9 +23,10 @@ class CacheManager {
   static bool showDebugLogs = false;
 
   static CacheManager _instance;
+
   static Future<CacheManager> getInstance() async {
     if (_instance == null) {
-      await synchronized(_lock, () async {
+      await _lock.synchronized(() async {
         if (_instance == null) {
           _instance = new CacheManager._();
           await _instance._init();
@@ -41,7 +42,7 @@ class CacheManager {
   Map<String, CacheObject> _cacheData;
   DateTime lastCacheClean;
 
-  static Object _lock = new Object();
+  static Lock _lock = new Lock();
 
   ///Shared preferences is used to keep track of the information about the files
   _init() async {
@@ -52,7 +53,7 @@ class CacheManager {
 
   bool _isStoringData = false;
   bool _shouldStoreDataAgain = false;
-  Object _storeLock = new Object();
+  Lock _storeLock = new Lock();
 
   _getSavedCacheDataFromPreferences() {
     //get saved cache data from shared prefs
@@ -79,7 +80,7 @@ class CacheManager {
   }
 
   Future<bool> _canSave() async {
-    return await synchronized(_storeLock, () {
+    return await _storeLock.synchronized(() {
       if (_isStoringData) {
         _shouldStoreDataAgain = true;
         return false;
@@ -90,7 +91,7 @@ class CacheManager {
   }
 
   Future<bool> _shouldSaveAgain() async {
-    return await synchronized(_storeLock, () {
+    return await _storeLock.synchronized(() {
       if (_shouldStoreDataAgain) {
         _shouldStoreDataAgain = false;
         return true;
@@ -103,7 +104,7 @@ class CacheManager {
   _saveDataInPrefs() async {
     Map json = new Map();
 
-    await synchronized(_lock, () {
+    await _lock.synchronized(() {
       _cacheData.forEach((key, cache) {
         json[key] = cache?.toMap();
       });
@@ -133,7 +134,7 @@ class CacheManager {
     if (force ||
         sinceLastClean > inBetweenCleans ||
         _cacheData.length > maxNrOfCacheObjects) {
-      await synchronized(_lock, () async {
+      await _lock.synchronized(() async {
         await _removeOldObjectsFromCache();
         await _shrinkLargeCache();
 
@@ -188,7 +189,7 @@ class CacheManager {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
-      await synchronized(_lock, () {
+      await _lock.synchronized(() {
         if (!_cacheData.containsKey(url)) {
           _cacheData[url] = new CacheObject(url);
         }
@@ -196,7 +197,7 @@ class CacheManager {
     }
 
     var cacheObject = _cacheData[url];
-    await synchronized(cacheObject.lock, () async {
+    await cacheObject.lock.synchronized(() async {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
 
