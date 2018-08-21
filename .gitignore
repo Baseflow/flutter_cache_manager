@@ -14,6 +14,11 @@ packages
 # Include when developing application packages.
 pubspec.lock
 
+.flutter-plugins
+
+ios
+android
+
 
 # IntelliJ related
 *.iml
@@ -22,3 +27,4 @@ pubspec.lock
 .idea/
 
 \.DS_Store
+
