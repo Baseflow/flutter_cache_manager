@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
 
 ///Cache information of one file
@@ -32,7 +33,7 @@ class CacheObject {
 
   DateTime get validTill {
     if (_map.containsKey(_keyValidTill)) {
-      return new DateTime.fromMillisecondsSinceEpoch(_map[_keyValidTill]);
+      return DateTime.fromMillisecondsSinceEpoch(_map[_keyValidTill]);
     }
     return null;
   }
@@ -47,15 +48,15 @@ class CacheObject {
   DateTime touched;
   String url;
 
-  Object lock;
+  Lock lock;
   Map _map;
 
   CacheObject(String url, {this.lock}) {
     this.url = url;
-    _map = new Map();
+    _map = Map();
     touch();
     if (lock == null) {
-      lock = new Object();
+      lock = Lock();
     }
   }
 
@@ -64,12 +65,12 @@ class CacheObject {
     _map = map;
 
     if (_map.containsKey(_keyTouched)) {
-      touched = new DateTime.fromMillisecondsSinceEpoch(_map[_keyTouched]);
+      touched = DateTime.fromMillisecondsSinceEpoch(_map[_keyTouched]);
     } else {
       touch();
     }
     if (lock == null) {
-      lock = new Object();
+      lock = Lock();
     }
   }
 
@@ -78,30 +79,29 @@ class CacheObject {
   }
 
   touch() {
-    touched = new DateTime.now();
+    touched = DateTime.now();
     _map[_keyTouched] = touched.millisecondsSinceEpoch;
   }
 
   setDataFromHeaders(Map<String, String> headers) async {
     //Without a cache-control header we keep the file for a week
-    var ageDuration = new Duration(days: 7);
+    var ageDuration = Duration(days: 7);
 
     if (headers.containsKey("cache-control")) {
       var cacheControl = headers["cache-control"];
       var controlSettings = cacheControl.split(", ");
       controlSettings.forEach((setting) {
         if (setting.startsWith("max-age=")) {
-          var validSeconds =
-              int.parse(setting.split("=")[1], onError: (source) => 0);
+          var validSeconds = int.tryParse(setting.split("=")[1]) ?? 0;
           if (validSeconds > 0) {
-            ageDuration = new Duration(seconds: validSeconds);
+            ageDuration = Duration(seconds: validSeconds);
           }
         }
       });
     }
 
     _map[_keyValidTill] =
-        new DateTime.now().add(ageDuration).millisecondsSinceEpoch;
+        DateTime.now().add(ageDuration).millisecondsSinceEpoch;
 
     if (headers.containsKey("etag")) {
       _map[_keyETag] = headers["etag"];
@@ -122,13 +122,13 @@ class CacheObject {
     }
 
     if (relativePath == null) {
-      var fileName = "cache/${new Uuid().v1()}${fileExtension}";
-      _map[_keyFilePath] = "${fileName}";
+      var fileName = "cache/${Uuid().v1()}$fileExtension";
+      _map[_keyFilePath] = fileName;
     }
   }
 
   removeOldFile(String filePath) async {
-    var file = new File(filePath);
+    var file = File(filePath);
     if (await file.exists()) {
       await file.delete();
     }

@@ -17,17 +17,18 @@ class CacheManager {
   static const _keyCacheData = "lib_cached_image_data";
   static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
 
-  static Duration inBetweenCleans = new Duration(days: 7);
-  static Duration maxAgeCacheObject = new Duration(days: 30);
+  static Duration inBetweenCleans = Duration(days: 7);
+  static Duration maxAgeCacheObject = Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
   static bool showDebugLogs = false;
 
   static CacheManager _instance;
+
   static Future<CacheManager> getInstance() async {
     if (_instance == null) {
-      await synchronized(_lock, () async {
+      await _lock.synchronized(() async {
         if (_instance == null) {
-          _instance = new CacheManager._();
+          _instance = CacheManager._();
           await _instance._init();
         }
       });
@@ -41,7 +42,7 @@ class CacheManager {
   Map<String, CacheObject> _cacheData;
   DateTime lastCacheClean;
 
-  static Object _lock = new Object();
+  static Lock _lock = Lock();
 
   ///Shared preferences is used to keep track of the information about the files
   _init() async {
@@ -52,17 +53,17 @@ class CacheManager {
 
   bool _isStoringData = false;
   bool _shouldStoreDataAgain = false;
-  Object _storeLock = new Object();
+  Lock _storeLock = Lock();
 
   _getSavedCacheDataFromPreferences() {
     //get saved cache data from shared prefs
     var jsonCacheString = _prefs.getString(_keyCacheData);
-    _cacheData = new Map();
+    _cacheData = Map();
     if (jsonCacheString != null) {
       Map jsonCache = const JsonDecoder().convert(jsonCacheString);
       jsonCache.forEach((key, data) {
         if (data != null) {
-          _cacheData[key] = new CacheObject.fromMap(key, data);
+          _cacheData[key] = CacheObject.fromMap(key, data);
         }
       });
     }
@@ -79,7 +80,7 @@ class CacheManager {
   }
 
   Future<bool> _canSave() async {
-    return await synchronized(_storeLock, () {
+    return await _storeLock.synchronized(() {
       if (_isStoringData) {
         _shouldStoreDataAgain = true;
         return false;
@@ -90,7 +91,7 @@ class CacheManager {
   }
 
   Future<bool> _shouldSaveAgain() async {
-    return await synchronized(_storeLock, () {
+    return await _storeLock.synchronized(() {
       if (_shouldStoreDataAgain) {
         _shouldStoreDataAgain = false;
         return true;
@@ -101,9 +102,9 @@ class CacheManager {
   }
 
   _saveDataInPrefs() async {
-    Map json = new Map();
+    Map json = Map();
 
-    await synchronized(_lock, () {
+    await _lock.synchronized(() {
       _cacheData.forEach((key, cache) {
         json[key] = cache?.toMap();
       });
@@ -120,24 +121,24 @@ class CacheManager {
     // Get data about when the last clean action has been performed
     var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
     if (cleanMillis != null) {
-      lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
+      lastCacheClean = DateTime.fromMillisecondsSinceEpoch(cleanMillis);
     } else {
-      lastCacheClean = new DateTime.now();
+      lastCacheClean = DateTime.now();
       _prefs.setInt(_keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
     }
   }
 
   _cleanCache({force: false}) async {
-    var sinceLastClean = new DateTime.now().difference(lastCacheClean);
+    var sinceLastClean = DateTime.now().difference(lastCacheClean);
 
     if (force ||
         sinceLastClean > inBetweenCleans ||
         _cacheData.length > maxNrOfCacheObjects) {
-      await synchronized(_lock, () async {
+      await _lock.synchronized(() async {
         await _removeOldObjectsFromCache();
         await _shrinkLargeCache();
 
-        lastCacheClean = new DateTime.now();
+        lastCacheClean = DateTime.now();
         _prefs.setInt(
             _keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
       });
@@ -145,7 +146,7 @@ class CacheManager {
   }
 
   _removeOldObjectsFromCache() async {
-    var oldestDateAllowed = new DateTime.now().subtract(maxAgeCacheObject);
+    var oldestDateAllowed = DateTime.now().subtract(maxAgeCacheObject);
 
     //Remove old objects
     var oldValues = List.from(
@@ -177,7 +178,7 @@ class CacheManager {
 
     _cacheData.remove(cacheObject.url);
 
-    var file = new File(await cacheObject.getFilePath());
+    var file = File(await cacheObject.getFilePath());
     if (await file.exists()) {
       file.delete();
     }
@@ -188,20 +189,20 @@ class CacheManager {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
-      await synchronized(_lock, () {
+      await _lock.synchronized(() {
         if (!_cacheData.containsKey(url)) {
-          _cacheData[url] = new CacheObject(url);
+          _cacheData[url] = CacheObject(url);
         }
       });
     }
 
     var cacheObject = _cacheData[url];
-    await synchronized(cacheObject.lock, () async {
+    await cacheObject.lock.synchronized(() async {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
 
       if (headers == null) {
-        headers = new Map();
+        headers = Map();
       }
 
       var filePath = await cacheObject.getFilePath();
@@ -215,7 +216,7 @@ class CacheManager {
         return;
       }
       //If file is removed from the cache storage, download again
-      var cachedFile = new File(filePath);
+      var cachedFile = File(filePath);
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
@@ -231,7 +232,7 @@ class CacheManager {
       }
       //If file is old, download if server has newer one
       if (cacheObject.validTill == null ||
-          cacheObject.validTill.isBefore(new DateTime.now())) {
+          cacheObject.validTill.isBefore(DateTime.now())) {
         log = "$log\nUpdating file in cache.";
         var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
             relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
@@ -239,7 +240,7 @@ class CacheManager {
           _cacheData[url] = newCacheData;
         }
         log =
-            "$log\nNew cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+            "$log\ncache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
       log =
@@ -254,14 +255,14 @@ class CacheManager {
     if (path == null) {
       return null;
     }
-    return new File(path);
+    return File(path);
   }
 
   ///Download the file from the url
   Future<CacheObject> _downloadFile(
       String url, Map<String, String> headers, Object lock,
       {String relativePath, String eTag}) async {
-    var newCache = new CacheObject(url, lock: lock);
+    var newCache = CacheObject(url, lock: lock);
     newCache.setRelativePath(relativePath);
 
     if (eTag != null) {
@@ -277,11 +278,11 @@ class CacheManager {
         await newCache.setDataFromHeaders(response.headers);
 
         var filePath = await newCache.getFilePath();
-        var folder = new File(filePath).parent;
+        var folder = File(filePath).parent;
         if (!(await folder.exists())) {
           folder.createSync(recursive: true);
         }
-        await new File(filePath).writeAsBytes(response.bodyBytes);
+        await File(filePath).writeAsBytes(response.bodyBytes);
 
         return newCache;
       }
