@@ -41,7 +41,7 @@ class CacheManager {
   CacheManager._();
 
   SharedPreferences _prefs;
-  Map<String, CacheObject> _cacheData;
+  Map<String, CacheObject> _cacheData = {};
   DateTime lastCacheClean;
 
   static Lock _lock = new Lock();
