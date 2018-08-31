@@ -282,7 +282,7 @@ class CacheManager {
         filePath,
         url,
         cacheObject.lock,
-        relativePath: filePath.split('/').last
+        relativePath: '/${filePath.split('/').last}'
       );
 
       if (newCacheData != null) {
