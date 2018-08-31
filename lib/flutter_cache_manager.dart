@@ -121,12 +121,12 @@ class CacheManager {
 
   _getLastCleanTimestampFromPreferences() {
     // Get data about when the last clean action has been performed
-    var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
-    if (cleanMillis != null) {
-      lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
+    var cleanDate = _prefs.getString(_keyCacheCleanDate);
+    if (cleanDate != null) {
+      lastCacheClean = new DateTime.parse(cleanDate);
     } else {
       lastCacheClean = new DateTime.now();
-      _prefs.setInt(_keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
+      _prefs.setString(_keyCacheCleanDate, lastCacheClean.toUtc().toIso8601String());
     }
   }
 
@@ -141,8 +141,7 @@ class CacheManager {
         await _shrinkLargeCache();
 
         lastCacheClean = new DateTime.now();
-        _prefs.setInt(
-            _keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
+        _prefs.setString(_keyCacheCleanDate, lastCacheClean.toUtc().toIso8601String());
       });
     }
   }
