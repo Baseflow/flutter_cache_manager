@@ -268,7 +268,7 @@ class CacheManager {
     String log = "[Flutter Cache Manager] Injecting as $url";
 
     if (!_cacheData.containsKey(url)) {
-      await synchronized(_lock, () {
+      await _lock.synchronized(() {
         if (!_cacheData.containsKey(url)) {
           _cacheData[url] = new CacheObject(url);
         }
@@ -276,9 +276,14 @@ class CacheManager {
     }
 
     var cacheObject = _cacheData[url];
-    await synchronized(cacheObject.lock, () async {
+    await cacheObject.lock.synchronized(() async {
 
-      var newCacheData = await _mockedCacheData(filePath, url, cacheObject.lock);
+      var newCacheData = await _mockedCacheData(
+        filePath,
+        url,
+        cacheObject.lock,
+        relativePath: filePath.split('/').last
+      );
 
       if (newCacheData != null) {
         _cacheData[url] = newCacheData;
@@ -304,7 +309,7 @@ class CacheManager {
     String log = "[Flutter Cache Manager] Removing at $url";
 
     if (_cacheData.containsKey(url)) {
-      await synchronized(_lock, () {
+      await _lock.synchronized(() {
         if (_cacheData.containsKey(url)) {
           _removeFile(_cacheData[url]);
 
@@ -349,7 +354,7 @@ class CacheManager {
     return null;
   }
 
-  ///Creates a Cahe entry with a given file path
+  ///Creates a Cache entry with a given file path
   Future<CacheObject> _mockedCacheData(
       String filePath,
       String url, Object lock,
