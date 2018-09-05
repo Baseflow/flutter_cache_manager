@@ -1,3 +1,8 @@
+## [0.1.2] - 2018-08-30
+
+* Fixed library compatibility issue
+* Improved some synchronization
+
 ## [0.1.1] - 2018-04-27
 
 * Fixed some issues when file could not be downloaded the first time it is trying to be retrieved.
