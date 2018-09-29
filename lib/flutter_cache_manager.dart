@@ -187,7 +187,7 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url, {Map<String, String> headers}) async {
+  Future<File> getFile(String url, {Map<String, String> headers, bool forceUpdate: false}) async {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
@@ -233,7 +233,7 @@ class CacheManager {
         return;
       }
       //If file is old, download if server has newer one
-      if (cacheObject.validTill == null ||
+      if (forceUpdate || cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
         var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
