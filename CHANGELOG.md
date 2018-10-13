@@ -1,3 +1,7 @@
+## [0.2.0] - 2018-10-13
+
+* Fixed library compatibility issue
+
 ## [0.1.2] - 2018-08-30
 
 * Fixed library compatibility issue

@@ -1,6 +1,6 @@
 name: flutter_cache_manager
 description: Generic cache manager for flutter
-version: 0.1.2
+version: 0.2.0
 author: Rene Floor <pub@renefloor.nl>
 homepage: https://github.com/renefloor/flutter_cache_manager
 
@@ -14,4 +14,4 @@ dependencies:
   path_provider: "^0.4.0"
   synchronized: "^1.5.1"
   uuid:  "^1.0.3"
-  http: "^0.11.3+14"
+  http: "^0.12.0"
