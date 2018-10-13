@@ -15,3 +15,4 @@ dependencies:
   synchronized: "^1.5.1"
   uuid:  "^1.0.3"
   http: "^0.12.0"
+  path: ^1.6.2
