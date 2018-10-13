@@ -8,8 +8,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:synchronized/synchronized.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:synchronized/synchronized.dart';
 
 import 'src/cache_object.dart';
 
@@ -23,12 +23,15 @@ class CacheManager {
   static bool showDebugLogs = false;
 
   static CacheManager _instance;
+
   static Future<CacheManager> getInstance() async {
     if (_instance == null) {
-      await synchronized(_lock, () async {
+      await _lock.synchronized(() async {
         if (_instance == null) {
-          _instance = new CacheManager._();
-          await _instance._init();
+          // keep local instance till it is fully initialized
+          var newInstance = new CacheManager._();
+          await newInstance._init();
+          _instance = newInstance;
         }
       });
     }
@@ -41,10 +44,10 @@ class CacheManager {
   Map<String, CacheObject> _cacheData;
   DateTime lastCacheClean;
 
-  static Object _lock = new Object();
+  static Lock _lock = new Lock();
 
   ///Shared preferences is used to keep track of the information about the files
-  _init() async {
+  Future _init() async {
     _prefs = await SharedPreferences.getInstance();
     _getSavedCacheDataFromPreferences();
     _getLastCleanTimestampFromPreferences();
@@ -52,16 +55,18 @@ class CacheManager {
 
   bool _isStoringData = false;
   bool _shouldStoreDataAgain = false;
-  Object _storeLock = new Object();
+  Lock _storeLock = new Lock();
 
   _getSavedCacheDataFromPreferences() {
     //get saved cache data from shared prefs
     var jsonCacheString = _prefs.getString(_keyCacheData);
     _cacheData = new Map();
     if (jsonCacheString != null) {
-      Map jsonCache = JSON.decode(jsonCacheString);
+      Map jsonCache = const JsonDecoder().convert(jsonCacheString);
       jsonCache.forEach((key, data) {
-        _cacheData[key] = new CacheObject.fromMap(key, data);
+        if (data != null) {
+          _cacheData[key] = new CacheObject.fromMap(key, data);
+        }
       });
     }
   }
@@ -77,7 +82,7 @@ class CacheManager {
   }
 
   Future<bool> _canSave() async {
-    return await synchronized(_storeLock, () {
+    return await _storeLock.synchronized(() {
       if (_isStoringData) {
         _shouldStoreDataAgain = true;
         return false;
@@ -88,7 +93,7 @@ class CacheManager {
   }
 
   Future<bool> _shouldSaveAgain() async {
-    return await synchronized(_storeLock, () {
+    return await _storeLock.synchronized(() {
       if (_shouldStoreDataAgain) {
         _shouldStoreDataAgain = false;
         return true;
@@ -101,13 +106,13 @@ class CacheManager {
   _saveDataInPrefs() async {
     Map json = new Map();
 
-    await synchronized(_lock, () {
+    await _lock.synchronized(() {
       _cacheData.forEach((key, cache) {
         json[key] = cache?.toMap();
       });
     });
 
-    _prefs.setString(_keyCacheData, JSON.encode(json));
+    _prefs.setString(_keyCacheData, const JsonEncoder().convert(json));
 
     if (await _shouldSaveAgain()) {
       await _saveDataInPrefs();
@@ -131,7 +136,7 @@ class CacheManager {
     if (force ||
         sinceLastClean > inBetweenCleans ||
         _cacheData.length > maxNrOfCacheObjects) {
-      await synchronized(_lock, () async {
+      await _lock.synchronized(() async {
         await _removeOldObjectsFromCache();
         await _shrinkLargeCache();
 
@@ -182,12 +187,11 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url,
-      {Map<String, String> headers}) async {
+  Future<File> getFile(String url, {Map<String, String> headers}) async {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
-      await synchronized(_lock, () {
+      await _lock.synchronized(() {
         if (!_cacheData.containsKey(url)) {
           _cacheData[url] = new CacheObject(url);
         }
@@ -195,11 +199,11 @@ class CacheManager {
     }
 
     var cacheObject = _cacheData[url];
-    await synchronized(cacheObject.lock, () async {
+    await cacheObject.lock.synchronized(() async {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
 
-      if(headers == null){
+      if (headers == null) {
         headers = new Map();
       }
 
@@ -207,7 +211,10 @@ class CacheManager {
       //If we have never downloaded this file, do download
       if (filePath == null) {
         log = "$log\nDownloading for first time.";
-        _cacheData[url] = await downloadFile(url, headers);
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock);
+        if (newCacheData != null) {
+          _cacheData[url] = newCacheData;
+        }
         return;
       }
       //If file is removed from the cache storage, download again
@@ -215,8 +222,11 @@ class CacheManager {
       var cachedFileExists = await cachedFile.exists();
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
-        _cacheData[url] = await downloadFile(url, headers,
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
             relativePath: cacheObject.relativePath);
+        if (newCacheData != null) {
+          _cacheData[url] = newCacheData;
+        }
 
         log =
             "$log\Cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
@@ -226,7 +236,7 @@ class CacheManager {
       if (cacheObject.validTill == null ||
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
-        var newCacheData = await downloadFile(url, headers,
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
             relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
@@ -242,13 +252,19 @@ class CacheManager {
     //If non of the above is true, than we don't have to download anything.
     _save();
     if (showDebugLogs) print(log);
-    return new File(await _cacheData[url].getFilePath());
+
+    var path = await _cacheData[url].getFilePath();
+    if (path == null) {
+      return null;
+    }
+    return new File(path);
   }
 
   ///Download the file from the url
-  Future<CacheObject> downloadFile(String url, Map<String, String> headers,
+  Future<CacheObject> _downloadFile(
+      String url, Map<String, String> headers, Object lock,
       {String relativePath, String eTag}) async {
-    var newCache = new CacheObject(url);
+    var newCache = new CacheObject(url, lock: lock);
     newCache.setRelativePath(relativePath);
 
     if (eTag != null) {

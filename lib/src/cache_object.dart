@@ -4,7 +4,9 @@
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
 
 ///Cache information of one file
@@ -46,17 +48,19 @@ class CacheObject {
   DateTime touched;
   String url;
 
-  Object lock;
+  Lock lock;
   Map _map;
 
-  CacheObject(String url) {
+  CacheObject(String url, {this.lock}) {
     this.url = url;
     _map = new Map();
     touch();
-    lock = new Object();
+    if (lock == null) {
+      lock = new Lock();
+    }
   }
 
-  CacheObject.fromMap(String url, Map map) {
+  CacheObject.fromMap(String url, Map map, {this.lock}) {
     this.url = url;
     _map = map;
 
@@ -65,8 +69,9 @@ class CacheObject {
     } else {
       touch();
     }
-
-    lock = new Object();
+    if (lock == null) {
+      lock = new Lock();
+    }
   }
 
   Map toMap() {
