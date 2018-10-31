@@ -344,7 +344,7 @@ class CacheManager {
     } catch (e) {}
     if (response != null) {
       if (response.statusCode == 200) {
-        _saveToCacheObject(newCache, response.bodyBytes, response.headers);
+        await _saveToCacheObject(newCache, response.bodyBytes, response.headers);
       } else if (response.statusCode == 304) {
         await newCache.setDataFromHeaders(response.headers);
       }
@@ -367,11 +367,11 @@ class CacheManager {
       bodyBytes = await new File(filePath).readAsBytes();
     } catch (e) {}
 
-    _saveToCacheObject(newCache, bodyBytes, new Map());
+    await _saveToCacheObject(newCache, bodyBytes, new Map());
     return newCache;
   }
 
-  void _saveToCacheObject(CacheObject newCache, List<int> bodyBytes,
+  Future<void> _saveToCacheObject(CacheObject newCache, List<int> bodyBytes,
       Map<String, String>rHeaders) async {
 
     if (bodyBytes==null)
