@@ -13,6 +13,8 @@ import 'package:synchronized/synchronized.dart';
 
 import 'src/cache_object.dart';
 
+typedef Future<http.Response> FileFetcher(String url, { Map<String, String> headers });
+
 class CacheManager {
   static const _keyCacheData = "lib_cached_image_data";
   static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
@@ -187,7 +189,7 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url, {Map<String, String> headers}) async {
+  Future<File> getFile(String url, {Map<String, String> headers, FileFetcher fileFetcher}) async {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
@@ -211,7 +213,7 @@ class CacheManager {
       //If we have never downloaded this file, do download
       if (filePath == null) {
         log = "$log\nDownloading for first time.";
-        var newCacheData = await _downloadFile(url, headers, cacheObject.lock);
+        var newCacheData = await _downloadFile(url, headers, cacheObject.lock, fileFetcher: fileFetcher);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
@@ -223,7 +225,7 @@ class CacheManager {
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
         var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
-            relativePath: cacheObject.relativePath);
+            relativePath: cacheObject.relativePath, fileFetcher: fileFetcher);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
@@ -237,7 +239,7 @@ class CacheManager {
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
         var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
-            relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
+            relativePath: cacheObject.relativePath, eTag: cacheObject.eTag, fileFetcher: fileFetcher);
         if (newCacheData != null) {
           _cacheData[url] = newCacheData;
         }
@@ -263,7 +265,7 @@ class CacheManager {
   ///Download the file from the url
   Future<CacheObject> _downloadFile(
       String url, Map<String, String> headers, Object lock,
-      {String relativePath, String eTag}) async {
+      {String relativePath, String eTag, FileFetcher fileFetcher = _defaultFileFetcher}) async {
     var newCache = new CacheObject(url, lock: lock);
     newCache.setRelativePath(relativePath);
 
@@ -273,7 +275,7 @@ class CacheManager {
 
     var response;
     try {
-      response = await http.get(url, headers: headers);
+      response = await fileFetcher(url, headers: headers);
     } catch (e) {}
     if (response != null) {
       if (response.statusCode == 200) {
@@ -297,3 +299,7 @@ class CacheManager {
     return null;
   }
 }
+
+  Future<http.Response> _defaultFileFetcher(String url, {Map<String, String> headers}) async {
+    return await http.get(url, headers: headers);
+  }
