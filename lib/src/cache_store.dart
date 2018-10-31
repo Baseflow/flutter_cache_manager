@@ -76,7 +76,7 @@ class CacheStore {
   Future<CacheObjectProvider> _openDatabaseConnection() async {
     var provider = await _cacheObjectProvider;
     if (_nrOfDbConnections == 0) {
-      provider.open();
+      await provider.open();
     }
     _nrOfDbConnections++;
     return provider;
@@ -86,7 +86,7 @@ class CacheStore {
     var provider = await _cacheObjectProvider;
     _nrOfDbConnections--;
     if (_nrOfDbConnections == 0) {
-      provider.close();
+      await provider.close();
     }
   }
 }

@@ -19,7 +19,7 @@ class WebHelper {
   ///Download the file from the url
   Future<FileInfo> downloadFile(String url,
       {Map<String, String> authHeaders}) async {
-    if (!_memCache.containsKey(url)) {
+    if (!_memCache.containsKey(url) || true) {
       var completer = new Completer<FileInfo>();
       _downloadRemoteFile(url).then((cacheObject) {
         completer.complete(cacheObject);
@@ -38,7 +38,7 @@ class WebHelper {
       cacheObject = new CacheObject(url);
     }
 
-    var headers = new Map();
+    var headers = new Map<String, String>();
     if (authHeaders != null) {
       headers.addAll(authHeaders);
     }
@@ -51,7 +51,9 @@ class WebHelper {
     try {
       var response = await http.get(url, headers: headers);
       success = await _handleHttpResponse(response, cacheObject);
-    } catch (e) {}
+    } catch (e) {
+      print(e);
+    }
 
     if (!success) {
       return null;

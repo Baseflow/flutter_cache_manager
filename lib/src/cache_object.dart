@@ -64,11 +64,11 @@ class CacheObjectProvider {
       await db.execute('''
       create table $tableCacheObject ( 
         $columnId integer primary key, 
-        $columnUrl text index, 
+        $columnUrl text, 
         $columnPath text,
         $columnETag text,
         $columnValidTill integer,
-        $columnTouched integer index,
+        $columnTouched integer
         )
       ''');
     });
@@ -106,5 +106,5 @@ class CacheObjectProvider {
         where: "$columnId = ?", whereArgs: [cacheObject.id]);
   }
 
-  Future close() async => db.close();
+  Future close() async => await db.close();
 }
