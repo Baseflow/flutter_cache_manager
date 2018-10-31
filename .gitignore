@@ -22,3 +22,6 @@ pubspec.lock
 .idea/
 
 \.DS_Store
+
+.flutter-plugins
+android/local.properties
