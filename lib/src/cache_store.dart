@@ -18,10 +18,10 @@ class CacheStore {
     _memCache = new Map();
     filePath = basePath;
     _nrOfDbConnections = 0;
-    _cacheObjectProvider = getObjectProvider();
+    _cacheObjectProvider = _getObjectProvider();
   }
 
-  Future<CacheObjectProvider> getObjectProvider() async {
+  Future<CacheObjectProvider> _getObjectProvider() async {
     var databasesPath = await getDatabasesPath();
     var path = p.join(databasesPath, "$storeKey.db");
 
@@ -33,22 +33,22 @@ class CacheStore {
   }
 
   Future<FileInfo> getFile(String url) async {
-    var cacheObject = await _retrieveCacheData(url);
+    var cacheObject = await retrieveCacheData(url);
+    if (cacheObject == null) {
+      return null;
+    }
     var path = p.join(await filePath, cacheObject.relativePath);
-
     return new FileInfo(
         File(path), FileSource.Cache, cacheObject.validTill, url);
   }
 
-  putFile(FileInfo fileInfo, String eTag) async {
-    var existingData = await _retrieveCacheData(fileInfo.originalUrl);
-    existingData.eTag = eTag;
-    _memCache[fileInfo.originalUrl] = Future<CacheObject>.value(existingData);
-    _updateCacheDataInDatabase(existingData);
+  putFile(CacheObject cacheObject) async {
+    _memCache[cacheObject.url] = Future<CacheObject>.value(cacheObject);
+    _updateCacheDataInDatabase(cacheObject);
   }
 
-  Future<CacheObject> _retrieveCacheData(String url) {
-    if (_memCache.containsKey(url)) {
+  Future<CacheObject> retrieveCacheData(String url) {
+    if (!_memCache.containsKey(url)) {
       var completer = new Completer<CacheObject>();
       _getCacheDataFromDatabase(url).then((cacheObject) {
         completer.complete(cacheObject);

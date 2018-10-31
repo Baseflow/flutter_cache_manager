@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/web_helper.dart';
@@ -50,32 +48,31 @@ abstract class BaseCacheManager {
   CacheStore store;
   WebHelper webHelper;
 
-  Future<File> getFile(String url, {Map<String, String> headers}) async {
-    var cacheFile = await store.getFile(url);
-    if (cacheFile.file != null) {
-      //TODO Check age
-      return cacheFile.file;
-    }
-    var remoteFile = await webHelper.downloadFile();
-    return remoteFile.file;
-  }
-
   ///Get the file from the cache and/or online. Depending on availability and age
-  Stream<FileInfo> getFileStream(String url,
-      {Map<String, String> headers}) async* {
-    yield await getFileFromCache(url);
-    yield await webHelper.downloadFile();
+  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) async* {
+    var cacheFile = await getFileFromCache(url);
+    if (cacheFile != null) {
+      yield cacheFile;
+    }
+    if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
+      var webFile = await webHelper.downloadFile(url, authHeaders: headers);
+      if (webFile != null) {
+        yield webFile;
+      }
+      if (webFile == null && cacheFile == null) {
+        yield new FileInfo(null, FileSource.NA, null, url);
+      }
+    }
   }
 
   ///Download the file and add to cache
-  Future<File> downloadFile(String url, {Map<String, String> headers}) async {
-    var fileInfo = await webHelper.downloadFile();
-    return fileInfo.file;
+  Future<FileInfo> downloadFile(String url,
+      {Map<String, String> authHeaders}) async {
+    return await webHelper.downloadFile(url, authHeaders: authHeaders);
   }
 
   ///Get the file from the cache
   Future<FileInfo> getFileFromCache(String url) async {
-    var fileInfo = await store.getFile(url);
-    return fileInfo;
+    return await store.getFile(url);
   }
 }
