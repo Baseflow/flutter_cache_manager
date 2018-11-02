@@ -147,6 +147,11 @@ class CacheManager {
     }
   }
 
+  Future<void> clear() async {
+    _cacheData.clear();
+    await _saveDataInPrefs();
+  }
+
   _removeOldObjectsFromCache() async {
     var oldestDateAllowed = new DateTime.now().subtract(maxAgeCacheObject);
 
@@ -172,7 +177,7 @@ class CacheManager {
     }
   }
 
-  _removeFile(CacheObject cacheObject) async {
+  Future<void> _removeFile(CacheObject cacheObject) async {
     //Ensure the file has been downloaded
     if (cacheObject.relativePath == null) {
       return;
@@ -309,9 +314,9 @@ class CacheManager {
     String log = "[Flutter Cache Manager] Removing at $url";
 
     if (_cacheData.containsKey(url)) {
-      await _lock.synchronized(() {
+      await _lock.synchronized(() async {
         if (_cacheData.containsKey(url)) {
-          _removeFile(_cacheData[url]);
+          await _removeFile(_cacheData[url]);
 
           log = '$log\nRemoved $url from cache';
           if (showDebugLogs) print(log);
