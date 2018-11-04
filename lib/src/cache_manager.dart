@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/web_helper.dart';
@@ -47,6 +49,15 @@ abstract class BaseCacheManager {
 
   CacheStore store;
   WebHelper webHelper;
+
+  ///Get the file from the cache and/or online. Depending on availability and age
+  Future<File> getSingleFile(String url, {Map<String, String> headers}) async {
+    var cacheFile = await getFileFromCache(url);
+    if (cacheFile != null && cacheFile.validTill.isAfter(DateTime.now())) {
+      return cacheFile.file;
+    }
+    return (await webHelper.downloadFile(url, authHeaders: headers))?.file;
+  }
 
   ///Get the file from the cache and/or online. Depending on availability and age
   Stream<FileInfo> getFile(String url, {Map<String, String> headers}) async* {
