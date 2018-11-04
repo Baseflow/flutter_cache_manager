@@ -22,7 +22,7 @@ class CacheObject {
   DateTime touched;
 
   CacheObject(this.url,
-      {this.relativePath, this.validTill, this.eTag, this.touched}) {
+      {this.relativePath, this.validTill, this.eTag, this.touched, this.id}) {
     if (touched == null) {
       touched = DateTime.now();
     }

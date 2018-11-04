@@ -34,7 +34,7 @@ class CacheStore {
 
   Future<FileInfo> getFile(String url) async {
     var cacheObject = await retrieveCacheData(url);
-    if (cacheObject == null) {
+    if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
     var path = p.join(await filePath, cacheObject.relativePath);
@@ -50,7 +50,15 @@ class CacheStore {
   Future<CacheObject> retrieveCacheData(String url) {
     if (!_memCache.containsKey(url)) {
       var completer = new Completer<CacheObject>();
-      _getCacheDataFromDatabase(url).then((cacheObject) {
+      _getCacheDataFromDatabase(url).then((cacheObject) async {
+        if (cacheObject?.relativePath != null) {
+          var exists =
+              await new File(p.join(await filePath, cacheObject.relativePath))
+                  .exists();
+          if (!exists) {
+            cacheObject = new CacheObject(url, id: cacheObject.id);
+          }
+        }
         completer.complete(cacheObject);
       });
 
