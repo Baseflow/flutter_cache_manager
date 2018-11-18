@@ -1,3 +1,8 @@
+## [0.3.0] - WIP
+
+* Complete refactor of library
+* Use of SQFlite instead of shared preferences for cache info
+
 ## [0.2.0] - 2018-10-13
 
 * Fixed library compatibility issue
