@@ -14,7 +14,7 @@ dependencies:
   path_provider: "^0.4.0"
   synchronized: "^1.5.1"
   uuid:  "^1.0.3"
-  http: "^0.12.0"
+  http: ">=0.11.0 <0.13.0"
   path: ^1.6.2
   sqflite: ^0.12.2+1
 
