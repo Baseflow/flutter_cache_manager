@@ -1,141 +1,139 @@
 // CacheManager for Flutter
 // Copyright (c) 2017 Rene Floor
 // Released under MIT License.
+import 'package:sqflite/sqflite.dart';
 
-import 'dart:async';
-import 'dart:io';
+final String tableCacheObject = "cacheObject";
 
-import 'package:path_provider/path_provider.dart';
-import 'package:synchronized/synchronized.dart';
-import 'package:uuid/uuid.dart';
+final String columnId = "_id";
+final String columnUrl = "url";
+final String columnPath = "relativePath";
+final String columnETag = "eTag";
+final String columnValidTill = "validTill";
+final String columnTouched = "touched";
 
 ///Cache information of one file
 class CacheObject {
-  static const _keyFilePath = "relativePath";
-  static const _keyValidTill = "validTill";
-  static const _keyETag = "ETag";
-  static const _keyTouched = "touched";
-
-  Future<String> getFilePath() async {
-    if (relativePath == null) {
-      return null;
-    }
-    Directory directory = await getTemporaryDirectory();
-    return directory.path + relativePath;
-  }
-
-  String get relativePath {
-    if (_map.containsKey(_keyFilePath)) {
-      return _map[_keyFilePath];
-    }
-    return null;
-  }
-
-  DateTime get validTill {
-    if (_map.containsKey(_keyValidTill)) {
-      return new DateTime.fromMillisecondsSinceEpoch(_map[_keyValidTill]);
-    }
-    return null;
-  }
-
-  String get eTag {
-    if (_map.containsKey(_keyETag)) {
-      return _map[_keyETag];
-    }
-    return null;
-  }
-
-  DateTime touched;
+  int id;
   String url;
+  String relativePath;
+  DateTime validTill;
+  String eTag;
 
-  Lock lock;
-  Map _map;
+  CacheObject(this.url,
+      {this.relativePath, this.validTill, this.eTag, this.id}) {}
 
-  CacheObject(String url, {this.lock}) {
-    this.url = url;
-    _map = new Map();
-    touch();
-    if (lock == null) {
-      lock = new Lock();
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>{
+      columnUrl: url,
+      columnPath: relativePath,
+      columnETag: eTag,
+      columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
+      columnTouched: DateTime.now().millisecondsSinceEpoch
+    };
+    if (id != null) {
+      map[columnId] = id;
     }
+    return map;
   }
 
-  CacheObject.fromMap(String url, Map map, {this.lock}) {
-    this.url = url;
-    _map = map;
+  CacheObject.fromMap(Map<String, dynamic> map) {
+    id = map[columnId];
+    url = map[columnUrl];
+    relativePath = map[columnPath];
+    validTill = DateTime.fromMillisecondsSinceEpoch(map[columnValidTill]);
+    eTag = map[columnETag];
+  }
 
-    if (_map.containsKey(_keyTouched)) {
-      touched = new DateTime.fromMillisecondsSinceEpoch(_map[_keyTouched]);
+  static List<CacheObject> fromMapList(List<Map<String, dynamic>> list) {
+    var objects = new List<CacheObject>();
+    for (var map in list) {
+      objects.add(CacheObject.fromMap(map));
+    }
+    return objects;
+  }
+}
+
+class CacheObjectProvider {
+  Database db;
+  String path;
+
+  CacheObjectProvider(this.path);
+
+  Future open() async {
+    db = await openDatabase(path, version: 1,
+        onCreate: (Database db, int version) async {
+      await db.execute('''
+      create table $tableCacheObject ( 
+        $columnId integer primary key, 
+        $columnUrl text, 
+        $columnPath text,
+        $columnETag text,
+        $columnValidTill integer,
+        $columnTouched integer
+        )
+      ''');
+    });
+  }
+
+  Future<dynamic> updateOrInsert(CacheObject cacheObject) async {
+    if (cacheObject.id == null) {
+      return await insert(cacheObject);
     } else {
-      touch();
-    }
-    if (lock == null) {
-      lock = new Lock();
+      return await update(cacheObject);
     }
   }
 
-  Map toMap() {
-    return _map;
+  Future<CacheObject> insert(CacheObject cacheObject) async {
+    cacheObject.id = await db.insert(tableCacheObject, cacheObject.toMap());
+    return cacheObject;
   }
 
-  touch() {
-    touched = new DateTime.now();
-    _map[_keyTouched] = touched.millisecondsSinceEpoch;
+  Future<CacheObject> get(String url) async {
+    List<Map> maps = await db.query(tableCacheObject,
+        columns: null, where: "$columnUrl = ?", whereArgs: [url]);
+    if (maps.length > 0) {
+      return new CacheObject.fromMap(maps.first);
+    }
+    return null;
   }
 
-  setDataFromHeaders(Map<String, String> headers) async {
-    //Without a cache-control header we keep the file for a week
-    var ageDuration = new Duration(days: 7);
-
-    if (headers.containsKey("cache-control")) {
-      var cacheControl = headers["cache-control"];
-      var controlSettings = cacheControl.split(", ");
-      controlSettings.forEach((setting) {
-        if (setting.startsWith("max-age=")) {
-          var validSeconds =
-              int.parse(setting.split("=")[1], onError: (source) => 0);
-          if (validSeconds > 0) {
-            ageDuration = new Duration(seconds: validSeconds);
-          }
-        }
-      });
-    }
-
-    _map[_keyValidTill] =
-        new DateTime.now().add(ageDuration).millisecondsSinceEpoch;
-
-    if (headers.containsKey("etag")) {
-      _map[_keyETag] = headers["etag"];
-    }
-
-    var fileExtension = "";
-    if (headers.containsKey("content-type")) {
-      var type = headers["content-type"].split("/");
-      if (type.length == 2) {
-        fileExtension = ".${type[1]}";
-      }
-    }
-
-    var oldPath = await getFilePath();
-    if (oldPath != null && !oldPath.endsWith(fileExtension)) {
-      removeOldFile(oldPath);
-      _map[_keyFilePath] = null;
-    }
-
-    if (relativePath == null) {
-      var fileName = "cache/${new Uuid().v1()}${fileExtension}";
-      _map[_keyFilePath] = "${fileName}";
-    }
+  Future<int> delete(int id) async {
+    return await db
+        .delete(tableCacheObject, where: "$columnId = ?", whereArgs: [id]);
   }
 
-  removeOldFile(String filePath) async {
-    var file = new File(filePath);
-    if (await file.exists()) {
-      await file.delete();
-    }
+  Future deleteAll(Iterable<int> ids) async {
+    return await db.delete(tableCacheObject,
+        where: "$columnId IN (" + ids.join(",") + ")");
   }
 
-  setRelativePath(String path) {
-    _map[_keyFilePath] = path;
+  Future<int> update(CacheObject cacheObject) async {
+    return await db.update(tableCacheObject, cacheObject.toMap(),
+        where: "$columnId = ?", whereArgs: [cacheObject.id]);
   }
+
+  Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
+    List<Map> maps = await db.query(tableCacheObject,
+        columns: null,
+        orderBy: "$columnTouched ASC",
+        limit: 100,
+        offset: capacity);
+
+    return CacheObject.fromMapList(maps);
+  }
+
+  Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
+    List<Map> maps = await db.query(
+      tableCacheObject,
+      where: "$columnTouched < ?",
+      columns: null,
+      whereArgs: [DateTime.now().subtract(maxAge).millisecondsSinceEpoch],
+      limit: 100,
+    );
+
+    return CacheObject.fromMapList(maps);
+  }
+
+  Future close() async => await db.close();
 }
