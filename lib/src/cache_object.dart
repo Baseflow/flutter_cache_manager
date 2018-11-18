@@ -21,7 +21,7 @@ class CacheObject {
   String eTag;
 
   CacheObject(this.url,
-      {this.relativePath, this.validTill, this.eTag, this.id}) {}
+      {this.relativePath, this.validTill, this.eTag, this.id});
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
