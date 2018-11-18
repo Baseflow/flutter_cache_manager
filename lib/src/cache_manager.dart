@@ -30,20 +30,17 @@ abstract class BaseCacheManager {
   Future<String> _fileBasePath;
 
   BaseCacheManager(this._cacheKey,
-      [this._inBetweenCleans = const Duration(days: 7),
-      this._maxAgeCacheObject = const Duration(days: 30),
-      this._maxNrOfCacheObjects = 200,
-      this._showDebugLogs = false]) {
+      [this._maxAgeCacheObject = const Duration(days: 30),
+      this._maxNrOfCacheObjects = 200]) {
     _fileBasePath = getFilePath();
-    store = new CacheStore(_fileBasePath, _cacheKey);
+    store = new CacheStore(
+        _fileBasePath, _cacheKey, _maxNrOfCacheObjects, _maxAgeCacheObject);
     webHelper = new WebHelper(store);
   }
 
   final String _cacheKey;
-  final Duration _inBetweenCleans;
   final Duration _maxAgeCacheObject;
   final int _maxNrOfCacheObjects;
-  final bool _showDebugLogs;
 
   Future<String> getFilePath();
 

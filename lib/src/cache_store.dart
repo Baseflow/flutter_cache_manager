@@ -7,17 +7,19 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 class CacheStore {
-  Map<String, Future<CacheObject>> _memCache;
+  Map<String, Future<CacheObject>> _memCache = new Map();
 
-  int _nrOfDbConnections;
+  int _nrOfDbConnections = 0;
   Future<String> filePath;
   Future<CacheObjectProvider> _cacheObjectProvider;
   String storeKey;
 
-  CacheStore(Future<String> basePath, this.storeKey) {
-    _memCache = new Map();
+  int _capacity;
+  Duration _maxAge;
+
+  CacheStore(
+      Future<String> basePath, this.storeKey, this._capacity, this._maxAge) {
     filePath = basePath;
-    _nrOfDbConnections = 0;
     _cacheObjectProvider = _getObjectProvider();
   }
 
@@ -51,13 +53,8 @@ class CacheStore {
     if (!_memCache.containsKey(url)) {
       var completer = new Completer<CacheObject>();
       _getCacheDataFromDatabase(url).then((cacheObject) async {
-        if (cacheObject?.relativePath != null) {
-          var exists =
-              await new File(p.join(await filePath, cacheObject.relativePath))
-                  .exists();
-          if (!exists) {
-            cacheObject = new CacheObject(url, id: cacheObject.id);
-          }
+        if (!await _fileExists(cacheObject)) {
+          cacheObject = new CacheObject(url, id: cacheObject.id);
         }
         completer.complete(cacheObject);
       });
@@ -67,9 +64,19 @@ class CacheStore {
     return _memCache[url];
   }
 
+  Future<bool> _fileExists(CacheObject cacheObject) async {
+    if (cacheObject?.relativePath == null) {
+      return false;
+    }
+    return new File(p.join(await filePath, cacheObject.relativePath)).exists();
+  }
+
   Future<CacheObject> _getCacheDataFromDatabase(String url) async {
     var provider = await _openDatabaseConnection();
     var data = await provider.get(url);
+    if (await _fileExists(data)) {
+      _updateCacheDataInDatabase(data);
+    }
     _closeDatabaseConnection();
     return data;
   }
@@ -91,7 +98,54 @@ class CacheStore {
   }
 
   _closeDatabaseConnection() async {
+    _nrOfDbConnections--;
+    if (_nrOfDbConnections == 0) {
+      _cleanAndClose();
+    }
+  }
+
+  createObjects() async {
+    var provider = await _openDatabaseConnection();
+    await provider
+        .updateOrInsert(new CacheObject("https://via.placeholder.com/1"));
+    await provider
+        .updateOrInsert(new CacheObject("https://via.placeholder.com/2"));
+    await provider
+        .updateOrInsert(new CacheObject("https://via.placeholder.com/3"));
+    await provider
+        .updateOrInsert(new CacheObject("https://via.placeholder.com/4"));
+    await provider
+        .updateOrInsert(new CacheObject("https://via.placeholder.com/5"));
+    await provider
+        .updateOrInsert(new CacheObject("https://via.placeholder.com/6"));
+    await _closeDatabaseConnection();
+  }
+
+  _cleanAndClose() async {
+    _nrOfDbConnections++;
     var provider = await _cacheObjectProvider;
+    var overCapactity = await provider.getObjectsOverCapacity(_capacity);
+    var oldObjects = await provider.getOldObjects(_maxAge);
+
+    var toRemove = List<int>();
+    overCapactity.forEach((cacheObject) async {
+      var file = new File(p.join(await filePath, cacheObject.relativePath));
+      if (await file.exists()) {
+        toRemove.add(cacheObject.id);
+        file.delete();
+      }
+    });
+    oldObjects.forEach((cacheObject) async {
+      if (!toRemove.contains(cacheObject.id)) {
+        var file = new File(p.join(await filePath, cacheObject.relativePath));
+        if (await file.exists()) {
+          toRemove.add(cacheObject.id);
+          file.delete();
+        }
+      }
+    });
+
+    await provider.deleteAll(toRemove);
     _nrOfDbConnections--;
     if (_nrOfDbConnections == 0) {
       await provider.close();

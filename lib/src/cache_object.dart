@@ -19,22 +19,17 @@ class CacheObject {
   String relativePath;
   DateTime validTill;
   String eTag;
-  DateTime touched;
 
   CacheObject(this.url,
-      {this.relativePath, this.validTill, this.eTag, this.touched, this.id}) {
-    if (touched == null) {
-      touched = DateTime.now();
-    }
-  }
+      {this.relativePath, this.validTill, this.eTag, this.id}) {}
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
       columnUrl: url,
       columnPath: relativePath,
       columnETag: eTag,
-      columnValidTill: validTill.millisecondsSinceEpoch,
-      columnTouched: touched.millisecondsSinceEpoch
+      columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
+      columnTouched: DateTime.now().millisecondsSinceEpoch
     };
     if (id != null) {
       map[columnId] = id;
@@ -48,7 +43,14 @@ class CacheObject {
     relativePath = map[columnPath];
     validTill = DateTime.fromMillisecondsSinceEpoch(map[columnValidTill]);
     eTag = map[columnETag];
-    touched = DateTime.fromMillisecondsSinceEpoch(map[columnTouched]);
+  }
+
+  static List<CacheObject> fromMapList(List<Map<String, dynamic>> list) {
+    var objects = new List<CacheObject>();
+    for (var map in list) {
+      objects.add(CacheObject.fromMap(map));
+    }
+    return objects;
   }
 }
 
@@ -101,9 +103,36 @@ class CacheObjectProvider {
         .delete(tableCacheObject, where: "$columnId = ?", whereArgs: [id]);
   }
 
+  Future deleteAll(Iterable<int> ids) async {
+    return await db.delete(tableCacheObject,
+        where: "$columnId IN (" + ids.join(",") + ")");
+  }
+
   Future<int> update(CacheObject cacheObject) async {
     return await db.update(tableCacheObject, cacheObject.toMap(),
         where: "$columnId = ?", whereArgs: [cacheObject.id]);
+  }
+
+  Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
+    List<Map> maps = await db.query(tableCacheObject,
+        columns: null,
+        orderBy: "$columnTouched ASC",
+        limit: 100,
+        offset: capacity);
+
+    return CacheObject.fromMapList(maps);
+  }
+
+  Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
+    List<Map> maps = await db.query(
+      tableCacheObject,
+      where: "$columnTouched < ?",
+      columns: null,
+      whereArgs: [DateTime.now().subtract(maxAge).millisecondsSinceEpoch],
+      limit: 100,
+    );
+
+    return CacheObject.fromMapList(maps);
   }
 
   Future close() async => await db.close();
