@@ -129,26 +129,28 @@ class CacheStore {
 
     var toRemove = List<int>();
     overCapactity.forEach((cacheObject) async {
-      var file = new File(p.join(await filePath, cacheObject.relativePath));
-      if (await file.exists()) {
-        toRemove.add(cacheObject.id);
-        file.delete();
-      }
+      _removeCachedFile(cacheObject, toRemove);
     });
     oldObjects.forEach((cacheObject) async {
-      if (!toRemove.contains(cacheObject.id)) {
-        var file = new File(p.join(await filePath, cacheObject.relativePath));
-        if (await file.exists()) {
-          toRemove.add(cacheObject.id);
-          file.delete();
-        }
-      }
+      _removeCachedFile(cacheObject, toRemove);
     });
 
     await provider.deleteAll(toRemove);
     _nrOfDbConnections--;
     if (_nrOfDbConnections == 0) {
       await provider.close();
+    }
+  }
+
+  _removeCachedFile(CacheObject cacheObject, List<int> toRemove) async {
+    if (!toRemove.contains(cacheObject.id)) {
+      var file = new File(p.join(await filePath, cacheObject.relativePath));
+      if (await file.exists()) {
+        toRemove.add(cacheObject.id);
+        file.delete();
+        if(_memCache.containsKey(cacheObject.url))
+          _memCache.remove(cacheObject.url);
+      }
     }
   }
 }
