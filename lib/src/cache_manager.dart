@@ -54,7 +54,10 @@ abstract class BaseCacheManager {
   ///Get the file from the cache and/or online. Depending on availability and age
   Future<File> getSingleFile(String url, {Map<String, String> headers}) async {
     var cacheFile = await getFileFromCache(url);
-    if (cacheFile != null && cacheFile.validTill.isAfter(DateTime.now())) {
+    if (cacheFile != null) {
+      if (cacheFile.validTill.isBefore(DateTime.now())) {
+        webHelper.downloadFile(url, authHeaders: headers);
+      }
       return cacheFile.file;
     }
     return (await webHelper.downloadFile(url, authHeaders: headers))?.file;
