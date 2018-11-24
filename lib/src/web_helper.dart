@@ -8,11 +8,15 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+typedef Future<http.Response> HttpGetter(String url,
+    {Map<String, String> headers});
+
 class WebHelper {
   CacheStore _store;
+  HttpGetter _httpGetter;
   Map<String, Future<FileInfo>> _memCache;
 
-  WebHelper(this._store) {
+  WebHelper(this._store, this._httpGetter) {
     _memCache = new Map();
   }
 
@@ -52,7 +56,9 @@ class WebHelper {
 
     var success = false;
     try {
-      var response = await http.get(url, headers: headers);
+      var response = await (_httpGetter != null
+          ? _httpGetter(url, headers: headers)
+          : _defaultHttpGetter(url, headers: headers));
       success = await _handleHttpResponse(response, cacheObject);
     } catch (e) {
       print(e);
@@ -67,6 +73,11 @@ class WebHelper {
 
     return FileInfo(
         new File(filePath), FileSource.Online, cacheObject.validTill, url);
+  }
+
+  Future<http.Response> _defaultHttpGetter(String url,
+      {Map<String, String> headers}) async {
+    return await http.get(url, headers: headers);
   }
 
   Future<bool> _handleHttpResponse(

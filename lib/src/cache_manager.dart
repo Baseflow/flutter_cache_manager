@@ -34,11 +34,12 @@ abstract class BaseCacheManager {
 
   BaseCacheManager(this._cacheKey,
       [this._maxAgeCacheObject = const Duration(days: 30),
-      this._maxNrOfCacheObjects = 200]) {
+      this._maxNrOfCacheObjects = 200,
+      HttpGetter httpGetter]) {
     _fileBasePath = getFilePath();
     store = new CacheStore(
         _fileBasePath, _cacheKey, _maxNrOfCacheObjects, _maxAgeCacheObject);
-    webHelper = new WebHelper(store);
+    webHelper = new WebHelper(store, httpGetter);
   }
 
   final String _cacheKey;
