@@ -11,6 +11,13 @@ final String columnPath = "relativePath";
 final String columnETag = "eTag";
 final String columnValidTill = "validTill";
 final String columnTouched = "touched";
+/**
+ *  Flutter Cache Manager
+ *
+ *  Copyright (c) 2018 Rene Floor
+ *
+ *  Released under MIT License.
+ */
 
 ///Cache information of one file
 class CacheObject {

@@ -6,6 +6,14 @@ import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+/**
+ *  Flutter Cache Manager
+ *
+ *  Copyright (c) 2018 Rene Floor
+ *
+ *  Released under MIT License.
+ */
+
 class CacheStore {
   Map<String, Future<CacheObject>> _memCache = new Map();
 
@@ -102,23 +110,6 @@ class CacheStore {
     if (_nrOfDbConnections == 0) {
       _cleanAndClose();
     }
-  }
-
-  createObjects() async {
-    var provider = await _openDatabaseConnection();
-    await provider
-        .updateOrInsert(new CacheObject("https://via.placeholder.com/1"));
-    await provider
-        .updateOrInsert(new CacheObject("https://via.placeholder.com/2"));
-    await provider
-        .updateOrInsert(new CacheObject("https://via.placeholder.com/3"));
-    await provider
-        .updateOrInsert(new CacheObject("https://via.placeholder.com/4"));
-    await provider
-        .updateOrInsert(new CacheObject("https://via.placeholder.com/5"));
-    await provider
-        .updateOrInsert(new CacheObject("https://via.placeholder.com/6"));
-    await _closeDatabaseConnection();
   }
 
   _cleanAndClose() async {

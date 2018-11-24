@@ -8,6 +8,14 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+/**
+ *  Flutter Cache Manager
+ *
+ *  Copyright (c) 2018 Rene Floor
+ *
+ *  Released under MIT License.
+ */
+
 typedef Future<http.Response> HttpGetter(String url,
     {Map<String, String> headers});
 

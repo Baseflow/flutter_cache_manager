@@ -9,11 +9,22 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+/**
+ *  Flutter Cache Manager
+ *
+ *  Copyright (c) 2018 Rene Floor
+ *
+ *  Released under MIT License.
+ */
+
 class DefaultCacheManager extends BaseCacheManager {
   static const key = "libCachedImageData";
 
   static DefaultCacheManager _instance;
 
+  /// The DefaultCacheManager that can be easily used directly. The code of
+  /// this implementation can be used as inspiration for more complex cache
+  /// managers.
   factory DefaultCacheManager() {
     if (_instance == null) {
       _instance = new DefaultCacheManager._();
@@ -32,6 +43,17 @@ class DefaultCacheManager extends BaseCacheManager {
 abstract class BaseCacheManager {
   Future<String> _fileBasePath;
 
+  /// Creates a new instance of a cache manager. This can be sued to retrieve
+  /// files from the cache or download them online. The http headers are used
+  /// for the maximum age of the files. The BaseCacheManager should only be
+  /// used in singleton patterns.
+  ///
+  /// The [_cacheKey] is used for the sqlite database file and should be unique.
+  /// Files are removed when they haven't been used for longer than [_maxAgeCacheObject]
+  /// or when this cache has grown to big. When the cache is larger than [_maxNrOfCacheObjects]
+  /// files the files that haven't been used longest will be removed.
+  /// The [httpGetter] can be used to customize how files are downloaded. For example
+  /// to edit the urls, add headers or use a proxy.
   BaseCacheManager(this._cacheKey,
       [this._maxAgeCacheObject = const Duration(days: 30),
       this._maxNrOfCacheObjects = 200,
@@ -46,12 +68,20 @@ abstract class BaseCacheManager {
   final Duration _maxAgeCacheObject;
   final int _maxNrOfCacheObjects;
 
+  /// This path is used as base folder for all cached files.
   Future<String> getFilePath();
 
+  /// Store helper for cached files
   CacheStore store;
+
+  /// Webhelper to download and store files
   WebHelper webHelper;
 
-  ///Get the file from the cache and/or online. Depending on availability and age
+  /// Get the file from the cache and/or online, depending on availability and age.
+  /// Downloaded form [url], [headers] can be used for example for authentication.
+  /// When a file is cached it is return directly, when it is too old the file is
+  /// downloaded in the background. When a cached file is not available the
+  /// newly downloaded file is returned.
   Future<File> getSingleFile(String url, {Map<String, String> headers}) async {
     var cacheFile = await getFileFromCache(url);
     if (cacheFile != null) {
@@ -63,7 +93,10 @@ abstract class BaseCacheManager {
     return (await webHelper.downloadFile(url, authHeaders: headers))?.file;
   }
 
-  ///Get the file from the cache and/or online. Depending on availability and age
+  /// Get the file from the cache and/or online, depending on availability and age.
+  /// Downloaded form [url], [headers] can be used for example for authentication.
+  /// The files are returned as stream. First the cached file if available, when the
+  /// cached file is too old the newly downloaded file is returned afterwards.
   Stream<FileInfo> getFile(String url, {Map<String, String> headers}) async* {
     var cacheFile = await getFileFromCache(url);
     if (cacheFile != null) {
@@ -92,7 +125,13 @@ abstract class BaseCacheManager {
     return await store.getFile(url);
   }
 
-  putFile(String url, Uint8List fileBytes,
+  /// Put a file in the cache. It is recommended to specify the [eTag] and the
+  /// [maxAge]. When [maxAge] is passed and the eTag is not set the file will
+  /// always be downloaded again. The [fileExtension] should be without a dot,
+  /// for example "jpg". When cache info is available for the url that path
+  /// is re-used.
+  /// The returned [File] is saved on disk.
+  Future<File> putFile(String url, Uint8List fileBytes,
       {String eTag,
       Duration maxAge = const Duration(days: 30),
       String fileExtension = "file"}) async {
@@ -116,6 +155,7 @@ abstract class BaseCacheManager {
     return file;
   }
 
+  /// Remove a file from the cache
   removeFile(String url) async {
     var cacheObject = await store.retrieveCacheData(url);
     if (cacheObject != null) {
