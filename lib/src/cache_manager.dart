@@ -55,18 +55,21 @@ abstract class BaseCacheManager {
   /// The [httpGetter] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy.
   BaseCacheManager(this._cacheKey,
-      [this._maxAgeCacheObject = const Duration(days: 30),
-      this._maxNrOfCacheObjects = 200,
-      HttpGetter httpGetter]) {
+      {maxAgeCacheObject = const Duration(days: 30),
+      maxNrOfCacheObjects = 200,
+      HttpGetter httpGetter}) {
     _fileBasePath = getFilePath();
+
+    _maxAgeCacheObject = maxNrOfCacheObjects;
+    _maxNrOfCacheObjects = maxNrOfCacheObjects;
     store = new CacheStore(
         _fileBasePath, _cacheKey, _maxNrOfCacheObjects, _maxAgeCacheObject);
     webHelper = new WebHelper(store, httpGetter);
   }
 
   final String _cacheKey;
-  final Duration _maxAgeCacheObject;
-  final int _maxNrOfCacheObjects;
+  Duration _maxAgeCacheObject;
+  int _maxNrOfCacheObjects;
 
   /// This path is used as base folder for all cached files.
   Future<String> getFilePath();
