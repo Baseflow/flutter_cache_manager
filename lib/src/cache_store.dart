@@ -61,7 +61,7 @@ class CacheStore {
     if (!_memCache.containsKey(url)) {
       var completer = new Completer<CacheObject>();
       _getCacheDataFromDatabase(url).then((cacheObject) async {
-        if (!await _fileExists(cacheObject)) {
+        if (cacheObject != null && !await _fileExists(cacheObject)) {
           cacheObject = new CacheObject(url, id: cacheObject.id);
         }
         completer.complete(cacheObject);

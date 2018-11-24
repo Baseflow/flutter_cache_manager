@@ -60,7 +60,7 @@ abstract class BaseCacheManager {
       HttpGetter httpGetter}) {
     _fileBasePath = getFilePath();
 
-    _maxAgeCacheObject = maxNrOfCacheObjects;
+    _maxAgeCacheObject = maxAgeCacheObject;
     _maxNrOfCacheObjects = maxNrOfCacheObjects;
     store = new CacheStore(
         _fileBasePath, _cacheKey, _maxNrOfCacheObjects, _maxAgeCacheObject);
