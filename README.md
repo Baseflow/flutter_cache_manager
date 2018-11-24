@@ -7,43 +7,68 @@ A CacheManager to download and cache files in the cache directory of the app. Va
 
 It uses the cache-control http header to efficiently retrieve files.
 
+The more basic usage is explained here. See the complete docs for more info.
+
 ## Usage
 
+The cache manager can be used to get a file on various ways
+The easiest way to get a single file is call `.getSingleFile`.
+
 ```
-    var cacheManager = await CacheManager.getInstance();
-    var file = await cacheManager.getFile(url);
+    var file = await DefaultCacheManager().getSingleFile(url);
 ```
+`getFile(url)` returns a stream with the first result being the cached file and later optionally the downloaded file.
+
+`downloadFile(url)` directly downloads from the web.
+
+`getFileFromCache` only retrieves from cache and returns no file when the file is not in the cache.
+
+
+`putFile` gives the option to put a new file into the cache without downloading it.
+
+`removeFile` removes a file from the cache. 
 
 
 ## Settings
-Some settings of the CacheManager can be changed.
-All these preferences are statics and should be set before the first use of the CacheManager, so preferably directly on start of your app.
+The cache manager is customizable by extending the BaseCacheManager.
+Below is an example with other settings for the maximum age of files, maximum number of objects
+and a custom http getter. The key parameter in the constructor and the getFilePath method are mandatory.
 
-For extra logging set:
-```
-  CacheManager.showDebugLogs = true;
 ```
 
-The cache can be cleaned after it is used to get a file. By default this happens once every week. You can change this by setting `inBetweenCleans`. 
-```
-  CacheManager.inBetweenCleans = new Duration(days: 7);
-```
+class CustomCacheManager extends BaseCacheManager {
+  static const key = "customCache";
 
-The CacheManager checks for two things, for objects that are too old and the size of the cache.
+  static CustomCacheManager _instance;
 
-By default it removes objects that haven't been used for 30 days. Set this by `maxAgeCacheObject`. *This is not about when the object is first downloaded, but when it is used the last.
-```
-  CacheManager.maxAgeCacheObject = new Duration(days: 30);
-```
+  factory CustomCacheManager() {
+    if (_instance == null) {
+      _instance = new CustomCacheManager._();
+    }
+    return _instance;
+  }
 
-By default the cache size is set to 200, when the cache grows beyond this it will remove the oldest objects again by when last used. Set this with `maxNrOfCacheObjects`.
-```
-  CacheManager.maxNrOfCacheObjects = 200;
+  CustomCacheManager._() : super(key, 
+              maxAgeCacheObject: Duration(days: 7), 
+              maxNrOfCacheObjects: 20,
+              httpGetter: _customHttpGetter);
+
+  Future<String> getFilePath() async {
+    var directory = await getTemporaryDirectory();
+    return p.join(directory.path, key);
+  }
+
+  static Future<http.Response> _customHttpGetter(String url, {Map<String, String> headers}) async {
+    // Do things with headers, the url or whatever.
+    return await http.get(url, headers: headers);
+  }
+}
+
 ```
 
 ## How it works
-The cached files are stored in the temporary directory of the app. This means the OS can delete the files any time.
+By default the cached files are stored in the temporary directory of the app. This means the OS can delete the files any time.
 
-Information about the files is stored in the shared preferences with the key "lib_cached_image_data". (Because images was the first use of this library :)) The date when the cache is last cleaned is stored as "lib_cached_image_data_last_clean".
+Information about the files is stored in a database using sqflite. The file name of the database is the key of the cacheManager, that's why that has to be unique.
 
 This cache information contains the end date till when the file is valid and the eTag to use with the http cache-control.
