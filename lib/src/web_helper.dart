@@ -18,11 +18,14 @@ class WebHelper {
 
   ///Download the file from the url
   Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders}) async {
-    if (!_memCache.containsKey(url) || true) {
+      {Map<String, String> authHeaders, bool ignoreMemCache = false}) async {
+    if (!_memCache.containsKey(url) || ignoreMemCache) {
       var completer = new Completer<FileInfo>();
       _downloadRemoteFile(url).then((cacheObject) {
         completer.complete(cacheObject);
+        if (cacheObject == null) {
+          _memCache.remove(url);
+        }
       });
 
       _memCache[url] = completer.future;

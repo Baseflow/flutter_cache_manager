@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class DefaultCacheManager extends BaseCacheManager {
   static const key = "libCachedImageData";
@@ -75,12 +78,44 @@ abstract class BaseCacheManager {
 
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders}) async {
-    return await webHelper.downloadFile(url, authHeaders: authHeaders);
+      {Map<String, String> authHeaders, bool force = false}) async {
+    return await webHelper.downloadFile(url,
+        authHeaders: authHeaders, ignoreMemCache: force);
   }
 
   ///Get the file from the cache
   Future<FileInfo> getFileFromCache(String url) async {
     return await store.getFile(url);
+  }
+
+  putFile(String url, Uint8List fileBytes,
+      {String eTag,
+      Duration maxAge = const Duration(days: 30),
+      String fileExtension = "file"}) async {
+    var cacheObject = await store.retrieveCacheData(url);
+    if (cacheObject == null) {
+      var relativePath = "${new Uuid().v1()}.$fileExtension";
+      cacheObject = new CacheObject(url, relativePath: relativePath);
+    }
+    cacheObject.validTill = DateTime.now().add(maxAge);
+    cacheObject.eTag = eTag;
+
+    var path = p.join(await getFilePath(), cacheObject.relativePath);
+    var folder = new File(path).parent;
+    if (!(await folder.exists())) {
+      folder.createSync(recursive: true);
+    }
+    var file = await new File(path).writeAsBytes(fileBytes);
+
+    store.putFile(cacheObject);
+
+    return file;
+  }
+
+  removeFile(String url) async {
+    var cacheObject = await store.retrieveCacheData(url);
+    if (cacheObject != null) {
+      await store.removeCachedFile(cacheObject);
+    }
   }
 }

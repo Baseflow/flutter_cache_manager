@@ -142,13 +142,21 @@ class CacheStore {
     }
   }
 
+  removeCachedFile(CacheObject cacheObject) async {
+    var provider = await _openDatabaseConnection();
+    var toRemove = List<int>();
+    _removeCachedFile(cacheObject, toRemove);
+    await provider.deleteAll(toRemove);
+    _closeDatabaseConnection();
+  }
+
   _removeCachedFile(CacheObject cacheObject, List<int> toRemove) async {
     if (!toRemove.contains(cacheObject.id)) {
       var file = new File(p.join(await filePath, cacheObject.relativePath));
       if (await file.exists()) {
         toRemove.add(cacheObject.id);
         file.delete();
-        if(_memCache.containsKey(cacheObject.url))
+        if (_memCache.containsKey(cacheObject.url))
           _memCache.remove(cacheObject.url);
       }
     }
