@@ -11,6 +11,7 @@ It uses the cache-control http header to efficiently retrieve files.
 
 ```
     var cacheManager = await CacheManager.getInstance();
+    var bool = cacheManager.holds(url); // true = url already in cache, false = not in cache
     var file = await cacheManager.getFile(url);
 ```
 
@@ -24,7 +25,7 @@ For extra logging set:
   CacheManager.showDebugLogs = true;
 ```
 
-The cache can be cleaned after it is used to get a file. By default this happens once every week. You can change this by setting `inBetweenCleans`. 
+The cache can be cleaned after it is used to get a file. By default this happens once every week. You can change this by setting `inBetweenCleans`.
 ```
   CacheManager.inBetweenCleans = new Duration(days: 7);
 ```
