@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:synchronized/synchronized.dart';
 
@@ -21,6 +22,7 @@ class CacheManager {
   static Duration maxAgeCacheObject = new Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
   static bool showDebugLogs = false;
+  static Directory cacheDirectory;
 
   static CacheManager _instance;
 
@@ -43,12 +45,14 @@ class CacheManager {
   SharedPreferences _prefs;
   Map<String, CacheObject> _cacheData;
   DateTime lastCacheClean;
+  Directory _directory;
 
   static Lock _lock = new Lock();
 
   ///Shared preferences is used to keep track of the information about the files
   Future _init() async {
     _prefs = await SharedPreferences.getInstance();
+    _directory = await getTemporaryDirectory();
     _getSavedCacheDataFromPreferences();
     _getLastCleanTimestampFromPreferences();
   }
@@ -65,7 +69,7 @@ class CacheManager {
       Map jsonCache = const JsonDecoder().convert(jsonCacheString);
       jsonCache.forEach((key, data) {
         if (data != null) {
-          _cacheData[key] = new CacheObject.fromMap(key, data);
+          _cacheData[key] = new CacheObject.fromMap(key, _directory, data);
         }
       });
     }
@@ -172,7 +176,7 @@ class CacheManager {
     }
   }
 
-  _removeFile(CacheObject cacheObject) async {
+  _removeFile(CacheObject cacheObject) {
     //Ensure the file has been downloaded
     if (cacheObject.relativePath == null) {
       return;
@@ -180,10 +184,22 @@ class CacheManager {
 
     _cacheData.remove(cacheObject.url);
 
-    var file = new File(await cacheObject.getFilePath());
-    if (await file.exists()) {
+    var file = new File(cacheObject.getFilePath());
+    if (file.existsSync()) {
       file.delete();
     }
+  }
+
+  bool holds(String url) {
+    final CacheObject cacheObject = _cacheData[url];
+
+    if (cacheObject == null) return false;
+
+    if (cacheObject.validTill == null) return false;
+    if (cacheObject.validTill.isBefore(DateTime.now())) return false;
+
+    final String path = cacheObject.getFilePath();
+    return File(path).existsSync();
   }
 
   ///Get the file from the cache or online. Depending on availability and age
@@ -193,7 +209,7 @@ class CacheManager {
     if (!_cacheData.containsKey(url)) {
       await _lock.synchronized(() {
         if (!_cacheData.containsKey(url)) {
-          _cacheData[url] = new CacheObject(url);
+          _cacheData[url] = new CacheObject(url, _directory);
         }
       });
     }
@@ -207,7 +223,7 @@ class CacheManager {
         headers = new Map();
       }
 
-      var filePath = await cacheObject.getFilePath();
+      var filePath = cacheObject.getFilePath();
       //If we have never downloaded this file, do download
       if (filePath == null) {
         log = "$log\nDownloading for first time.";
@@ -253,7 +269,7 @@ class CacheManager {
     _save();
     if (showDebugLogs) print(log);
 
-    var path = await _cacheData[url].getFilePath();
+    var path = _cacheData[url].getFilePath();
     if (path == null) {
       return null;
     }
@@ -264,7 +280,7 @@ class CacheManager {
   Future<CacheObject> _downloadFile(
       String url, Map<String, String> headers, Object lock,
       {String relativePath, String eTag}) async {
-    var newCache = new CacheObject(url, lock: lock);
+    var newCache = new CacheObject(url, _directory, lock: lock);
     newCache.setRelativePath(relativePath);
 
     if (eTag != null) {
@@ -279,7 +295,7 @@ class CacheManager {
       if (response.statusCode == 200) {
         await newCache.setDataFromHeaders(response.headers);
 
-        var filePath = await newCache.getFilePath();
+        var filePath = newCache.getFilePath();
         var folder = new File(filePath).parent;
         if (!(await folder.exists())) {
           folder.createSync(recursive: true);

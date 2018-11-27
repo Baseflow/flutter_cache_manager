@@ -2,10 +2,8 @@
 // Copyright (c) 2017 Rene Floor
 // Released under MIT License.
 
-import 'dart:async';
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,21 +14,15 @@ class CacheObject {
   static const _keyETag = "ETag";
   static const _keyTouched = "touched";
 
-  Future<String> getFilePath() async {
+  String getFilePath() {
     if (relativePath == null) {
       return null;
     }
-    Directory directory = await getTemporaryDirectory();
     return directory.path + relativePath;
   }
 
-  String get relativePath {
-    if (_map.containsKey(_keyFilePath)) {
-      return _map[_keyFilePath];
-    }
-    return null;
-  }
-
+  String get relativePath => _map[_keyFilePath];
+  String get eTag => _map[_keyETag];
   DateTime get validTill {
     if (_map.containsKey(_keyValidTill)) {
       return new DateTime.fromMillisecondsSinceEpoch(_map[_keyValidTill]);
@@ -38,21 +30,15 @@ class CacheObject {
     return null;
   }
 
-  String get eTag {
-    if (_map.containsKey(_keyETag)) {
-      return _map[_keyETag];
-    }
-    return null;
-  }
 
   DateTime touched;
-  String url;
+  final String url;
+  final Directory directory;
 
   Lock lock;
   Map _map;
 
-  CacheObject(String url, {this.lock}) {
-    this.url = url;
+  CacheObject(this.url, this.directory, {this.lock}) {
     _map = new Map();
     touch();
     if (lock == null) {
@@ -60,8 +46,7 @@ class CacheObject {
     }
   }
 
-  CacheObject.fromMap(String url, Map map, {this.lock}) {
-    this.url = url;
+  CacheObject.fromMap(this.url, this.directory, Map map, {this.lock}) {
     _map = map;
 
     if (_map.containsKey(_keyTouched)) {
@@ -83,7 +68,7 @@ class CacheObject {
     _map[_keyTouched] = touched.millisecondsSinceEpoch;
   }
 
-  setDataFromHeaders(Map<String, String> headers) async {
+  setDataFromHeaders(Map<String, String> headers) {
     //Without a cache-control header we keep the file for a week
     var ageDuration = new Duration(days: 7);
 
@@ -116,15 +101,15 @@ class CacheObject {
       }
     }
 
-    var oldPath = await getFilePath();
+    var oldPath = getFilePath();
     if (oldPath != null && !oldPath.endsWith(fileExtension)) {
       removeOldFile(oldPath);
       _map[_keyFilePath] = null;
     }
 
     if (relativePath == null) {
-      var fileName = "cache/${new Uuid().v1()}${fileExtension}";
-      _map[_keyFilePath] = "${fileName}";
+      var fileName = "cache/${new Uuid().v1()}$fileExtension";
+      _map[_keyFilePath] = fileName;
     }
   }
 
