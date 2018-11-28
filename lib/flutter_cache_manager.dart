@@ -22,7 +22,6 @@ class CacheManager {
   static Duration maxAgeCacheObject = new Duration(days: 30);
   static int maxNrOfCacheObjects = 200;
   static bool showDebugLogs = false;
-  static Directory cacheDirectory;
 
   static CacheManager _instance;
 
