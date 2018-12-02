@@ -6,7 +6,6 @@ library flutter_cache_manager;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:synchronized/synchronized.dart';
@@ -296,4 +295,19 @@ class CacheManager {
 
     return null;
   }
+
+
+  //clean all data
+  Future clean()async{
+    await _lock.synchronized(() async {
+      _cacheData.forEach((_,value)async{
+        String filePath = await value.getFilePath();
+        if (null != filePath){
+          print('delete : $filePath');
+          await value.removeOldFile(filePath);
+        }
+      });
+    });
+  }
+
 }
