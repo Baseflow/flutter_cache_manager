@@ -303,7 +303,6 @@ class CacheManager {
       _cacheData.forEach((_,value)async{
         String filePath = await value.getFilePath();
         if (null != filePath){
-          print('delete : $filePath');
           await value.removeOldFile(filePath);
         }
       });
