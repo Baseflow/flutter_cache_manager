@@ -186,7 +186,7 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url, {Map<String, String> headers}) async {
+  Future<File> getFile(String url, {Map<String, String> headers,bool force=false}) async {
     String log = "[Flutter Cache Manager] Loading $url";
 
     if (!_cacheData.containsKey(url)) {
@@ -216,6 +216,10 @@ class CacheManager {
         }
         return;
       }
+
+      //if force download
+      await cacheObject.removeOldFile(filePath);
+
       //If file is removed from the cache storage, download again
       var cachedFile = new File(filePath);
       var cachedFileExists = await cachedFile.exists();
