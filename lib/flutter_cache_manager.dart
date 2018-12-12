@@ -218,7 +218,9 @@ class CacheManager {
       }
 
       //if force download
-      await cacheObject.removeOldFile(filePath);
+      if (force){
+        await cacheObject.removeOldFile(filePath);
+      }
 
       //If file is removed from the cache storage, download again
       var cachedFile = new File(filePath);
