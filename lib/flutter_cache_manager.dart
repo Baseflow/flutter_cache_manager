@@ -25,6 +25,8 @@ class CacheManager {
 
   static CacheManager _instance;
 
+  static CacheManager getInstanceSync() => _instance;
+
   static Future<CacheManager> getInstance() async {
     if (_instance == null) {
       await _lock.synchronized(() async {
