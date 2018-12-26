@@ -163,7 +163,7 @@ class CacheManager {
     if (_cacheData.length > maxNrOfCacheObjects) {
       var allValues = _cacheData.values.toList();
       allValues.sort(
-          (c1, c2) => c1.touched.compareTo(c2.touched)); // sort OLDEST first
+              (c1, c2) => c1.touched.compareTo(c2.touched)); // sort OLDEST first
       var oldestValues = List.from(
           allValues.take(_cacheData.length - maxNrOfCacheObjects)); // get them
       oldestValues.forEach((item) async {
@@ -178,7 +178,7 @@ class CacheManager {
       return;
     }
 
-    _cacheData.remove(cacheObject.url);
+    _cacheData.remove(cacheObject.cacheKey);
 
     var file = new File(await cacheObject.getFilePath());
     if (await file.exists()) {
@@ -187,18 +187,23 @@ class CacheManager {
   }
 
   ///Get the file from the cache or online. Depending on availability and age
-  Future<File> getFile(String url, {Map<String, String> headers}) async {
+  Future<File> getFile(String url,
+      {String cacheKey, Map<String, String> headers}) async {
     String log = "[Flutter Cache Manager] Loading $url";
 
-    if (!_cacheData.containsKey(url)) {
+    if(cacheKey==null||cacheKey.isEmpty) {
+      cacheKey = url;
+    }
+
+    if (!_cacheData.containsKey(cacheKey)) {
       await _lock.synchronized(() {
-        if (!_cacheData.containsKey(url)) {
-          _cacheData[url] = new CacheObject(url);
+        if (!_cacheData.containsKey(cacheKey)) {
+          _cacheData[cacheKey] = new CacheObject(url,cacheKey: cacheKey);
         }
       });
     }
 
-    var cacheObject = _cacheData[url];
+    var cacheObject = _cacheData[cacheKey];
     await cacheObject.lock.synchronized(() async {
       // Set touched date to show that this object is being used recently
       cacheObject.touch();
@@ -211,9 +216,10 @@ class CacheManager {
       //If we have never downloaded this file, do download
       if (filePath == null) {
         log = "$log\nDownloading for first time.";
-        var newCacheData = await _downloadFile(url, headers, cacheObject.lock);
+        var newCacheData = await _downloadFile(url, headers, cacheObject
+            .lock,cacheKey: cacheKey);
         if (newCacheData != null) {
-          _cacheData[url] = newCacheData;
+          _cacheData[cacheKey] = newCacheData;
         }
         return;
       }
@@ -223,13 +229,13 @@ class CacheManager {
       if (!cachedFileExists) {
         log = "$log\nDownloading because file does not exist.";
         var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
-            relativePath: cacheObject.relativePath);
+            relativePath: cacheObject.relativePath,cacheKey: cacheKey);
         if (newCacheData != null) {
-          _cacheData[url] = newCacheData;
+          _cacheData[cacheKey] = newCacheData;
         }
 
         log =
-            "$log\Cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+        "$log\Cache file valid till ${_cacheData[cacheKey].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
       //If file is old, download if server has newer one
@@ -237,23 +243,24 @@ class CacheManager {
           cacheObject.validTill.isBefore(new DateTime.now())) {
         log = "$log\nUpdating file in cache.";
         var newCacheData = await _downloadFile(url, headers, cacheObject.lock,
-            relativePath: cacheObject.relativePath, eTag: cacheObject.eTag);
+            relativePath: cacheObject.relativePath, eTag: cacheObject.eTag,
+            cacheKey: cacheKey);
         if (newCacheData != null) {
-          _cacheData[url] = newCacheData;
+          _cacheData[cacheKey] = newCacheData;
         }
         log =
-            "$log\nNew cache file valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+        "$log\nNew cache file valid till ${_cacheData[cacheKey].validTill?.toIso8601String() ?? "only once.. :("}";
         return;
       }
       log =
-          "$log\nUsing file from cache.\nCache valid till ${_cacheData[url].validTill?.toIso8601String() ?? "only once.. :("}";
+      "$log\nUsing file from cache.\nCache valid till ${_cacheData[cacheKey].validTill?.toIso8601String() ?? "only once.. :("}";
     });
 
     //If non of the above is true, than we don't have to download anything.
     _save();
     if (showDebugLogs) print(log);
 
-    var path = await _cacheData[url].getFilePath();
+    var path = await _cacheData[cacheKey].getFilePath();
     if (path == null) {
       return null;
     }
@@ -263,8 +270,11 @@ class CacheManager {
   ///Download the file from the url
   Future<CacheObject> _downloadFile(
       String url, Map<String, String> headers, Object lock,
-      {String relativePath, String eTag}) async {
-    var newCache = new CacheObject(url, lock: lock);
+      {String cacheKey,String relativePath, String eTag}) async {
+    if(cacheKey==null||cacheKey.isEmpty) {
+      cacheKey = url;
+    }
+    var newCache = new CacheObject(url,cacheKey: cacheKey, lock: lock);
     newCache.setRelativePath(relativePath);
 
     if (eTag != null) {

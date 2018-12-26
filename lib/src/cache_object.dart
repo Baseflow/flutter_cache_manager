@@ -47,12 +47,16 @@ class CacheObject {
 
   DateTime touched;
   String url;
+  String cacheKey;
 
   Lock lock;
   Map _map;
 
-  CacheObject(String url, {this.lock}) {
+  CacheObject(String url, {this.cacheKey, this.lock}) {
     this.url = url;
+    if (cacheKey == null || cacheKey.isEmpty) {
+      cacheKey = url;
+    }
     _map = new Map();
     touch();
     if (lock == null) {
@@ -60,8 +64,11 @@ class CacheObject {
     }
   }
 
-  CacheObject.fromMap(String url, Map map, {this.lock}) {
+  CacheObject.fromMap(String url, Map map, {this.cacheKey,this.lock}) {
     this.url = url;
+    if (cacheKey == null || cacheKey.isEmpty) {
+      cacheKey = url;
+    }
     _map = map;
 
     if (_map.containsKey(_keyTouched)) {
@@ -93,7 +100,7 @@ class CacheObject {
       controlSettings.forEach((setting) {
         if (setting.startsWith("max-age=")) {
           var validSeconds =
-              int.parse(setting.split("=")[1], onError: (source) => 0);
+          int.parse(setting.split("=")[1], onError: (source) => 0);
           if (validSeconds > 0) {
             ageDuration = new Duration(seconds: validSeconds);
           }
@@ -123,8 +130,8 @@ class CacheObject {
     }
 
     if (relativePath == null) {
-      var fileName = "cache/${new Uuid().v1()}${fileExtension}";
-      _map[_keyFilePath] = "${fileName}";
+      var fileName = "cache/${new Uuid().v1()}$fileExtension";
+      _map[_keyFilePath] = "$fileName";
     }
   }
 
