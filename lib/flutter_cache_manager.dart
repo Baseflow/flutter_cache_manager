@@ -15,8 +15,8 @@ import 'package:synchronized/synchronized.dart';
 import 'src/cache_object.dart';
 
 class CacheManager {
-  // static const _keyCacheData = "lib_cached_image_data";
-  // static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
+  static const _keyCacheData = "lib_cached_image_data";
+  static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
 
   static Duration inBetweenCleans = new Duration(days: 7);
   static Duration maxAgeCacheObject = new Duration(days: 30);
@@ -66,11 +66,11 @@ class CacheManager {
 
   _getSavedCacheDataFromPreferences() {
     //get saved cache data from shared prefs
+    _cacheData = new Map();
     // var jsonCacheString = _prefs.getString(_keyCacheData);
     try {
       var jsonCacheString =
-        File('${_stateDirectory.path}/cacheManagerCacheString').readAsStringSync();
-      _cacheData = new Map();
+        File('${_stateDirectory.path}/${_keyCacheData}').readAsStringSync();
       if (jsonCacheString != null) {
         Map jsonCache = const JsonDecoder().convert(jsonCacheString);
         jsonCache.forEach((key, data) {
@@ -124,7 +124,7 @@ class CacheManager {
     });
 
     // _prefs.setString(_keyCacheData, const JsonEncoder().convert(json));
-    File('${_stateDirectory.path}/cacheManagerCacheString').writeAsStringSync(
+    File('${_stateDirectory.path}/${_keyCacheData}').writeAsStringSync(
       const JsonEncoder().convert(json)
     );
 
@@ -138,12 +138,12 @@ class CacheManager {
     // var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
     try {
       var cleanMillis = int.parse(
-        File('${_stateDirectory.path}/cacheManagerCleanDate').readAsStringSync()
+        File('${_stateDirectory.path}/$_keyCacheCleanDate').readAsStringSync()
       );
       lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
     } catch(_) {
       lastCacheClean = new DateTime.now();
-      File('${_stateDirectory.path}/cacheManagerCleanDate').writeAsStringSync(
+      File('${_stateDirectory.path}/$_keyCacheCleanDate').writeAsStringSync(
         lastCacheClean.millisecondsSinceEpoch.toString()
       );
       // _prefs.setInt(_keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
@@ -161,7 +161,7 @@ class CacheManager {
         await _shrinkLargeCache();
 
         lastCacheClean = new DateTime.now();
-        File('${_stateDirectory.path}/cacheManagerCleanDate').writeAsStringSync(
+        File('${_stateDirectory.path}/$_keyCacheCleanDate').writeAsStringSync(
           lastCacheClean.millisecondsSinceEpoch.toString()
         );
       });
