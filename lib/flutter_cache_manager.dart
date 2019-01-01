@@ -9,14 +9,14 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import 'package:synchronized/synchronized.dart';
 
 import 'src/cache_object.dart';
 
 class CacheManager {
-  static const _keyCacheData = "lib_cached_image_data";
-  static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
+  // static const _keyCacheData = "lib_cached_image_data";
+  // static const _keyCacheCleanDate = "lib_cached_image_data_last_clean";
 
   static Duration inBetweenCleans = new Duration(days: 7);
   static Duration maxAgeCacheObject = new Duration(days: 30);
@@ -43,17 +43,19 @@ class CacheManager {
 
   CacheManager._();
 
-  SharedPreferences _prefs;
+  // SharedPreferences _prefs;
   Map<String, CacheObject> _cacheData;
   DateTime lastCacheClean;
-  Directory _directory;
+  Directory _cacheDirectory;
+  Directory _stateDirectory;
 
   static Lock _lock = new Lock();
 
   ///Shared preferences is used to keep track of the information about the files
   Future _init() async {
-    _prefs = await SharedPreferences.getInstance();
-    _directory = await getTemporaryDirectory();
+    // _prefs = await SharedPreferences.getInstance();
+    _cacheDirectory = await getTemporaryDirectory();
+    _stateDirectory = await getApplicationDocumentsDirectory();
     _getSavedCacheDataFromPreferences();
     _getLastCleanTimestampFromPreferences();
   }
@@ -64,16 +66,20 @@ class CacheManager {
 
   _getSavedCacheDataFromPreferences() {
     //get saved cache data from shared prefs
-    var jsonCacheString = _prefs.getString(_keyCacheData);
-    _cacheData = new Map();
-    if (jsonCacheString != null) {
-      Map jsonCache = const JsonDecoder().convert(jsonCacheString);
-      jsonCache.forEach((key, data) {
-        if (data != null) {
-          _cacheData[key] = new CacheObject.fromMap(key, _directory, data);
-        }
-      });
-    }
+    // var jsonCacheString = _prefs.getString(_keyCacheData);
+    try {
+      var jsonCacheString =
+        File('${_stateDirectory.path}/cacheManagerCacheString').readAsStringSync();
+      _cacheData = new Map();
+      if (jsonCacheString != null) {
+        Map jsonCache = const JsonDecoder().convert(jsonCacheString);
+        jsonCache.forEach((key, data) {
+          if (data != null) {
+            _cacheData[key] = new CacheObject.fromMap(key, _cacheDirectory, data);
+          }
+        });
+      }
+    } catch(_) {}
   }
 
   ///Store all data to shared preferences
@@ -117,7 +123,10 @@ class CacheManager {
       });
     });
 
-    _prefs.setString(_keyCacheData, const JsonEncoder().convert(json));
+    // _prefs.setString(_keyCacheData, const JsonEncoder().convert(json));
+    File('${_stateDirectory.path}/cacheManagerCacheString').writeAsStringSync(
+      const JsonEncoder().convert(json)
+    );
 
     if (await _shouldSaveAgain()) {
       await _saveDataInPrefs();
@@ -126,12 +135,18 @@ class CacheManager {
 
   _getLastCleanTimestampFromPreferences() {
     // Get data about when the last clean action has been performed
-    var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
-    if (cleanMillis != null) {
+    // var cleanMillis = _prefs.getInt(_keyCacheCleanDate);
+    try {
+      var cleanMillis = int.parse(
+        File('${_stateDirectory.path}/cacheManagerCleanDate').readAsStringSync()
+      );
       lastCacheClean = new DateTime.fromMillisecondsSinceEpoch(cleanMillis);
-    } else {
+    } catch(_) {
       lastCacheClean = new DateTime.now();
-      _prefs.setInt(_keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
+      File('${_stateDirectory.path}/cacheManagerCleanDate').writeAsStringSync(
+        lastCacheClean.millisecondsSinceEpoch.toString()
+      );
+      // _prefs.setInt(_keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
     }
   }
 
@@ -146,8 +161,9 @@ class CacheManager {
         await _shrinkLargeCache();
 
         lastCacheClean = new DateTime.now();
-        _prefs.setInt(
-            _keyCacheCleanDate, lastCacheClean.millisecondsSinceEpoch);
+        File('${_stateDirectory.path}/cacheManagerCleanDate').writeAsStringSync(
+          lastCacheClean.millisecondsSinceEpoch.toString()
+        );
       });
     }
   }
@@ -210,7 +226,7 @@ class CacheManager {
     if (!_cacheData.containsKey(url)) {
       await _lock.synchronized(() {
         if (!_cacheData.containsKey(url)) {
-          _cacheData[url] = new CacheObject(url, _directory);
+          _cacheData[url] = new CacheObject(url, _cacheDirectory);
         }
       });
     }
@@ -281,7 +297,7 @@ class CacheManager {
   Future<CacheObject> _downloadFile(
       String url, Map<String, String> headers, Object lock,
       {String relativePath, String eTag}) async {
-    var newCache = new CacheObject(url, _directory, lock: lock);
+    var newCache = new CacheObject(url, _cacheDirectory, lock: lock);
     newCache.setRelativePath(relativePath);
 
     if (eTag != null) {
