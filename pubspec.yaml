@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # shared_preferences: "^0.4.0"
+  shared_preferences: "^0.4.0"
   path_provider: "^0.4.0"
   synchronized: "^1.5.1"
   uuid:  "^1.0.3"
