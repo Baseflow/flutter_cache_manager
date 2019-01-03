@@ -203,6 +203,20 @@ class CacheManager {
     return File(path).existsSync();
   }
 
+  File getFileSync(String url) {
+    var cacheObject = _cacheData[url];
+    if (cacheObject != null) {
+      cacheObject.touch();
+
+      final String filePath = cacheObject.getFilePath();
+      if (filePath == null) return null;
+
+      final File file = File(filePath);
+      if (file.existsSync()) return file;
+    }
+    return null;
+  }
+
   ///Get the file from the cache or online. Depending on availability and age
   Future<File> getFile(String url, {Map<String, String> headers}) async {
     String log = "[Flutter Cache Manager] Loading $url";
