@@ -33,7 +33,7 @@ class WebHelper {
       {Map<String, String> authHeaders, bool ignoreMemCache = false}) async {
     if (!_memCache.containsKey(url) || ignoreMemCache) {
       var completer = new Completer<FileInfo>();
-      _downloadRemoteFile(url).then((cacheObject) {
+      _downloadRemoteFile(url, authHeaders: authHeaders).then((cacheObject) {
         completer.complete(cacheObject);
         if (cacheObject == null) {
           _memCache.remove(url);
