@@ -5,6 +5,7 @@ import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:synchronized/synchronized.dart';
 
 /**
  *  Flutter Cache Manager
@@ -96,19 +97,30 @@ class CacheStore {
     return data;
   }
 
+  var databaseConnectionLock = Lock();
   Future<CacheObjectProvider> _openDatabaseConnection() async {
     var provider = await _cacheObjectProvider;
     if (_nrOfDbConnections == 0) {
-      await provider.open();
+      await databaseConnectionLock.synchronized(() async {
+        if (_nrOfDbConnections == 0) {
+          await provider.open();
+        }
+        _nrOfDbConnections++;
+      });
+    } else {
+      _nrOfDbConnections++;
     }
-    _nrOfDbConnections++;
     return provider;
   }
 
   _closeDatabaseConnection() async {
     _nrOfDbConnections--;
     if (_nrOfDbConnections == 0) {
-      _cleanAndClose();
+      await databaseConnectionLock.synchronized(() {
+        if (_nrOfDbConnections == 0) {
+          _cleanAndClose();
+        }
+      });
     }
   }
 
