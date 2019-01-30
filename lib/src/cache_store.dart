@@ -114,13 +114,15 @@ class CacheStore {
   }
 
   _closeDatabaseConnection() async {
-    _nrOfDbConnections--;
-    if (_nrOfDbConnections == 0) {
+    if (_nrOfDbConnections == 1) {
       await databaseConnectionLock.synchronized(() {
+        _nrOfDbConnections--;
         if (_nrOfDbConnections == 0) {
           _cleanAndClose();
         }
       });
+    } else {
+      _nrOfDbConnections--;
     }
   }
 
@@ -139,10 +141,12 @@ class CacheStore {
     });
 
     await provider.deleteAll(toRemove);
-    _nrOfDbConnections--;
-    if (_nrOfDbConnections == 0) {
-      await provider.close();
-    }
+    await databaseConnectionLock.synchronized(() async {
+      _nrOfDbConnections--;
+      if (_nrOfDbConnections == 0) {
+        await provider.close();
+      }
+    });
   }
 
   removeCachedFile(CacheObject cacheObject) async {
