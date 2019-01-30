@@ -1,6 +1,10 @@
 // CacheManager for Flutter
 // Copyright (c) 2017 Rene Floor
 // Released under MIT License.
+
+// HINT: Unnecessary import. Future and Stream are available via dart:core.
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 
 final String tableCacheObject = "cacheObject";
