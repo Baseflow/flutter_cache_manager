@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
@@ -16,16 +17,50 @@ import 'package:uuid/uuid.dart';
  *  Released under MIT License.
  */
 
-typedef Future<http.Response> HttpGetter(String url,
+typedef Future<FileFetcherResponse> FileFetcher(String url,
     {Map<String, String> headers});
+
+abstract class FileFetcherResponse {
+  get statusCode;
+
+  Uint8List get bodyBytes => null;
+
+  bool hasHeader(String name);
+  String header(String name);
+}
+
+class HttpFileFetcherResponse implements FileFetcherResponse {
+  http.Response _response;
+
+  HttpFileFetcherResponse(this._response);
+
+  @override
+  bool hasHeader(String name) {
+    return _response.headers.containsKey(name);
+  }
+
+  @override
+  String header(String name) {
+    return _response.headers[name];
+  }
+
+  @override
+  Uint8List get bodyBytes => _response.bodyBytes;
+
+  @override
+  get statusCode => _response.statusCode;
+}
 
 class WebHelper {
   CacheStore _store;
-  HttpGetter _httpGetter;
+  FileFetcher _fileFetcher;
   Map<String, Future<FileInfo>> _memCache;
 
-  WebHelper(this._store, this._httpGetter) {
+  WebHelper(this._store, this._fileFetcher) {
     _memCache = new Map();
+    if (_fileFetcher == null) {
+      _fileFetcher = _defaultHttpGetter;
+    }
   }
 
   ///Download the file from the url
@@ -64,9 +99,7 @@ class WebHelper {
 
     var success = false;
     try {
-      var response = await (_httpGetter != null
-          ? _httpGetter(url, headers: headers)
-          : _defaultHttpGetter(url, headers: headers));
+      var response = await _fileFetcher(url, headers: headers);
       success = await _handleHttpResponse(response, cacheObject);
     } catch (e) {
       print(e);
@@ -83,16 +116,17 @@ class WebHelper {
         new File(filePath), FileSource.Online, cacheObject.validTill, url);
   }
 
-  Future<http.Response> _defaultHttpGetter(String url,
+  Future<FileFetcherResponse> _defaultHttpGetter(String url,
       {Map<String, String> headers}) async {
-    return await http.get(url, headers: headers);
+    var httpResponse = await http.get(url, headers: headers);
+    return new HttpFileFetcherResponse(httpResponse);
   }
 
   Future<bool> _handleHttpResponse(
-      http.Response response, CacheObject cacheObject) async {
+      FileFetcherResponse response, CacheObject cacheObject) async {
     if (response.statusCode == 200) {
       var basePath = await _store.filePath;
-      _setDataFromHeaders(cacheObject, response.headers);
+      _setDataFromHeaders(cacheObject, response);
       var path = p.join(basePath, cacheObject.relativePath);
 
       var folder = new File(path).parent;
@@ -103,19 +137,19 @@ class WebHelper {
       return true;
     }
     if (response.statusCode == 304) {
-      await _setDataFromHeaders(cacheObject, response.headers);
+      await _setDataFromHeaders(cacheObject, response);
       return true;
     }
     return false;
   }
 
   _setDataFromHeaders(
-      CacheObject cacheObject, Map<String, String> headers) async {
+      CacheObject cacheObject, FileFetcherResponse response) async {
     //Without a cache-control header we keep the file for a week
     var ageDuration = new Duration(days: 7);
 
-    if (headers.containsKey("cache-control")) {
-      var cacheControl = headers["cache-control"];
+    if (response.hasHeader("cache-control")) {
+      var cacheControl = response.header("cache-control");
       var controlSettings = cacheControl.split(", ");
       controlSettings.forEach((setting) {
         if (setting.startsWith("max-age=")) {
@@ -129,13 +163,13 @@ class WebHelper {
 
     cacheObject.validTill = new DateTime.now().add(ageDuration);
 
-    if (headers.containsKey("etag")) {
-      cacheObject.eTag = headers["etag"];
+    if (response.hasHeader("etag")) {
+      cacheObject.eTag = response.header("etag");
     }
 
     var fileExtension = "";
-    if (headers.containsKey("content-type")) {
-      var type = headers["content-type"].split("/");
+    if (response.hasHeader("content-type")) {
+      var type = response.header("content-type").split("/");
       if (type.length == 2) {
         fileExtension = ".${type[1]}";
       }
