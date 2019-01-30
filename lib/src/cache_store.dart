@@ -7,13 +7,9 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:synchronized/synchronized.dart';
 
-/**
- *  Flutter Cache Manager
- *
- *  Copyright (c) 2018 Rene Floor
- *
- *  Released under MIT License.
- */
+///Flutter Cache Manager
+///Copyright (c) 2019 Rene Floor
+///Released under MIT License.
 
 class CacheStore {
   Map<String, Future<CacheObject>> _memCache = new Map();

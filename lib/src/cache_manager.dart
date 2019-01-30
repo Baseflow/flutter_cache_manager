@@ -9,13 +9,9 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-/**
- *  Flutter Cache Manager
- *
- *  Copyright (c) 2018 Rene Floor
- *
- *  Released under MIT License.
- */
+///Flutter Cache Manager
+///Copyright (c) 2019 Rene Floor
+///Released under MIT License.
 
 class DefaultCacheManager extends BaseCacheManager {
   static const key = "libCachedImageData";

@@ -9,13 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
-/**
- *  Flutter Cache Manager
- *
- *  Copyright (c) 2018 Rene Floor
- *
- *  Released under MIT License.
- */
+///Flutter Cache Manager
+///Copyright (c) 2019 Rene Floor
+///Released under MIT License.
 
 typedef Future<FileFetcherResponse> FileFetcher(String url,
     {Map<String, String> headers});
@@ -182,7 +178,7 @@ class WebHelper {
     }
 
     if (cacheObject.relativePath == null) {
-      cacheObject.relativePath = "${new Uuid().v1()}${fileExtension}";
+      cacheObject.relativePath = "${new Uuid().v1()}$fileExtension";
     }
   }
 

@@ -2,6 +2,7 @@
 
 * Complete refactor of library
 * Use of SQFlite instead of shared preferences for cache info
+* Added the option to use a custom file fetcher (for example for firebase)
 
 ## [0.2.0] - 2018-10-13
 
