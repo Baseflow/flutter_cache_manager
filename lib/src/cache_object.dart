@@ -128,6 +128,10 @@ class CacheObjectProvider {
     List<Map> maps = await db.query(tableCacheObject,
         columns: null,
         orderBy: "$columnTouched ASC",
+        where: "$columnTouched < ?",
+        whereArgs: [
+          DateTime.now().subtract(new Duration(days: 1)).millisecondsSinceEpoch
+        ],
         limit: 100,
         offset: capacity);
 

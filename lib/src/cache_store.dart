@@ -125,11 +125,11 @@ class CacheStore {
   _cleanAndClose() async {
     _nrOfDbConnections++;
     var provider = await _cacheObjectProvider;
-    var overCapactity = await provider.getObjectsOverCapacity(_capacity);
+    var overCapacity = await provider.getObjectsOverCapacity(_capacity);
     var oldObjects = await provider.getOldObjects(_maxAge);
 
     var toRemove = List<int>();
-    overCapactity.forEach((cacheObject) async {
+    overCapacity.forEach((cacheObject) async {
       _removeCachedFile(cacheObject, toRemove);
     });
     oldObjects.forEach((cacheObject) async {
@@ -155,13 +155,13 @@ class CacheStore {
 
   _removeCachedFile(CacheObject cacheObject, List<int> toRemove) async {
     if (!toRemove.contains(cacheObject.id)) {
-      var file = new File(p.join(await filePath, cacheObject.relativePath));
-      if (await file.exists()) {
-        toRemove.add(cacheObject.id);
-        file.delete();
-        if (_memCache.containsKey(cacheObject.url))
-          _memCache.remove(cacheObject.url);
-      }
+      toRemove.add(cacheObject.id);
+      if (_memCache.containsKey(cacheObject.url))
+        _memCache.remove(cacheObject.url);
+    }
+    var file = new File(p.join(await filePath, cacheObject.relativePath));
+    if (await file.exists()) {
+      file.delete();
     }
   }
 }
