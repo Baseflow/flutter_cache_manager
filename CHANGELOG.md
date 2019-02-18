@@ -1,8 +1,9 @@
-## [0.3.0] - WIP
+## [0.3.0] - 2019-02-18
 
 * Complete refactor of library
 * Use of SQFlite instead of shared preferences for cache info
 * Added the option to use a custom file fetcher (for example for firebase)
+* Support for AndroidX
 
 ## [0.2.0] - 2018-10-13
 
