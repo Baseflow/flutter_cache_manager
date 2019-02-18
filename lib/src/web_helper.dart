@@ -35,6 +35,8 @@ class WebHelper {
         if (cacheObject == null) {
           _memCache.remove(url);
         }
+      }).catchError((e){
+        completer.completeError(e);
       });
 
       _memCache[url] = completer.future;
@@ -45,37 +47,37 @@ class WebHelper {
   ///Download the file from the url
   Future<FileInfo> _downloadRemoteFile(String url,
       {Map<String, String> authHeaders}) async {
-    var cacheObject = await _store.retrieveCacheData(url);
-    if (cacheObject == null) {
-      cacheObject = new CacheObject(url);
-    }
+    return Future.sync(() async {
+      var cacheObject = await _store.retrieveCacheData(url);
+      if (cacheObject == null) {
+        cacheObject = new CacheObject(url);
+      }
 
-    var headers = new Map<String, String>();
-    if (authHeaders != null) {
-      headers.addAll(authHeaders);
-    }
+      var headers = new Map<String, String>();
+      if (authHeaders != null) {
+        headers.addAll(authHeaders);
+      }
 
-    if (cacheObject.eTag != null) {
-      headers["If-None-Match"] = cacheObject.eTag;
-    }
+      if (cacheObject.eTag != null) {
+        headers["If-None-Match"] = cacheObject.eTag;
+      }
 
-    var success = false;
-    try {
+      var success = false;
+
       var response = await _fileFetcher(url, headers: headers);
       success = await _handleHttpResponse(response, cacheObject);
-    } catch (e) {
-      print(e);
-    }
 
-    if (!success) {
-      return null;
-    }
+      if (!success) {
+        throw HttpException(
+            "No valid statuscode. Statuscode was ${response?.statusCode}");
+      }
 
-    _store.putFile(cacheObject);
-    var filePath = p.join(await _store.filePath, cacheObject.relativePath);
+      _store.putFile(cacheObject);
+      var filePath = p.join(await _store.filePath, cacheObject.relativePath);
 
-    return FileInfo(
-        new File(filePath), FileSource.Online, cacheObject.validTill, url);
+      return FileInfo(
+          new File(filePath), FileSource.Online, cacheObject.validTill, url);
+    });
   }
 
   Future<FileFetcherResponse> _defaultHttpGetter(String url,

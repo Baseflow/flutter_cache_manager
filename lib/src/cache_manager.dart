@@ -92,7 +92,12 @@ abstract class BaseCacheManager {
       }
       return cacheFile.file;
     }
-    return (await webHelper.downloadFile(url, authHeaders: headers))?.file;
+    try {
+      var download = await webHelper.downloadFile(url, authHeaders: headers);
+      return download.file;
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
@@ -105,12 +110,15 @@ abstract class BaseCacheManager {
       yield cacheFile;
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
-      var webFile = await webHelper.downloadFile(url, authHeaders: headers);
-      if (webFile != null) {
-        yield webFile;
-      }
-      if (webFile == null && cacheFile == null) {
-        yield new FileInfo(null, FileSource.NA, null, url);
+      try {
+        var webFile = await webHelper.downloadFile(url, authHeaders: headers);
+        if (webFile != null) {
+          yield webFile;
+        }
+      } catch (e) {
+        if (cacheFile == null) {
+          throw e;
+        }
       }
     }
   }
