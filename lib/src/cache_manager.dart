@@ -173,6 +173,7 @@ abstract class BaseCacheManager {
     }
   }
 
+  /// Removes all files from the cache
   emptyCache() async {
     await store.emptyCache();
   }

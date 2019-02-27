@@ -28,6 +28,8 @@ The easiest way to get a single file is call `.getSingleFile`.
 
 `removeFile` removes a file from the cache. 
 
+`emptyCache` removes all files from the cache. 
+
 
 ## Settings
 The cache manager is customizable by extending the BaseCacheManager.

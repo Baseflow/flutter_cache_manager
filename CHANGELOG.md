@@ -1,3 +1,7 @@
+## [0.3.1] - 2019-02-27
+
+* Added method to clear cache
+
 ## [0.3.0] - 2019-02-18
 
 * Complete refactor of library
