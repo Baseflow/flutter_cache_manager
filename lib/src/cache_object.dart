@@ -124,6 +124,11 @@ class CacheObjectProvider {
         where: "$columnId = ?", whereArgs: [cacheObject.id]);
   }
 
+  Future<List<CacheObject>> getAllObjects() async {
+    List<Map> maps = await db.query(tableCacheObject, columns: null);
+    return CacheObject.fromMapList(maps);
+  }
+
   Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
     List<Map> maps = await db.query(tableCacheObject,
         columns: null,

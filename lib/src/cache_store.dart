@@ -145,6 +145,19 @@ class CacheStore {
     });
   }
 
+  emptyCache() async {
+    var provider = await _openDatabaseConnection();
+    var toRemove = List<int>();
+
+    var allObjects = await provider.getAllObjects();
+    allObjects.forEach((cacheObject) async {
+      _removeCachedFile(cacheObject, toRemove);
+    });
+
+    await provider.deleteAll(toRemove);
+    _closeDatabaseConnection();
+  }
+
   removeCachedFile(CacheObject cacheObject) async {
     var provider = await _openDatabaseConnection();
     var toRemove = List<int>();

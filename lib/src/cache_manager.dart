@@ -42,7 +42,7 @@ class DefaultCacheManager extends BaseCacheManager {
 abstract class BaseCacheManager {
   Future<String> _fileBasePath;
 
-  /// Creates a new instance of a cache manager. This can be sued to retrieve
+  /// Creates a new instance of a cache manager. This can be used to retrieve
   /// files from the cache or download them online. The http headers are used
   /// for the maximum age of the files. The BaseCacheManager should only be
   /// used in singleton patterns.
@@ -171,5 +171,9 @@ abstract class BaseCacheManager {
     if (cacheObject != null) {
       await store.removeCachedFile(cacheObject);
     }
+  }
+
+  emptyCache() async {
+    await store.emptyCache();
   }
 }
