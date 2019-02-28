@@ -31,10 +31,11 @@ class WebHelper {
     if (!_memCache.containsKey(url) || ignoreMemCache) {
       var completer = new Completer<FileInfo>();
       _downloadRemoteFile(url, authHeaders: authHeaders).then((cacheObject) {
-        _memCache.remove(url);
         completer.complete(cacheObject);
       }).catchError((e) {
         completer.completeError(e);
+      }).whenComplete((){
+        _memCache.remove(url);
       });
 
       _memCache[url] = completer.future;
