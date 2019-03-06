@@ -1,3 +1,7 @@
+## [0.3.2] - 2019-03-06
+
+* Fixed image loading after loading failed once.
+
 ## [0.3.1] - 2019-02-27
 
 * Added method to clear cache
