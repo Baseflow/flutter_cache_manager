@@ -144,7 +144,7 @@ class CacheObjectProvider {
   }
 
   Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
-    List<Map> maps = await db.query(
+    List<Map<String, dynamic>> maps = await db.query(
       tableCacheObject,
       where: "$columnTouched < ?",
       columns: null,
