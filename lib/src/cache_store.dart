@@ -12,7 +12,7 @@ import 'package:synchronized/synchronized.dart';
 ///Released under MIT License.
 
 class CacheStore {
-  Map<String, Future<CacheObject>> _memCache = new Map();
+  Map<String, CacheObject> _memCache = new Map();
 
   int _nrOfDbConnections = 0;
   Future<String> filePath;
@@ -50,7 +50,7 @@ class CacheStore {
   }
 
   putFile(CacheObject cacheObject) async {
-    _memCache[cacheObject.url] = Future<CacheObject>.value(cacheObject);
+    _memCache[cacheObject.url] = cacheObject;
     _updateCacheDataInDatabase(cacheObject);
   }
 
@@ -61,12 +61,13 @@ class CacheStore {
         if (cacheObject != null && !await _fileExists(cacheObject)) {
           cacheObject = new CacheObject(url, id: cacheObject.id);
         }
+        _memCache[url] = cacheObject;
         completer.complete(cacheObject);
       });
-
-      _memCache[url] = completer.future;
+      return completer.future;
+    } else {
+      return Future<CacheObject>.value(_memCache[url]);
     }
-    return _memCache[url];
   }
 
   Future<bool> _fileExists(CacheObject cacheObject) async {
