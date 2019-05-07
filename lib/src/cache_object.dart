@@ -78,7 +78,7 @@ class CacheObject {
       controlSettings.forEach((setting) {
         if (setting.startsWith("max-age=")) {
           var validSeconds =
-              int.parse(setting.split("=")[1], onError: (source) => 0);
+              int.tryParse(setting.split("=")[1]) ?? 0;
           if (validSeconds > 0) {
             ageDuration = new Duration(seconds: validSeconds);
           }
