@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: "^0.4.0"
-  path_provider: "^0.4.0"
+  path_provider: any
   synchronized: "^1.5.1"
-  uuid:  "^1.0.3"
+  uuid:  any
   http: ">=0.11.0 <0.13.0"
