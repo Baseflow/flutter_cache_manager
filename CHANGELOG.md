@@ -1,3 +1,8 @@
+## [1.0.0] - 2019-06-27
+
+* Keep SQL connection open during session.
+* Update dependencies
+
 ## [0.3.2] - 2019-03-06
 
 * Fixed image loading after loading failed once.
