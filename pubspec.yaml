@@ -15,7 +15,6 @@ dependencies:
   http: ">=0.11.0 < 0.13.0"
   path: "^1.6.2"
   sqflite: "^1.1.0"
-  synchronized: "^2.0.2"
 
 dev_dependencies:
   flutter_test:

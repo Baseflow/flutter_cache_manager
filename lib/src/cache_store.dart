@@ -5,7 +5,6 @@ import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
-import 'package:synchronized/synchronized.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -14,13 +13,16 @@ import 'package:synchronized/synchronized.dart';
 class CacheStore {
   Map<String, Future<CacheObject>> _memCache = new Map();
 
-  int _nrOfDbConnections = 0;
   Future<String> filePath;
   Future<CacheObjectProvider> _cacheObjectProvider;
   String storeKey;
 
-  int _capacity;
-  Duration _maxAge;
+  final int _capacity;
+  final Duration _maxAge;
+
+  DateTime lastCleanupRun = DateTime.now();
+  static const Duration cleanupRunMinInterval = Duration(seconds: 10);
+  Timer _scheduledCleanup;
 
   CacheStore(
       Future<String> basePath, this.storeKey, this._capacity, this._maxAge) {
@@ -36,7 +38,9 @@ class CacheStore {
     try {
       await Directory(databasesPath).create(recursive: true);
     } catch (_) {}
-    return new CacheObjectProvider(path);
+    final provider = CacheObjectProvider(path);
+    await provider.open();
+    return provider;
   }
 
   Future<FileInfo> getFile(String url) async {
@@ -77,53 +81,32 @@ class CacheStore {
   }
 
   Future<CacheObject> _getCacheDataFromDatabase(String url) async {
-    var provider = await _openDatabaseConnection();
+    var provider = await _cacheObjectProvider;
     var data = await provider.get(url);
     if (await _fileExists(data)) {
       _updateCacheDataInDatabase(data);
     }
-    _closeDatabaseConnection();
+    _scheduleCleanup();
     return data;
+  }
+
+  void _scheduleCleanup() {
+    if (_scheduledCleanup != null) {
+      return;
+    }
+    _scheduledCleanup = Timer(cleanupRunMinInterval, () {
+      _scheduledCleanup = null;
+      _cleanupCache();
+    });
   }
 
   Future<dynamic> _updateCacheDataInDatabase(CacheObject cacheObject) async {
-    var provider = await _openDatabaseConnection();
+    var provider = await _cacheObjectProvider;
     var data = await provider.updateOrInsert(cacheObject);
-    _closeDatabaseConnection();
     return data;
   }
 
-  var databaseConnectionLock = Lock();
-  Future<CacheObjectProvider> _openDatabaseConnection() async {
-    var provider = await _cacheObjectProvider;
-    if (_nrOfDbConnections == 0) {
-      await databaseConnectionLock.synchronized(() async {
-        if (_nrOfDbConnections == 0) {
-          await provider.open();
-        }
-        _nrOfDbConnections++;
-      });
-    } else {
-      _nrOfDbConnections++;
-    }
-    return provider;
-  }
-
-  _closeDatabaseConnection() async {
-    if (_nrOfDbConnections == 1) {
-      await databaseConnectionLock.synchronized(() {
-        _nrOfDbConnections--;
-        if (_nrOfDbConnections == 0) {
-          _cleanAndClose();
-        }
-      });
-    } else {
-      _nrOfDbConnections--;
-    }
-  }
-
-  _cleanAndClose() async {
-    _nrOfDbConnections++;
+  Future<void> _cleanupCache() async {
     var provider = await _cacheObjectProvider;
     var overCapacity = await provider.getObjectsOverCapacity(_capacity);
     var oldObjects = await provider.getOldObjects(_maxAge);
@@ -137,16 +120,10 @@ class CacheStore {
     });
 
     await provider.deleteAll(toRemove);
-    await databaseConnectionLock.synchronized(() async {
-      _nrOfDbConnections--;
-      if (_nrOfDbConnections == 0) {
-        await provider.close();
-      }
-    });
   }
 
   emptyCache() async {
-    var provider = await _openDatabaseConnection();
+    var provider = await _cacheObjectProvider;
     var toRemove = List<int>();
 
     var allObjects = await provider.getAllObjects();
@@ -155,15 +132,13 @@ class CacheStore {
     });
 
     await provider.deleteAll(toRemove);
-    _closeDatabaseConnection();
   }
 
   removeCachedFile(CacheObject cacheObject) async {
-    var provider = await _openDatabaseConnection();
+    var provider = await _cacheObjectProvider;
     var toRemove = List<int>();
     _removeCachedFile(cacheObject, toRemove);
     await provider.deleteAll(toRemove);
-    _closeDatabaseConnection();
   }
 
   _removeCachedFile(CacheObject cacheObject, List<int> toRemove) async {
@@ -176,5 +151,10 @@ class CacheStore {
     if (await file.exists()) {
       file.delete();
     }
+  }
+
+  Future<void> dispose() async {
+    final provider = await _cacheObjectProvider;
+    await provider.close();
   }
 }
