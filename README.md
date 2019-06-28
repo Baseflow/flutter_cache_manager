@@ -30,6 +30,7 @@ The easiest way to get a single file is call `.getSingleFile`.
 
 `emptyCache` removes all files from the cache. 
 
+`getCacheSize` get cache size. 
 
 ## Settings
 The cache manager is customizable by extending the BaseCacheManager.

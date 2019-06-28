@@ -28,6 +28,22 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   FileInfo fileInfo;
+  int _cacheSize = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _getCacheSize();
+  }
+
+  _getCacheSize() {
+    DefaultCacheManager().getCacheSize().then((cacheSize) {
+      setState(() {
+        _cacheSize = cacheSize;
+      });
+    });
+  }
 
   _downloadFile() {
     var url =
@@ -37,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         fileInfo = f;
       });
+      _getCacheSize();
     });
   }
 
@@ -67,12 +84,16 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               'From: $from',
             ),
+            Text(
+              'Cache Size: $_cacheSize',
+            ),
             Padding(
               padding: const EdgeInsets.only(top: 32.0),
               child: RaisedButton(
                 child: Text('CLEAR CACHE'),
-                onPressed: () {
-                  DefaultCacheManager().emptyCache();
+                onPressed: () async {
+                  await DefaultCacheManager().emptyCache();
+                  _getCacheSize();
                 },
               ),
             )

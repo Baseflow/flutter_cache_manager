@@ -177,4 +177,15 @@ abstract class BaseCacheManager {
   emptyCache() async {
     await store.emptyCache();
   }
+
+  /// Get cache size
+  Future<int> getCacheSize() async {
+    int cacheSize = 0;
+    final directory = Directory(await getFilePath());
+    if (directory.existsSync() && directory.listSync().length > 0) {
+      FileStat fileStat = directory.statSync();
+      cacheSize = fileStat.size;
+    }
+    return cacheSize;
+  }
 }
