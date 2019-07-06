@@ -135,6 +135,10 @@ abstract class BaseCacheManager {
     return await store.getFile(url);
   }
 
+  FileInfo getFileFromMemory(String url) {
+    return store.getFileFromMemory(url);
+  }
+
   /// Put a file in the cache. It is recommended to specify the [eTag] and the
   /// [maxAge]. When [maxAge] is passed and the eTag is not set the file will
   /// always be downloaded again. The [fileExtension] should be without a dot,

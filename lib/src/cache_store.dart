@@ -11,9 +11,12 @@ import 'package:sqflite/sqflite.dart';
 ///Released under MIT License.
 
 class CacheStore {
-  Map<String, Future<CacheObject>> _memCache = new Map();
+  Map<String, Future<CacheObject>> _futureCache = new Map();
+  Map<String, CacheObject> _memCache = new Map();
 
   Future<String> filePath;
+  String _filePath;
+
   Future<CacheObjectProvider> _cacheObjectProvider;
   String storeKey;
 
@@ -27,6 +30,8 @@ class CacheStore {
   CacheStore(
       Future<String> basePath, this.storeKey, this._capacity, this._maxAge) {
     filePath = basePath;
+    basePath.then((p) => _filePath = p);
+
     _cacheObjectProvider = _getObjectProvider();
   }
 
@@ -54,23 +59,40 @@ class CacheStore {
   }
 
   putFile(CacheObject cacheObject) async {
-    _memCache[cacheObject.url] = Future<CacheObject>.value(cacheObject);
+    _memCache[cacheObject.url] = cacheObject;
     _updateCacheDataInDatabase(cacheObject);
   }
 
   Future<CacheObject> retrieveCacheData(String url) {
-    if (!_memCache.containsKey(url)) {
+    if (_memCache.containsKey(url)) {
+      return Future.value(_memCache[url]);
+    }
+    if (!_futureCache.containsKey(url)) {
       var completer = new Completer<CacheObject>();
       _getCacheDataFromDatabase(url).then((cacheObject) async {
         if (cacheObject != null && !await _fileExists(cacheObject)) {
           cacheObject = new CacheObject(url, id: cacheObject.id);
         }
         completer.complete(cacheObject);
+
+        _memCache[url] = cacheObject;
+        _futureCache[url] = null;
       });
 
-      _memCache[url] = completer.future;
+      _futureCache[url] = completer.future;
     }
-    return _memCache[url];
+    return _futureCache[url];
+  }
+
+  FileInfo getFileFromMemory(String url) {
+    if (_memCache[url] == null || _filePath == null) {
+      return null;
+    }
+    var cacheObject = _memCache[url];
+
+    var path = p.join(_filePath, cacheObject.relativePath);
+    return new FileInfo(
+        File(path), FileSource.Cache, cacheObject.validTill, url);
   }
 
   Future<bool> _fileExists(CacheObject cacheObject) async {
@@ -146,6 +168,8 @@ class CacheStore {
       toRemove.add(cacheObject.id);
       if (_memCache.containsKey(cacheObject.url))
         _memCache.remove(cacheObject.url);
+      if (_futureCache.containsKey(cacheObject.url))
+        _futureCache.remove(cacheObject.url);
     }
     var file = new File(p.join(await filePath, cacheObject.relativePath));
     if (await file.exists()) {
