@@ -1,12 +1,8 @@
 import 'dart:io';
 
-/**
- *  Flutter Cache Manager
- *
- *  Copyright (c) 2018 Rene Floor
- *
- *  Released under MIT License.
- */
+///Flutter Cache Manager
+///Copyright (c) 2019 Rene Floor
+///Released under MIT License.
 
 enum FileSource { NA, Cache, Online }
 

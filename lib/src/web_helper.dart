@@ -1,55 +1,17 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
-/**
- *  Flutter Cache Manager
- *
- *  Copyright (c) 2018 Rene Floor
- *
- *  Released under MIT License.
- */
-
-typedef Future<FileFetcherResponse> FileFetcher(String url,
-    {Map<String, String> headers});
-
-abstract class FileFetcherResponse {
-  get statusCode;
-
-  Uint8List get bodyBytes => null;
-
-  bool hasHeader(String name);
-  String header(String name);
-}
-
-class HttpFileFetcherResponse implements FileFetcherResponse {
-  http.Response _response;
-
-  HttpFileFetcherResponse(this._response);
-
-  @override
-  bool hasHeader(String name) {
-    return _response.headers.containsKey(name);
-  }
-
-  @override
-  String header(String name) {
-    return _response.headers[name];
-  }
-
-  @override
-  Uint8List get bodyBytes => _response.bodyBytes;
-
-  @override
-  get statusCode => _response.statusCode;
-}
+///Flutter Cache Manager
+///Copyright (c) 2019 Rene Floor
+///Released under MIT License.
 
 class WebHelper {
   CacheStore _store;
@@ -70,9 +32,10 @@ class WebHelper {
       var completer = new Completer<FileInfo>();
       _downloadRemoteFile(url, authHeaders: authHeaders).then((cacheObject) {
         completer.complete(cacheObject);
-        if (cacheObject == null) {
-          _memCache.remove(url);
-        }
+      }).catchError((e) {
+        completer.completeError(e);
+      }).whenComplete((){
+        _memCache.remove(url);
       });
 
       _memCache[url] = completer.future;
@@ -83,37 +46,37 @@ class WebHelper {
   ///Download the file from the url
   Future<FileInfo> _downloadRemoteFile(String url,
       {Map<String, String> authHeaders}) async {
-    var cacheObject = await _store.retrieveCacheData(url);
-    if (cacheObject == null) {
-      cacheObject = new CacheObject(url);
-    }
+    return Future.sync(() async {
+      var cacheObject = await _store.retrieveCacheData(url);
+      if (cacheObject == null) {
+        cacheObject = new CacheObject(url);
+      }
 
-    var headers = new Map<String, String>();
-    if (authHeaders != null) {
-      headers.addAll(authHeaders);
-    }
+      var headers = new Map<String, String>();
+      if (authHeaders != null) {
+        headers.addAll(authHeaders);
+      }
 
-    if (cacheObject.eTag != null) {
-      headers["If-None-Match"] = cacheObject.eTag;
-    }
+      if (cacheObject.eTag != null) {
+        headers["If-None-Match"] = cacheObject.eTag;
+      }
 
-    var success = false;
-    try {
+      var success = false;
+
       var response = await _fileFetcher(url, headers: headers);
       success = await _handleHttpResponse(response, cacheObject);
-    } catch (e) {
-      print(e);
-    }
 
-    if (!success) {
-      return null;
-    }
+      if (!success) {
+        throw HttpException(
+            "No valid statuscode. Statuscode was ${response?.statusCode}");
+      }
 
-    _store.putFile(cacheObject);
-    var filePath = p.join(await _store.filePath, cacheObject.relativePath);
+      _store.putFile(cacheObject);
+      var filePath = p.join(await _store.filePath, cacheObject.relativePath);
 
-    return FileInfo(
-        new File(filePath), FileSource.Online, cacheObject.validTill, url);
+      return FileInfo(
+          new File(filePath), FileSource.Online, cacheObject.validTill, url);
+    });
   }
 
   Future<FileFetcherResponse> _defaultHttpGetter(String url,
@@ -182,7 +145,7 @@ class WebHelper {
     }
 
     if (cacheObject.relativePath == null) {
-      cacheObject.relativePath = "${new Uuid().v1()}${fileExtension}";
+      cacheObject.relativePath = "${new Uuid().v1()}$fileExtension";
     }
   }
 

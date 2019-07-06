@@ -1,7 +1,22 @@
-## [0.3.0] - WIP
+## [1.0.0] - 2019-06-27
+
+* Keep SQL connection open during session.
+* Update dependencies
+
+## [0.3.2] - 2019-03-06
+
+* Fixed image loading after loading failed once.
+
+## [0.3.1] - 2019-02-27
+
+* Added method to clear cache
+
+## [0.3.0] - 2019-02-18
 
 * Complete refactor of library
 * Use of SQFlite instead of shared preferences for cache info
+* Added the option to use a custom file fetcher (for example for firebase)
+* Support for AndroidX
 
 ## [0.2.0] - 2018-10-13
 

@@ -1,21 +1,20 @@
+// HINT: Unnecessary import. Future and Stream are available via dart:core.
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-/**
- *  Flutter Cache Manager
- *
- *  Copyright (c) 2018 Rene Floor
- *
- *  Released under MIT License.
- */
+///Flutter Cache Manager
+///Copyright (c) 2019 Rene Floor
+///Released under MIT License.
 
 class DefaultCacheManager extends BaseCacheManager {
   static const key = "libCachedImageData";
@@ -43,7 +42,7 @@ class DefaultCacheManager extends BaseCacheManager {
 abstract class BaseCacheManager {
   Future<String> _fileBasePath;
 
-  /// Creates a new instance of a cache manager. This can be sued to retrieve
+  /// Creates a new instance of a cache manager. This can be used to retrieve
   /// files from the cache or download them online. The http headers are used
   /// for the maximum age of the files. The BaseCacheManager should only be
   /// used in singleton patterns.
@@ -55,8 +54,8 @@ abstract class BaseCacheManager {
   /// The [httpGetter] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy.
   BaseCacheManager(this._cacheKey,
-      {maxAgeCacheObject = const Duration(days: 30),
-      maxNrOfCacheObjects = 200,
+      {Duration maxAgeCacheObject = const Duration(days: 30),
+      int maxNrOfCacheObjects = 200,
       FileFetcher fileFetcher}) {
     _fileBasePath = getFilePath();
 
@@ -93,7 +92,12 @@ abstract class BaseCacheManager {
       }
       return cacheFile.file;
     }
-    return (await webHelper.downloadFile(url, authHeaders: headers))?.file;
+    try {
+      var download = await webHelper.downloadFile(url, authHeaders: headers);
+      return download.file;
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
@@ -106,12 +110,15 @@ abstract class BaseCacheManager {
       yield cacheFile;
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
-      var webFile = await webHelper.downloadFile(url, authHeaders: headers);
-      if (webFile != null) {
-        yield webFile;
-      }
-      if (webFile == null && cacheFile == null) {
-        yield new FileInfo(null, FileSource.NA, null, url);
+      try {
+        var webFile = await webHelper.downloadFile(url, authHeaders: headers);
+        if (webFile != null) {
+          yield webFile;
+        }
+      } catch (e) {
+        if (cacheFile == null) {
+          throw e;
+        }
       }
     }
   }
@@ -164,5 +171,10 @@ abstract class BaseCacheManager {
     if (cacheObject != null) {
       await store.removeCachedFile(cacheObject);
     }
+  }
+
+  /// Removes all files from the cache
+  emptyCache() async {
+    await store.emptyCache();
   }
 }

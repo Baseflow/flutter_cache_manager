@@ -1,6 +1,10 @@
 // CacheManager for Flutter
 // Copyright (c) 2017 Rene Floor
 // Released under MIT License.
+
+// HINT: Unnecessary import. Future and Stream are available via dart:core.
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 
 final String tableCacheObject = "cacheObject";
@@ -120,10 +124,19 @@ class CacheObjectProvider {
         where: "$columnId = ?", whereArgs: [cacheObject.id]);
   }
 
+  Future<List<CacheObject>> getAllObjects() async {
+    List<Map> maps = await db.query(tableCacheObject, columns: null);
+    return CacheObject.fromMapList(maps);
+  }
+
   Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
     List<Map> maps = await db.query(tableCacheObject,
         columns: null,
         orderBy: "$columnTouched ASC",
+        where: "$columnTouched < ?",
+        whereArgs: [
+          DateTime.now().subtract(new Duration(days: 1)).millisecondsSinceEpoch
+        ],
         limit: 100,
         offset: capacity);
 
@@ -131,7 +144,7 @@ class CacheObjectProvider {
   }
 
   Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
-    List<Map> maps = await db.query(
+    List<Map<String, dynamic>> maps = await db.query(
       tableCacheObject,
       where: "$columnTouched < ?",
       columns: null,

@@ -67,6 +67,15 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               'From: $from',
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 32.0),
+              child: RaisedButton(
+                child: Text('CLEAR CACHE'),
+                onPressed: () {
+                  DefaultCacheManager().emptyCache();
+                },
+              ),
+            )
           ],
         ),
       ),
