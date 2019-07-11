@@ -117,7 +117,7 @@ abstract class BaseCacheManager {
         }
       } catch (e) {
         if (cacheFile == null) {
-          throw e;
+          yield e;
         }
       }
     }
