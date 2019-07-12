@@ -63,7 +63,7 @@ class CacheStore {
       var completer = new Completer<CacheObject>();
       _getCacheDataFromDatabase(url).then((cacheObject) async {
         if (cacheObject != null && !await _fileExists(cacheObject)) {
-          cacheObject = new CacheObject(url, id: cacheObject.id);
+          cacheObject = new CacheObject(url, relativePath: cacheObject.relativePath, id: cacheObject.id);
         }
         completer.complete(cacheObject);
       });
