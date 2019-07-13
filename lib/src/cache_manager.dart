@@ -135,6 +135,7 @@ abstract class BaseCacheManager {
     return await store.getFile(url);
   }
 
+  ///Returns the file from memory if it has already been fetched
   FileInfo getFileFromMemory(String url) {
     return store.getFileFromMemory(url);
   }

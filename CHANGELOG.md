@@ -1,3 +1,8 @@
+## [1.1.0] - 2019-07-13
+
+* New method to get fileinfo from memory.
+* Better error handling.
+
 ## [1.0.0] - 2019-06-27
 
 * Keep SQL connection open during session.
