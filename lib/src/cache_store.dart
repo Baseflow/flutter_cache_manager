@@ -54,7 +54,7 @@ class CacheStore {
   }
 
   putFile(CacheObject cacheObject) async {
-    _memCache[cacheObject.url] = Future<CacheObject>.value(cacheObject);
+    _memCache[cacheObject.url] = cacheObject;
     await _updateCacheDataInDatabase(cacheObject);
   }
 
