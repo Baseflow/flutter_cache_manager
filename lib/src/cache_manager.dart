@@ -117,7 +117,7 @@ abstract class BaseCacheManager {
         }
       } catch (e) {
         if (cacheFile == null) {
-          throw e;
+          yield e;
         }
       }
     }
@@ -133,6 +133,11 @@ abstract class BaseCacheManager {
   ///Get the file from the cache
   Future<FileInfo> getFileFromCache(String url) async {
     return await store.getFile(url);
+  }
+
+  ///Returns the file from memory if it has already been fetched
+  FileInfo getFileFromMemory(String url) {
+    return store.getFileFromMemory(url);
   }
 
   /// Put a file in the cache. It is recommended to specify the [eTag] and the
