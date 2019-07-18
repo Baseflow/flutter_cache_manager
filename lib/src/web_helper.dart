@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:file/file.dart' as f;
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as p;
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
+
+final http.Client _httpClient = http.Client();
 
 class WebHelper {
   WebHelper(this._store, FileFetcher fileFetcher)
@@ -74,8 +74,11 @@ class WebHelper {
   }
 
   static Future<FileFetcherResponse> _defaultHttpGetter(String url, {Map<String, String> headers}) async {
-    final httpResponse = await http.get(url, headers: headers);
-    return HttpFileFetcherResponse(httpResponse);
+    final req = http.Request('GET', Uri.parse(url));
+    req.headers.addAll(headers);
+    final httpResponse = await _httpClient.send(req);
+
+    return HttpStreamFileFetcherResponse(httpResponse);
   }
 
   Future<bool> _handleHttpResponse(FileFetcherResponse response, CacheObject cacheObject) async {
@@ -87,7 +90,13 @@ class WebHelper {
       if (!(await folder.exists())) {
         folder.createSync(recursive: true);
       }
-      await file.writeAsBytes(response.bodyBytes);
+      if (response.bodyStream != null) {
+        final sink = file.openWrite();
+        await sink.addStream(response.bodyStream);
+        await sink.close();
+      } else {
+        await file.writeAsBytes(response.bodyBytes);
+      }
       return true;
     }
     if (response.statusCode == 304) {

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -16,27 +15,50 @@ abstract class FileFetcherResponse {
 
   String header(String name);
 
-  Uint8List get bodyBytes => null;
+  Stream<List<int>> get bodyStream;
+
+  List<int> get bodyBytes;
 }
 
-class HttpFileFetcherResponse implements FileFetcherResponse {
-  const HttpFileFetcherResponse(this._response);
+abstract class BaseHttpFileFetcherResponse implements FileFetcherResponse {
+  final http.BaseResponse _baseResponse;
 
-  final http.Response _response;
+  const BaseHttpFileFetcherResponse(this._baseResponse);
 
   @override
-  int get statusCode => _response.statusCode;
+  int get statusCode => _baseResponse.statusCode;
 
   @override
   bool hasHeader(String name) {
-    return _response.headers.containsKey(name);
+    return _baseResponse.headers.containsKey(name);
   }
 
   @override
   String header(String name) {
-    return _response.headers[name];
+    return _baseResponse.headers[name];
   }
 
   @override
-  Uint8List get bodyBytes => _response.bodyBytes;
+  Stream<List<int>> get bodyStream => null;
+
+  @override
+  List<int> get bodyBytes => null;
+}
+
+class HttpStreamFileFetcherResponse extends BaseHttpFileFetcherResponse {
+  final http.StreamedResponse _response;
+
+  const HttpStreamFileFetcherResponse(this._response): super(_response);
+
+  @override
+  Stream<List<int>> get bodyStream => _response.stream;
+}
+
+class HttpFileFetcherResponse extends BaseHttpFileFetcherResponse {
+  final http.Response _response;
+
+  const HttpFileFetcherResponse(this._response): super(_response);
+
+  @override
+  List<int> get bodyBytes => _response.bodyBytes;
 }
