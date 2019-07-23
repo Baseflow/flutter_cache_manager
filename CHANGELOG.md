@@ -1,3 +1,7 @@
+## [1.1.1] - 2019-07-23
+
+* Changed error handling back to throwing the error as it is supposed to be.
+
 ## [1.1.0] - 2019-07-13
 
 * New method to get fileinfo from memory.
