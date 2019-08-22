@@ -106,25 +106,9 @@ class WebHelper {
     return false;
   }
 
-  _setDataFromHeaders(
-      CacheObject cacheObject, FileFetcherResponse response) async {
-    //Without a cache-control header we keep the file for a week
-    var ageDuration = new Duration(days: 7);
-
-    if (response.hasHeader("cache-control")) {
-      var cacheControl = response.header("cache-control");
-      var controlSettings = cacheControl.split(", ");
-      controlSettings.forEach((setting) {
-        if (setting.startsWith("max-age=")) {
-          var validSeconds = int.tryParse(setting.split("=")[1]) ?? 0;
-          if (validSeconds > 0) {
-            ageDuration = new Duration(seconds: validSeconds);
-          }
-        }
-      });
-    }
-
-    cacheObject.validTill = new DateTime.now().add(ageDuration);
+  _setDataFromHeaders(CacheObject cacheObject, FileFetcherResponse response) async {
+    // Without a valid cache-control header we keep the file for a week
+    cacheObject.validTill = DateTime.now().add(response.maxAge ?? const Duration(days: 7));
 
     if (response.hasHeader("etag")) {
       cacheObject.eTag = response.header("etag");

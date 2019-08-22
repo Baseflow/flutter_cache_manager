@@ -17,9 +17,26 @@ abstract class FileFetcherResponse {
 
   bool hasHeader(String name);
   String header(String name);
+
+  /// return the maxAge the response might be cached.
+  /// By default returns the max-age of cache-control header.
+  Duration get maxAge {
+    if (hasHeader("cache-control")) {
+      var cacheControl = header("cache-control");
+      var controlSettings = cacheControl.split(", ");
+      final setting = controlSettings.firstWhere((setting) => setting.contains('max-age'), orElse: () => null);
+      if (setting != null) {
+        final validSeconds = int.tryParse(setting.split("=")[1]) ?? 0;
+        if (validSeconds > 0) {
+          return new Duration(seconds: validSeconds);
+        }
+      }
+    }
+    return null;
+  }
 }
 
-class HttpFileFetcherResponse implements FileFetcherResponse {
+class HttpFileFetcherResponse extends FileFetcherResponse {
   http.Response _response;
 
   HttpFileFetcherResponse(this._response);
