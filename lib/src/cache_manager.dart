@@ -104,35 +104,39 @@ abstract class BaseCacheManager {
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
-  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) async* {
-    var cacheFile = await getFileFromCache(url);
-    if (cacheFile != null) {
-      yield cacheFile;
-    }
-    if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
-      try {
-        var webFile = await webHelper.downloadFile(url, authHeaders: headers);
-        if (webFile != null) {
-          yield webFile;
-        }
-      } catch (e) {
-        if (cacheFile == null) {
-          throw e;
+  Stream<FileInfo> getFile(String url, {Map<String, String> headers}){
+    return _StreamHolder<FileInfo>((holder) async {
+      var cacheFile = await getFileFromCache(url);
+      if (!holder.isCanceled && cacheFile != null) {
+        holder.add(cacheFile);
+      }
+      if (!holder.isCanceled &&
+        (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now()))) {
+        try {
+          var webFile = await webHelper.downloadFile(url, authHeaders: headers);
+          if (!holder.isCanceled && webFile != null) {
+            holder.add(webFile);
+          }
+        } catch (e, stack) {
+          if (!holder.isCanceled && cacheFile == null) {
+            holder.addError(e, stack);
+          }
         }
       }
-    }
+      holder.close();
+    }).stream;
   }
 
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders, bool force = false}) async {
-    return await webHelper.downloadFile(url,
+      {Map<String, String> authHeaders, bool force = false}) {
+    return webHelper.downloadFile(url,
         authHeaders: authHeaders, ignoreMemCache: force);
   }
 
   ///Get the file from the cache
-  Future<FileInfo> getFileFromCache(String url) async {
-    return await store.getFile(url);
+  Future<FileInfo> getFileFromCache(String url) {
+    return store.getFile(url);
   }
 
   ///Returns the file from memory if it has already been fetched
@@ -181,5 +185,39 @@ abstract class BaseCacheManager {
   /// Removes all files from the cache
   emptyCache() async {
     await store.emptyCache();
+  }
+}
+
+class _StreamHolder<T> {
+
+  Stream<T> get stream => _controller.stream;
+
+  _StreamHolder(void callback(_StreamHolder holder)) {
+    _controller.onCancel = _onCancel;
+    // callback when some one is listening
+    _controller.onListen = () => callback(this);
+  }
+  
+  bool isCanceled = false;
+  
+  void add(T event) {
+    _controller.add(event);
+  }
+
+  void addError(dynamic error, [StackTrace trace]) {
+    _controller.addError(error, trace);
+  }
+  // for single consumer
+  final StreamController<T> _controller = StreamController<T>();
+
+  void _onCancel() {
+    isCanceled = true;
+    // close on canceled
+    close();
+  }
+
+  void close() {
+    if (!_controller.isClosed) 
+      _controller.close();
   }
 }
