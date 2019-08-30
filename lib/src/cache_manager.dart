@@ -104,14 +104,22 @@ abstract class BaseCacheManager {
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
-  Stream<FileInfo> getFile(String url, {Map<String, String> headers}){
+  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) {
     return _StreamHolder<FileInfo>((holder) async {
-      var cacheFile = await getFileFromCache(url);
+      FileInfo cacheFile;
+      try {
+        cacheFile = await getFileFromCache(url);
+      } catch (e, stack) {
+        // XXX: should we suppress this error?
+        if (!holder.isCanceled) holder.addError(e, stack);
+      }
+      // cache hit
       if (!holder.isCanceled && cacheFile != null) {
         holder.add(cacheFile);
       }
+      // cache miss or invalid
       if (!holder.isCanceled &&
-        (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now()))) {
+          (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now()))) {
         try {
           var webFile = await webHelper.downloadFile(url, authHeaders: headers);
           if (!holder.isCanceled && webFile != null) {
@@ -189,7 +197,6 @@ abstract class BaseCacheManager {
 }
 
 class _StreamHolder<T> {
-
   Stream<T> get stream => _controller.stream;
 
   _StreamHolder(void callback(_StreamHolder holder)) {
@@ -197,9 +204,9 @@ class _StreamHolder<T> {
     // callback when some one is listening
     _controller.onListen = () => callback(this);
   }
-  
+
   bool isCanceled = false;
-  
+
   void add(T event) {
     _controller.add(event);
   }
@@ -207,6 +214,7 @@ class _StreamHolder<T> {
   void addError(dynamic error, [StackTrace trace]) {
     _controller.addError(error, trace);
   }
+
   // for single consumer
   final StreamController<T> _controller = StreamController<T>();
 
@@ -217,7 +225,6 @@ class _StreamHolder<T> {
   }
 
   void close() {
-    if (!_controller.isClosed) 
-      _controller.close();
+    if (!_controller.isClosed) _controller.close();
   }
 }
