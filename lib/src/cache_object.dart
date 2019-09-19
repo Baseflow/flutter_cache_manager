@@ -5,7 +5,6 @@
 // HINT: Unnecessary import. Future and Stream are available via dart:core.
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 final String tableCacheObject = "cacheObject";
@@ -67,9 +66,6 @@ class CacheObject {
 }
 
 class CacheObjectProvider {
-  @visibleForTesting
-  static DateTime Function() now = () => DateTime.now();
-
   Database db;
   String path;
 
@@ -138,7 +134,9 @@ class CacheObjectProvider {
         columns: null,
         orderBy: "$columnTouched ASC",
         where: "$columnTouched < ?",
-        whereArgs: [now().subtract(new Duration(days: 1)).millisecondsSinceEpoch],
+        whereArgs: [
+          DateTime.now().subtract(new Duration(days: 1)).millisecondsSinceEpoch
+        ],
         limit: 100,
         offset: capacity);
 
@@ -150,7 +148,7 @@ class CacheObjectProvider {
       tableCacheObject,
       where: "$columnTouched < ?",
       columns: null,
-      whereArgs: [now().subtract(maxAge).millisecondsSinceEpoch],
+      whereArgs: [DateTime.now().subtract(maxAge).millisecondsSinceEpoch],
       limit: 100,
     );
 
