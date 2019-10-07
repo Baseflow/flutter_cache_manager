@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:path/path.dart' as p;
@@ -24,7 +25,7 @@ class CacheStore {
   final Duration _maxAge;
 
   DateTime lastCleanupRun = DateTime.now();
-  static const Duration cleanupRunMinInterval = Duration(seconds: 10);
+  Duration cleanupRunMinInterval = const Duration(seconds: 10);
   Timer _scheduledCleanup;
 
   CacheStore(
@@ -32,10 +33,11 @@ class CacheStore {
     filePath = basePath;
     basePath.then((p) => _filePath = p);
 
-    _cacheObjectProvider = _getObjectProvider();
+    _cacheObjectProvider = getObjectProvider();
   }
 
-  Future<CacheObjectProvider> _getObjectProvider() async {
+  @protected
+  Future<CacheObjectProvider> getObjectProvider() async {
     var databasesPath = await getDatabasesPath();
     var path = p.join(databasesPath, "$storeKey.db");
 
