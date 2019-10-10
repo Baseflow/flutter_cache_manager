@@ -178,12 +178,12 @@ abstract class BaseCacheManager {
     await store.emptyCache();
   }
 
-  /// Get cache size
+  /// Get the size of all files in the cache folder
   Future<int> getCacheSize() async {
-    int cacheSize = 0;
+    var cacheSize = 0;
     final directory = Directory(await getFilePath());
-    if (directory.existsSync() && directory.listSync().length > 0) {
-      FileStat fileStat = directory.statSync();
+    if (await directory.exists() && (await directory.list().length) > 0) {
+      var fileStat = await directory.stat();
       cacheSize = fileStat.size;
     }
     return cacheSize;
