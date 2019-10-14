@@ -28,6 +28,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   FileInfo fileInfo;
+  String error;
 
   _downloadFile() {
     var url =
@@ -36,6 +37,12 @@ class _MyHomePageState extends State<MyHomePage> {
     DefaultCacheManager().getFile(url).listen((f) {
       setState(() {
         fileInfo = f;
+        error = null;
+      });
+    }).onError((e){
+      setState((){
+        fileInfo = null;
+        error = e.toString();
       });
     });
   }
@@ -67,6 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               'From: $from',
             ),
+            Text('Error: $error'),
             Padding(
               padding: const EdgeInsets.only(top: 32.0),
               child: RaisedButton(

@@ -104,23 +104,32 @@ abstract class BaseCacheManager {
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
-  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) async* {
+  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) {
+    var streamController = new StreamController<FileInfo>();
+    _pushFileToStream(streamController, url, headers);
+    return streamController.stream;
+  }
+
+  _pushFileToStream(StreamController streamController, String url, Map<String, String> headers) async {
     var cacheFile = await getFileFromCache(url);
     if (cacheFile != null) {
-      yield cacheFile;
+      streamController.sink.add(cacheFile);
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
         var webFile = await webHelper.downloadFile(url, authHeaders: headers);
         if (webFile != null) {
-          yield webFile;
+          streamController.sink.add(webFile);
         }
       } catch (e) {
         if (cacheFile == null) {
-          throw e;
+          if(streamController.hasListener){
+            streamController.addError(e);
+          }
         }
       }
     }
+    streamController.close();
   }
 
   ///Download the file and add to cache
