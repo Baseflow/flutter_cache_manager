@@ -111,21 +111,24 @@ abstract class BaseCacheManager {
   }
 
   _pushFileToStream(StreamController streamController, String url, Map<String, String> headers) async {
-    var cacheFile = await getFileFromCache(url);
-    if (cacheFile != null) {
-      streamController.sink.add(cacheFile);
+    FileInfo cacheFile;
+    try {
+      cacheFile = await getFileFromCache(url);
+      if (cacheFile != null) {
+        streamController.add(cacheFile);
+      }
+    }catch(e){
+      print("Failed to load cached file for $url with error:\n$e");
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
         var webFile = await webHelper.downloadFile(url, authHeaders: headers);
         if (webFile != null) {
-          streamController.sink.add(webFile);
+          streamController.add(webFile);
         }
       } catch (e) {
         if (cacheFile == null) {
-          if(streamController.hasListener){
-            streamController.addError(e);
-          }
+          streamController.addError(e);
         }
       }
     }
