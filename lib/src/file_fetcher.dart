@@ -16,6 +16,7 @@ abstract class FileFetcherResponse {
   Uint8List get bodyBytes => null;
 
   bool hasHeader(String name);
+
   String header(String name);
 }
 
