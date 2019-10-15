@@ -39,8 +39,8 @@ class _MyHomePageState extends State<MyHomePage> {
         fileInfo = f;
         error = null;
       });
-    }).onError((e){
-      setState((){
+    }).onError((e) {
+      setState(() {
         fileInfo = null;
         error = e.toString();
       });

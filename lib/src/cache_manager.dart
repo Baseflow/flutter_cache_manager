@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_cache_manager/src/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
@@ -110,15 +111,17 @@ abstract class BaseCacheManager {
     return streamController.stream;
   }
 
-  _pushFileToStream(StreamController streamController, String url, Map<String, String> headers) async {
+  _pushFileToStream(StreamController streamController, String url,
+      Map<String, String> headers) async {
     FileInfo cacheFile;
     try {
       cacheFile = await getFileFromCache(url);
       if (cacheFile != null) {
         streamController.add(cacheFile);
       }
-    }catch(e){
-      print("Failed to load cached file for $url with error:\n$e");
+    } catch (e) {
+      print(
+          "CacheManager: Failed to load cached file for $url with error:\n$e");
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
@@ -127,7 +130,12 @@ abstract class BaseCacheManager {
           streamController.add(webFile);
         }
       } catch (e) {
-        if (cacheFile == null) {
+        assert(() {
+          print(
+              "CacheManager: Failed to download file from $url with error:\n$e");
+          return true;
+        }());
+        if (cacheFile == null && streamController.hasListener) {
           streamController.addError(e);
         }
       }
