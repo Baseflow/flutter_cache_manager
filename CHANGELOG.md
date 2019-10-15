@@ -1,3 +1,10 @@
+## [1.1.2] - 2019-10-16
+
+* Better error handling (really better this time).
+* Fix that oldest files are removed, and not the newest.
+* Fix error when cache data exists, but file is already removed.
+* await on putFile
+
 ## [1.1.1] - 2019-07-23
 
 * Changed error handling back to throwing the error as it is supposed to be.
