@@ -4,12 +4,14 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_cache_manager/src/cache_object.dart';
+import 'package:flutter_cache_manager/src/cache_object_db_provider.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
 ///Flutter Cache Manager
@@ -39,6 +41,19 @@ class DefaultCacheManager extends BaseCacheManager {
   }
 }
 
+Future<CacheObjectProvider> _getObjectDbProvider(String key) async {
+  var databasesPath = await getDatabasesPath();
+  var path = p.join(databasesPath, "$key.db");
+
+  // Make sure the directory exists
+  try {
+    await Directory(databasesPath).create(recursive: true);
+  } catch (_) {}
+  final provider = CacheObjectDbProvider(path);
+  await provider.open();
+  return provider;
+}
+
 abstract class BaseCacheManager {
   Future<String> _fileBasePath;
 
@@ -47,28 +62,34 @@ abstract class BaseCacheManager {
   /// for the maximum age of the files. The BaseCacheManager should only be
   /// used in singleton patterns.
   ///
-  /// The [_cacheKey] is used for the sqlite database file and should be unique.
+  /// The [_cacheKey] is used for [getObjectProvider] (e.g. sqlite database) and should be unique.
   /// Files are removed when they haven't been used for longer than [_maxAgeCacheObject]
   /// or when this cache has grown to big. When the cache is larger than [_maxNrOfCacheObjects]
   /// files the files that haven't been used longest will be removed.
   /// The [httpGetter] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy.
-  BaseCacheManager(this._cacheKey,
-      {Duration maxAgeCacheObject = const Duration(days: 30),
-      int maxNrOfCacheObjects = 200,
-      FileFetcher fileFetcher}) {
+  BaseCacheManager(
+    this._cacheKey, {
+    Duration maxAgeCacheObject = const Duration(days: 30),
+    int maxNrOfCacheObjects = 200,
+    FileFetcher fileFetcher,
+    Future<CacheObjectProvider> getObjectProvider,
+  })  : this._maxAgeCacheObject = maxAgeCacheObject,
+        this._maxNrOfCacheObjects = maxNrOfCacheObjects {
     _fileBasePath = getFilePath();
 
-    _maxAgeCacheObject = maxAgeCacheObject;
-    _maxNrOfCacheObjects = maxNrOfCacheObjects;
     store = new CacheStore(
-        _fileBasePath, _cacheKey, _maxNrOfCacheObjects, _maxAgeCacheObject);
+      _fileBasePath,
+      getObjectProvider ?? _getObjectDbProvider(_cacheKey),
+      _maxNrOfCacheObjects,
+      _maxAgeCacheObject,
+    );
     webHelper = new WebHelper(store, fileFetcher);
   }
 
   final String _cacheKey;
-  Duration _maxAgeCacheObject;
-  int _maxNrOfCacheObjects;
+  final Duration _maxAgeCacheObject;
+  final int _maxNrOfCacheObjects;
 
   /// This path is used as base folder for all cached files.
   Future<String> getFilePath();

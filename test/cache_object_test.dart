@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_cache_manager/src/cache_object.dart';
+import 'package:flutter_cache_manager/src/cache_object_db_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -31,5 +33,5 @@ Future<CacheObjectProvider> getDbProvider() async {
   try {
     await Directory(databasesPath.path).create(recursive: true);
   } catch (_) {}
-  return new CacheObjectProvider(path);
+  return new CacheObjectDbProvider(path);
 }

@@ -5,8 +5,6 @@
 // HINT: Unnecessary import. Future and Stream are available via dart:core.
 import 'dart:async';
 
-import 'package:sqflite/sqflite.dart';
-
 final String tableCacheObject = "cacheObject";
 
 final String columnId = "_id";
@@ -65,28 +63,17 @@ class CacheObject {
   }
 }
 
-class CacheObjectProvider {
-  Database db;
-  String path;
-
-  CacheObjectProvider(this.path);
-
-  Future open() async {
-    db = await openDatabase(path, version: 1,
-        onCreate: (Database db, int version) async {
-      await db.execute('''
-      create table $tableCacheObject ( 
-        $columnId integer primary key, 
-        $columnUrl text, 
-        $columnPath text,
-        $columnETag text,
-        $columnValidTill integer,
-        $columnTouched integer
-        )
-      ''');
-    });
-  }
-
+/// Interface for caching [CacheObject].
+abstract class CacheObjectProvider {
+  /// Open this provider.
+  Future open();
+  /// Insert a new object.
+  Future<CacheObject> insert(CacheObject cacheObject);
+  /// Gets an object belongs to [url].
+  Future<CacheObject> get(String url);
+  Future<dynamic> delete(int id);
+  Future<dynamic> deleteAll(Iterable<int> ids);
+  Future<int> update(CacheObject cacheObject);
   Future<dynamic> updateOrInsert(CacheObject cacheObject) async {
     if (cacheObject.id == null) {
       return await insert(cacheObject);
@@ -95,65 +82,15 @@ class CacheObjectProvider {
     }
   }
 
-  Future<CacheObject> insert(CacheObject cacheObject) async {
-    cacheObject.id = await db.insert(tableCacheObject, cacheObject.toMap());
-    return cacheObject;
-  }
+  /// Get all objects in this provider.
+  Future<List<CacheObject>> getAllObjects();
 
-  Future<CacheObject> get(String url) async {
-    List<Map> maps = await db.query(tableCacheObject,
-        columns: null, where: "$columnUrl = ?", whereArgs: [url]);
-    if (maps.length > 0) {
-      return new CacheObject.fromMap(maps.first);
-    }
-    return null;
-  }
+  /// Get all objects whose index exceeds [capacity].
+  Future<List<CacheObject>> getObjectsOverCapacity(int capacity);
 
-  Future<int> delete(int id) async {
-    return await db
-        .delete(tableCacheObject, where: "$columnId = ?", whereArgs: [id]);
-  }
+  /// Get all objects whose age exceeds [maxAge].
+  Future<List<CacheObject>> getOldObjects(Duration maxAge);
 
-  Future deleteAll(Iterable<int> ids) async {
-    return await db.delete(tableCacheObject,
-        where: "$columnId IN (" + ids.join(",") + ")");
-  }
-
-  Future<int> update(CacheObject cacheObject) async {
-    return await db.update(tableCacheObject, cacheObject.toMap(),
-        where: "$columnId = ?", whereArgs: [cacheObject.id]);
-  }
-
-  Future<List<CacheObject>> getAllObjects() async {
-    List<Map> maps = await db.query(tableCacheObject, columns: null);
-    return CacheObject.fromMapList(maps);
-  }
-
-  Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
-    List<Map> maps = await db.query(tableCacheObject,
-        columns: null,
-        orderBy: "$columnTouched DESC",
-        where: "$columnTouched < ?",
-        whereArgs: [
-          DateTime.now().subtract(new Duration(days: 1)).millisecondsSinceEpoch
-        ],
-        limit: 100,
-        offset: capacity);
-
-    return CacheObject.fromMapList(maps);
-  }
-
-  Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
-    List<Map<String, dynamic>> maps = await db.query(
-      tableCacheObject,
-      where: "$columnTouched < ?",
-      columns: null,
-      whereArgs: [DateTime.now().subtract(maxAge).millisecondsSinceEpoch],
-      limit: 100,
-    );
-
-    return CacheObject.fromMapList(maps);
-  }
-
-  Future close() async => await db.close();
+  /// Close this provider.
+  Future close();
 }
