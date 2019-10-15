@@ -27,56 +27,57 @@ class WebHelper {
 
   ///Download the file from the url
   Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders, bool ignoreMemCache = false}) async {
+      {Map<String, String> authHeaders, bool ignoreMemCache = false}) {
     if (!_memCache.containsKey(url) || ignoreMemCache) {
-      var completer = new Completer<FileInfo>();
-      _downloadRemoteFile(url, authHeaders: authHeaders).then((cacheObject) {
-        completer.complete(cacheObject);
-      }).catchError((e) {
-        completer.completeError(e);
-      }).whenComplete(() {
-        _memCache.remove(url);
-      });
-
-      _memCache[url] = completer.future;
+      _memCache[url] = _getFile(url, authHeaders);
     }
     return _memCache[url];
+  }
+
+  Future<FileInfo> _getFile(String url, Map<String, String> authHeaders) async {
+    try {
+      final cacheObject =
+          await _downloadRemoteFile(url, authHeaders: authHeaders);
+      return cacheObject;
+    } catch (err) {
+      return Future.error(err);
+    } finally {
+      _memCache.remove(url);
+    }
   }
 
   ///Download the file from the url
   Future<FileInfo> _downloadRemoteFile(String url,
       {Map<String, String> authHeaders}) async {
-    return Future.sync(() async {
-      var cacheObject = await _store.retrieveCacheData(url);
-      if (cacheObject == null) {
-        cacheObject = new CacheObject(url);
-      }
+    var cacheObject = await _store.retrieveCacheData(url);
+    if (cacheObject == null) {
+      cacheObject = new CacheObject(url);
+    }
 
-      var headers = new Map<String, String>();
-      if (authHeaders != null) {
-        headers.addAll(authHeaders);
-      }
+    var headers = new Map<String, String>();
+    if (authHeaders != null) {
+      headers.addAll(authHeaders);
+    }
 
-      if (cacheObject.eTag != null) {
-        headers["If-None-Match"] = cacheObject.eTag;
-      }
+    if (cacheObject.eTag != null) {
+      headers["If-None-Match"] = cacheObject.eTag;
+    }
 
-      var success = false;
+    var success = false;
 
-      var response = await _fileFetcher(url, headers: headers);
-      success = await _handleHttpResponse(response, cacheObject);
+    var response = await _fileFetcher(url, headers: headers);
+    success = await _handleHttpResponse(response, cacheObject);
 
-      if (!success) {
-        throw HttpException(
-            "No valid statuscode. Statuscode was ${response?.statusCode}");
-      }
+    if (!success) {
+      throw HttpException(
+          "No valid statuscode. Statuscode was ${response?.statusCode}");
+    }
 
-      _store.putFile(cacheObject);
-      var filePath = p.join(await _store.filePath, cacheObject.relativePath);
+    _store.putFile(cacheObject);
+    var filePath = p.join(await _store.filePath, cacheObject.relativePath);
 
-      return FileInfo(
-          new File(filePath), FileSource.Online, cacheObject.validTill, url);
-    });
+    return FileInfo(
+        new File(filePath), FileSource.Online, cacheObject.validTill, url);
   }
 
   Future<FileFetcherResponse> _defaultHttpGetter(String url,
