@@ -60,7 +60,7 @@ class CacheStore {
 
   putFile(CacheObject cacheObject) async {
     _memCache[cacheObject.url] = cacheObject;
-    _updateCacheDataInDatabase(cacheObject);
+    await _updateCacheDataInDatabase(cacheObject);
   }
 
   Future<CacheObject> retrieveCacheData(String url) {
