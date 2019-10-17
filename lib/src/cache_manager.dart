@@ -8,6 +8,7 @@ import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/web_helper.dart';
+import 'package:http/http.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -61,9 +62,9 @@ abstract class BaseCacheManager {
 
     _maxAgeCacheObject = maxAgeCacheObject;
     _maxNrOfCacheObjects = maxNrOfCacheObjects;
-    store = new CacheStore(
+    _store = new CacheStore(
         _fileBasePath, _cacheKey, _maxNrOfCacheObjects, _maxAgeCacheObject);
-    webHelper = new WebHelper(store, fileFetcher);
+    _webHelper = new WebHelper(_store, fileFetcher);
   }
 
   final String _cacheKey;
@@ -74,10 +75,10 @@ abstract class BaseCacheManager {
   Future<String> getFilePath();
 
   /// Store helper for cached files
-  CacheStore store;
+  CacheStore _store;
 
   /// Webhelper to download and store files
-  WebHelper webHelper;
+  WebHelper _webHelper;
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
@@ -88,12 +89,12 @@ abstract class BaseCacheManager {
     var cacheFile = await getFileFromCache(url);
     if (cacheFile != null) {
       if (cacheFile.validTill.isBefore(DateTime.now())) {
-        webHelper.downloadFile(url, authHeaders: headers);
+        _webHelper.downloadFile(url, authHeaders: headers);
       }
       return cacheFile.file;
     }
     try {
-      var download = await webHelper.downloadFile(url, authHeaders: headers);
+      var download = await _webHelper.downloadFile(url, authHeaders: headers);
       return download.file;
     } catch (e) {
       return null;
@@ -124,7 +125,7 @@ abstract class BaseCacheManager {
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
-        var webFile = await webHelper.downloadFile(url, authHeaders: headers);
+        var webFile = await _webHelper.downloadFile(url, authHeaders: headers);
         if (webFile != null) {
           streamController.add(webFile);
         }
@@ -145,18 +146,18 @@ abstract class BaseCacheManager {
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,
       {Map<String, String> authHeaders, bool force = false}) async {
-    return await webHelper.downloadFile(url,
+    return await _webHelper.downloadFile(url,
         authHeaders: authHeaders, ignoreMemCache: force);
   }
 
   ///Get the file from the cache
   Future<FileInfo> getFileFromCache(String url) async {
-    return await store.getFile(url);
+    return await _store.getFile(url);
   }
 
   ///Returns the file from memory if it has already been fetched
   FileInfo getFileFromMemory(String url) {
-    return store.getFileFromMemory(url);
+    return _store.getFileFromMemory(url);
   }
 
   /// Put a file in the cache. It is recommended to specify the [eTag] and the
@@ -169,7 +170,7 @@ abstract class BaseCacheManager {
       {String eTag,
       Duration maxAge = const Duration(days: 30),
       String fileExtension = "file"}) async {
-    var cacheObject = await store.retrieveCacheData(url);
+    var cacheObject = await _store.retrieveCacheData(url);
     if (cacheObject == null) {
       var relativePath = "${new Uuid().v1()}.$fileExtension";
       cacheObject = new CacheObject(url, relativePath: relativePath);
@@ -184,21 +185,21 @@ abstract class BaseCacheManager {
     }
     var file = await new File(path).writeAsBytes(fileBytes);
 
-    store.putFile(cacheObject);
+    _store.putFile(cacheObject);
 
     return file;
   }
 
   /// Remove a file from the cache
   removeFile(String url) async {
-    var cacheObject = await store.retrieveCacheData(url);
+    var cacheObject = await _store.retrieveCacheData(url);
     if (cacheObject != null) {
-      await store.removeCachedFile(cacheObject);
+      await _store.removeCachedFile(cacheObject);
     }
   }
 
   /// Removes all files from the cache
   emptyCache() async {
-    await store.emptyCache();
+    await _store.emptyCache();
   }
 }
