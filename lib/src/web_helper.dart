@@ -70,8 +70,11 @@ class WebHelper {
     success = await _handleHttpResponse(response, cacheObject);
 
     if (!success) {
-      throw HttpException(
-          "No valid statuscode. Statuscode was ${response?.statusCode}");
+      throw HttpExceptionWithStatus(
+        response.statusCode,
+        "Invalid statusCode: ${response?.statusCode}",
+        uri: Uri.parse(url),
+      );
     }
 
     _store.putFile(cacheObject);
@@ -158,4 +161,9 @@ class WebHelper {
       await file.delete();
     }
   }
+}
+
+class HttpExceptionWithStatus extends HttpException {
+  const HttpExceptionWithStatus(this.statusCode, String message, {Uri uri}) : super(message, uri: uri);
+  final int statusCode;
 }
