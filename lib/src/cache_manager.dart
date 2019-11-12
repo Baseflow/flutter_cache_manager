@@ -93,12 +93,7 @@ abstract class BaseCacheManager {
       }
       return cacheFile.file;
     }
-    try {
-      var download = await _webHelper.downloadFile(url, authHeaders: headers);
-      return download.file;
-    } catch (e) {
-      return null;
-    }
+    return (await _webHelper.downloadFile(url, authHeaders: headers)).file;
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
