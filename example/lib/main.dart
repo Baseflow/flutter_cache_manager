@@ -30,9 +30,8 @@ class _MyHomePageState extends State<MyHomePage> {
   FileInfo fileInfo;
   String error;
 
-  _downloadFile() {
-    var url =
-        'https://cdn2.online-convert.com/example-file/raster%20image/png/example_small.png';
+  void _downloadFile() {
+    var url = 'https://cdn2.online-convert.com/example-file/raster%20image/png/example_small.png';
 
     DefaultCacheManager().getFile(url).listen((f) {
       setState(() {
@@ -49,11 +48,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var path = "N/A";
+    var path = 'N/A';
     if (fileInfo?.file != null) {
       path = fileInfo.file.path;
     }
-    var from = "N/A";
+    var from = 'N/A';
     if (fileInfo != null) {
       from = fileInfo.source.toString();
     }
@@ -65,23 +64,15 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Local filePath:',
-            ),
-            Text(
-              path,
-            ),
-            Text(
-              'From: $from',
-            ),
+            const Text('Local filePath:'),
+            Text(path),
+            Text('From: $from'),
             Text('Error: $error'),
             Padding(
               padding: const EdgeInsets.only(top: 32.0),
               child: RaisedButton(
-                child: Text('CLEAR CACHE'),
-                onPressed: () {
-                  DefaultCacheManager().emptyCache();
-                },
+                child: const Text('CLEAR CACHE'),
+                onPressed: DefaultCacheManager().emptyCache,
               ),
             )
           ],

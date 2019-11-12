@@ -166,6 +166,7 @@ Pods/
 
 ### Dart ###
 # See https://www.dartlang.org/tools/private-files.html
+.dart_tool/
 
 # Files and directories created by pub
 .packages
