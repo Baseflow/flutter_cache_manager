@@ -108,13 +108,6 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         }
 
-        if (error != null) {
-          ListTile(
-            title: Text("Error"),
-            subtitle: Text(error.toString()),
-          );
-        }
-
         children.add(
           Padding(
             padding: EdgeInsets.all(10.0),
@@ -131,6 +124,15 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       } else {
         children.add(ListTile(title: Text("Tap the floating action button to download.")));
+      }
+
+      if (error != null) {
+        children.add(
+          ListTile(
+            title: Text("Error"),
+            subtitle: Text(error.toString()),
+          ),
+        );
       }
 
       body = ListView(children: children);
