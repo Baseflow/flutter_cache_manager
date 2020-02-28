@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
@@ -22,7 +23,7 @@ class CacheStore {
   String _filePath;
 
   final String storeKey;
-  Future<CacheObjectProvider> _cacheObjectProvider;
+  Future<CacheInfoRepository> _cacheInfoRepository;
   final int _capacity;
   final Duration _maxAge;
 
@@ -31,10 +32,10 @@ class CacheStore {
 
   CacheStore(Future<String> basePath, this.storeKey, this._capacity, this._maxAge) {
     filePath = basePath.then((path) => _filePath = path);
-    _cacheObjectProvider = _getObjectProvider();
+    _cacheInfoRepository = _getObjectProvider();
   }
 
-  Future<CacheObjectProvider> _getObjectProvider() async {
+  Future<CacheInfoRepository> _getObjectProvider() async {
     final databasesPath = await getDatabasesPath();
     try {
       await Directory(databasesPath).create(recursive: true);
@@ -66,7 +67,7 @@ class CacheStore {
       final completer = Completer<CacheObject>();
       _getCacheDataFromDatabase(url).then((cacheObject) async {
         if (cacheObject != null && !await _fileExists(cacheObject)) {
-          final provider = await _cacheObjectProvider;
+          final provider = await _cacheInfoRepository;
           unawaited(provider.delete(cacheObject.id));
           cacheObject = null;
         }
@@ -97,7 +98,7 @@ class CacheStore {
   }
 
   Future<CacheObject> _getCacheDataFromDatabase(String url) async {
-    final provider = await _cacheObjectProvider;
+    final provider = await _cacheInfoRepository;
     final data = await provider.get(url);
     if (await _fileExists(data)) {
       unawaited(_updateCacheDataInDatabase(data));
@@ -117,13 +118,13 @@ class CacheStore {
   }
 
   Future<dynamic> _updateCacheDataInDatabase(CacheObject cacheObject) async {
-    final provider = await _cacheObjectProvider;
+    final provider = await _cacheInfoRepository;
     return provider.updateOrInsert(cacheObject);
   }
 
   Future<void> _cleanupCache() async {
     final toRemove = <int>[];
-    final provider = await _cacheObjectProvider;
+    final provider = await _cacheInfoRepository;
 
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
     for (final cacheObject in overCapacity) {
@@ -139,7 +140,7 @@ class CacheStore {
   }
 
   Future<void> emptyCache() async {
-    final provider = await _cacheObjectProvider;
+    final provider = await _cacheInfoRepository;
     final toRemove = <int>[];
     final allObjects = await provider.getAllObjects();
     for (final cacheObject in allObjects) {
@@ -149,7 +150,7 @@ class CacheStore {
   }
 
   Future<void> removeCachedFile(CacheObject cacheObject) async {
-    final provider = await _cacheObjectProvider;
+    final provider = await _cacheInfoRepository;
     final toRemove = <int>[];
     unawaited(_removeCachedFile(cacheObject, toRemove));
     await provider.deleteAll(toRemove);
@@ -172,7 +173,7 @@ class CacheStore {
   }
 
   Future<void> dispose() async {
-    final provider = await _cacheObjectProvider;
+    final provider = await _cacheInfoRepository;
     await provider.close();
   }
 }
