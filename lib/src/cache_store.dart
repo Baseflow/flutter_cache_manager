@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter_cache_manager/src/cache_object.dart';
+import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
+import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:pedantic/pedantic.dart';
 import 'package:sqflite/sqflite.dart';
