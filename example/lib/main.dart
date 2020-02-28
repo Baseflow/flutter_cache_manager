@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -65,29 +64,29 @@ class _MyHomePageState extends State<MyHomePage> {
             Container(
               width: 50.0,
               height: 50.0,
-              child: CircularProgressIndicator(),
+              child: const CircularProgressIndicator(),
             ),
-            SizedBox(width: 20.0),
-            Text("Downloading"),
+            const SizedBox(width: 20.0),
+            const Text('Downloading'),
           ],
         ),
       );
     } else {
-      final List<Widget> children = [];
+      final children = <Widget>[];
       if (fileInfo != null) {
         if (fileInfo != null) {
           children.add(
             ListTile(
-              title: Text("Original URL"),
+              title: const Text('Original URL'),
               subtitle: Text(fileInfo.originalUrl),
             ),
           );
 
           if (fileInfo.file != null) {
-            File file = fileInfo.file;
+            var file = fileInfo.file;
             children.add(
               ListTile(
-                title: Text("Local file path"),
+                title: const Text('Local file path'),
                 subtitle: Text(file.path),
               ),
             );
@@ -95,14 +94,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
           children.add(
             ListTile(
-              title: Text("Loaded from"),
+              title: const Text('Loaded from'),
               subtitle: Text(fileInfo.source.toString()),
             ),
           );
 
           children.add(
             ListTile(
-              title: Text("Valid Until"),
+              title: const Text('Valid Until'),
               subtitle: Text(fileInfo.validTill.toIso8601String()),
             ),
           );
@@ -110,12 +109,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
         children.add(
           Padding(
-            padding: EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(10.0),
             child: RaisedButton(
-              child: Text('CLEAR CACHE'),
+              child: const Text('CLEAR CACHE'),
               onPressed: () {
                 DefaultCacheManager().emptyCache();
-                this.setState(() {
+                setState(() {
                   fileInfo = null;
                 });
               },
@@ -123,13 +122,13 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       } else {
-        children.add(ListTile(title: Text("Tap the floating action button to download.")));
+        children.add(const ListTile(title: Text('Tap the floating action button to download.')));
       }
 
       if (error != null) {
         children.add(
           ListTile(
-            title: Text("Error"),
+            title: const Text('Error'),
             subtitle: Text(error.toString()),
           ),
         );
@@ -146,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Flutter Cache Manager Demo"),
+        title: const Text('Flutter Cache Manager Demo'),
       ),
       body: body,
       floatingActionButton: fab,
