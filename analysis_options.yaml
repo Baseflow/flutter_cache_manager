@@ -8,7 +8,7 @@ analyzer:
     unused_import: warning
     unused_local_variable: warning
     dead_code: warning
-    override_on_non_overriding_method: error
+    invalid_override_of_non_virtual_member: error
 
 linter:
   rules:
