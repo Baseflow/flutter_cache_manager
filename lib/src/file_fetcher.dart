@@ -7,23 +7,25 @@ import 'package:http/http.dart' as http;
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
-typedef Future<FileFetcherResponse> FileFetcher(String url,
-    {Map<String, String> headers});
+typedef Future<FileFetcherResponse> FileFetcher(String url, {Map<String, String> headers});
 
 abstract class FileFetcherResponse {
-  get statusCode;
-
-  Uint8List get bodyBytes => null;
+  int get statusCode;
 
   bool hasHeader(String name);
 
   String header(String name);
+
+  Uint8List get bodyBytes => null;
 }
 
 class HttpFileFetcherResponse implements FileFetcherResponse {
-  http.Response _response;
+  const HttpFileFetcherResponse(this._response);
 
-  HttpFileFetcherResponse(this._response);
+  final http.Response _response;
+
+  @override
+  int get statusCode => _response.statusCode;
 
   @override
   bool hasHeader(String name) {
@@ -37,7 +39,4 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
 
   @override
   Uint8List get bodyBytes => _response.bodyBytes;
-
-  @override
-  get statusCode => _response.statusCode;
 }
