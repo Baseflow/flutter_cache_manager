@@ -30,9 +30,10 @@ class CacheStore {
   DateTime lastCleanupRun = DateTime.now();
   Timer _scheduledCleanup;
 
-  CacheStore(Future<String> basePath, this.storeKey, this._capacity, this._maxAge) {
+  CacheStore(Future<String> basePath, this.storeKey, this._capacity, this._maxAge,
+    {Future<CacheInfoRepository> cacheRepoProvider}) {
     filePath = basePath.then((path) => _filePath = path);
-    _cacheInfoRepository = _getObjectProvider();
+    _cacheInfoRepository = cacheRepoProvider ?? _getObjectProvider();
   }
 
   Future<CacheInfoRepository> _getObjectProvider() async {
@@ -94,7 +95,11 @@ class CacheStore {
     if (cacheObject?.relativePath == null) {
       return false;
     }
-    return File(p.join(await filePath, cacheObject.relativePath)).exists();
+
+    var dirPath = await filePath;
+    var completePath = p.join(dirPath, cacheObject.relativePath);
+    var file = File(completePath);
+    return file.exists();
   }
 
   Future<CacheObject> _getCacheDataFromDatabase(String url) async {
