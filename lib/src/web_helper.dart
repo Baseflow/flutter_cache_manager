@@ -100,10 +100,14 @@ class WebHelper {
     // Without a cache-control header we keep the file for a week
     var ageDuration = const Duration(days: 7);
     if (response.hasHeader('cache-control')) {
-      final controlSettings = response.header('cache-control').split(', ');
+      final controlSettings = response.header('cache-control').split(',');
       for (final setting in controlSettings) {
-        if (setting.startsWith('max-age=')) {
-          final validSeconds = int.tryParse(setting.split('=')[1]) ?? 0;
+        final sanitizedSetting = setting.trim().toLowerCase();
+        if (sanitizedSetting == 'no-cache') {
+          ageDuration = const Duration();
+        }
+        if (sanitizedSetting.startsWith('max-age=')) {
+          var validSeconds = int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
           if (validSeconds > 0) {
             ageDuration = Duration(seconds: validSeconds);
           }
