@@ -16,9 +16,9 @@ dependencies:
   path: "^1.6.4"
   sqflite: "^1.1.7+2"
   pedantic: "^1.8.0+1"
+  file: ^5.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   mockito: ^4.1.1
-  file: ^5.1.0

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file/file.dart' as f;
+import 'package:file/local.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
@@ -56,7 +58,7 @@ abstract class BaseCacheManager {
     int maxNrOfCacheObjects = 200,
     FileFetcher fileFetcher,
   }) {
-    _store = CacheStore(getFilePath(), _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
+    _store = CacheStore(_getFileDir(), _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
     _webHelper = WebHelper(_store, fileFetcher);
   }
 
@@ -175,4 +177,11 @@ abstract class BaseCacheManager {
 
   /// Removes all files from the cache
   Future<void> emptyCache() => _store.emptyCache();
+
+  Future<f.Directory> _getFileDir() async {
+    var fs = const LocalFileSystem();
+    var directory = fs.directory((await getFilePath()));
+    await directory.create(recursive: true);
+    return directory;
+  }
 }

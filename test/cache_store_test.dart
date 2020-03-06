@@ -12,7 +12,7 @@ void main() {
     var repo = MockRepo();
     when(repo.get(any)).thenAnswer((_)=> Future.value(null));
 
-    var store = CacheStore(Future.value('/this/is/a/test/dir'), 'test', 30,
+    var store = CacheStore(createDir(), 'test', 30,
         const Duration(days: 7),
         cacheRepoProvider: Future.value(repo));
 
@@ -24,19 +24,12 @@ void main() {
     
     var tempDir = createDir();
     var file = await (await tempDir).childFile('testimage.png').create();
-    String realPath;
-    try {
-      var path = await dirToPath(tempDir);
-      realPath = path;
-    }catch(e){
-      print(e);
-    }
 
     when(repo.get('baseflow.com/test.png')).thenAnswer((_) =>
       Future.value(CacheObject('baseflow.com/test.png', relativePath: 'testimage.png'))
     );
 
-    var store = CacheStore(dirToPath(tempDir), 'test', 30,
+    var store = CacheStore(tempDir, 'test', 30,
         const Duration(days: 7),
         cacheRepoProvider: Future.value(repo));
 
@@ -47,10 +40,6 @@ void main() {
 Future<Directory> createDir() async {
   final fileSystem = MemoryFileSystem();
   return fileSystem.systemTempDirectory.createTemp('test');
-}
-
-Future<String> dirToPath(Future<Directory> dir) async{
-  return (await dir).path;
 }
 
 class MockRepo extends Mock implements CacheInfoRepository {}
