@@ -2,6 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
 [![Build Status](https://app.bitrise.io/app/b3454de795b5c22a/status.svg?token=vEfW1ztZ-tkoUx64yXeklg&branch=master)](https://app.bitrise.io/app/b3454de795b5c22a)
+[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/master/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
 
 A CacheManager to download and cache files in the cache directory of the app. Various settings on how long to keep a file can be changed.
 
