@@ -115,8 +115,12 @@ class WebHelper {
 
     if (response.hasHeader("cache-control")) {
       var cacheControl = response.header("cache-control");
-      var controlSettings = cacheControl.split(", ");
+      var controlSettings = cacheControl.split(",");
       controlSettings.forEach((setting) {
+        setting = setting.trim();
+        if (setting.toLowerCase() == "no-cache") {
+          ageDuration = new Duration();
+        }
         if (setting.startsWith("max-age=")) {
           var validSeconds = int.tryParse(setting.split("=")[1]) ?? 0;
           if (validSeconds > 0) {
