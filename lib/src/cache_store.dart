@@ -15,7 +15,7 @@ import 'package:sqflite/sqflite.dart';
 ///Released under MIT License.
 
 class CacheStore {
-  static const Duration cleanupRunMinInterval = Duration(seconds: 10);
+  Duration cleanupRunMinInterval;
 
   final _futureCache = <String, Future<CacheObject>>{};
   final _memCache = <String, CacheObject>{};
@@ -32,7 +32,7 @@ class CacheStore {
   Timer _scheduledCleanup;
 
   CacheStore(Future<f.Directory> basedir, this.storeKey, this._capacity, this._maxAge,
-    {Future<CacheInfoRepository> cacheRepoProvider}) {
+    {Future<CacheInfoRepository> cacheRepoProvider, this.cleanupRunMinInterval = const Duration(seconds: 10)}) {
     fileDir = basedir.then((dir) => _fileDir = dir);
     _cacheInfoRepository = cacheRepoProvider ?? _getObjectProvider();
   }
