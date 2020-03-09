@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file/file.dart' as f;
+import 'package:file/local.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
@@ -56,7 +58,8 @@ abstract class BaseCacheManager {
     int maxNrOfCacheObjects = 200,
     FileFetcher fileFetcher,
   }) {
-    _store = CacheStore(getFilePath(), _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
+    _store =
+        CacheStore(_fileDir, _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
     _webHelper = WebHelper(_store, fileFetcher);
   }
 
@@ -97,7 +100,8 @@ abstract class BaseCacheManager {
     return streamController.stream;
   }
 
-  Future<void> _pushFileToStream(StreamController streamController, String url, Map<String, String> headers) async {
+  Future<void> _pushFileToStream(StreamController streamController, String url,
+      Map<String, String> headers) async {
     FileInfo cacheFile;
     try {
       cacheFile = await getFileFromCache(url);
@@ -105,17 +109,20 @@ abstract class BaseCacheManager {
         streamController.add(cacheFile);
       }
     } catch (e) {
-      print('CacheManager: Failed to load cached file for $url with error:\n$e');
+      print(
+          'CacheManager: Failed to load cached file for $url with error:\n$e');
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
-        final webFile = await _webHelper.downloadFile(url, authHeaders: headers);
+        final webFile =
+            await _webHelper.downloadFile(url, authHeaders: headers);
         if (webFile != null) {
           streamController.add(webFile);
         }
       } catch (e) {
         assert(() {
-          print('CacheManager: Failed to download file from $url with error:\n$e');
+          print(
+              'CacheManager: Failed to download file from $url with error:\n$e');
           return true;
         }());
         if (cacheFile == null && streamController.hasListener) {
@@ -127,8 +134,10 @@ abstract class BaseCacheManager {
   }
 
   ///Download the file and add to cache
-  Future<FileInfo> downloadFile(String url, {Map<String, String> authHeaders, bool force = false}) {
-    return _webHelper.downloadFile(url, authHeaders: authHeaders, ignoreMemCache: force);
+  Future<FileInfo> downloadFile(String url,
+      {Map<String, String> authHeaders, bool force = false}) {
+    return _webHelper.downloadFile(url,
+        authHeaders: authHeaders, ignoreMemCache: force);
   }
 
   ///Get the file from the cache
@@ -151,7 +160,8 @@ abstract class BaseCacheManager {
     String fileExtension = 'file',
   }) async {
     var cacheObject = await _store.retrieveCacheData(url);
-    cacheObject ??= CacheObject(url, relativePath: '${Uuid().v1()}.$fileExtension');
+    cacheObject ??=
+        CacheObject(url, relativePath: '${Uuid().v1()}.$fileExtension');
     cacheObject.validTill = DateTime.now().add(maxAge);
     cacheObject.eTag = eTag;
 
@@ -175,4 +185,16 @@ abstract class BaseCacheManager {
 
   /// Removes all files from the cache
   Future<void> emptyCache() => _store.emptyCache();
+
+  Future<f.Directory> _cachedFileDir;
+  Future<f.Directory> get _fileDir {
+    return _cachedFileDir ??= _createFileDir();
+  }
+
+  Future<f.Directory> _createFileDir() async {
+    var fs = const LocalFileSystem();
+    var directory = fs.directory((await getFilePath()));
+    await directory.create(recursive: true);
+    return directory;
+  }
 }

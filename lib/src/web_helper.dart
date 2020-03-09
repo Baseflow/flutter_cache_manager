@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file/file.dart' as f;
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
@@ -68,8 +69,8 @@ class WebHelper {
 
     unawaited(_store.putFile(cacheObject));
 
-    final filePath = p.join(await _store.filePath, cacheObject.relativePath);
-    return FileInfo(File(filePath), FileSource.Online, cacheObject.validTill, url);
+    final file = (await _store.fileDir).childFile(cacheObject.relativePath);
+    return FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
   static Future<FileFetcherResponse> _defaultHttpGetter(String url, {Map<String, String> headers}) async {
@@ -79,14 +80,14 @@ class WebHelper {
 
   Future<bool> _handleHttpResponse(FileFetcherResponse response, CacheObject cacheObject) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final basePath = await _store.filePath;
+      final basePath = await _store.fileDir;
       unawaited(_setDataFromHeaders(cacheObject, response));
-      final path = p.join(basePath, cacheObject.relativePath);
-      final folder = File(path).parent;
+      final file = basePath.childFile(cacheObject.relativePath);
+      final folder = file.parent;
       if (!(await folder.exists())) {
         folder.createSync(recursive: true);
       }
-      await File(path).writeAsBytes(response.bodyBytes);
+      await file.writeAsBytes(response.bodyBytes);
       return true;
     }
     if (response.statusCode == 304) {
@@ -139,7 +140,7 @@ class WebHelper {
   }
 
   Future<void> _removeOldFile(String relativePath) async {
-    final file = File(p.join(await _store.filePath, relativePath));
+    final file = (await _store.fileDir).childFile(relativePath);
     if (await file.exists()) {
       await file.delete();
     }

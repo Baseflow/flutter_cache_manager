@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file/file.dart' as f;
 import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
@@ -14,13 +15,13 @@ import 'package:sqflite/sqflite.dart';
 ///Released under MIT License.
 
 class CacheStore {
-  static const Duration cleanupRunMinInterval = Duration(seconds: 10);
+  Duration cleanupRunMinInterval;
 
   final _futureCache = <String, Future<CacheObject>>{};
   final _memCache = <String, CacheObject>{};
 
-  Future<String> filePath;
-  String _filePath;
+  Future<f.Directory> fileDir;
+  f.Directory _fileDir;
 
   final String storeKey;
   Future<CacheInfoRepository> _cacheInfoRepository;
@@ -30,9 +31,10 @@ class CacheStore {
   DateTime lastCleanupRun = DateTime.now();
   Timer _scheduledCleanup;
 
-  CacheStore(Future<String> basePath, this.storeKey, this._capacity, this._maxAge) {
-    filePath = basePath.then((path) => _filePath = path);
-    _cacheInfoRepository = _getObjectProvider();
+  CacheStore(Future<f.Directory> basedir, this.storeKey, this._capacity, this._maxAge,
+    {Future<CacheInfoRepository> cacheRepoProvider, this.cleanupRunMinInterval = const Duration(seconds: 10)}) {
+    fileDir = basedir.then((dir) => _fileDir = dir);
+    _cacheInfoRepository = cacheRepoProvider ?? _getObjectProvider();
   }
 
   Future<CacheInfoRepository> _getObjectProvider() async {
@@ -50,8 +52,8 @@ class CacheStore {
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
-    final path = p.join(await filePath, cacheObject.relativePath);
-    return FileInfo(File(path), FileSource.Cache, cacheObject.validTill, url);
+    final file = (await fileDir).childFile(cacheObject.relativePath);
+    return FileInfo(file, FileSource.Cache, cacheObject.validTill, url);
   }
 
   Future<void> putFile(CacheObject cacheObject) async {
@@ -82,11 +84,11 @@ class CacheStore {
   }
 
   FileInfo getFileFromMemory(String url) {
-    if (_memCache[url] == null || _filePath == null) {
+    if (_memCache[url] == null || _fileDir == null) {
       return null;
     }
     final cacheObject = _memCache[url];
-    final file = File(p.join(_filePath, cacheObject.relativePath));
+    final file = _fileDir.childFile(cacheObject.relativePath);
     return FileInfo(file, FileSource.Cache, cacheObject.validTill, url);
   }
 
@@ -94,7 +96,10 @@ class CacheStore {
     if (cacheObject?.relativePath == null) {
       return false;
     }
-    return File(p.join(await filePath, cacheObject.relativePath)).exists();
+
+    var dirPath = await fileDir;
+    var file = dirPath.childFile(cacheObject.relativePath);
+    return file.exists();
   }
 
   Future<CacheObject> _getCacheDataFromDatabase(String url) async {
@@ -166,7 +171,7 @@ class CacheStore {
         unawaited(_futureCache.remove(cacheObject.url));
       }
     }
-    final file = File(p.join(await filePath, cacheObject.relativePath));
+    final file = (await fileDir).childFile(cacheObject.relativePath);
     if (await file.exists()) {
       unawaited(file.delete());
     }
