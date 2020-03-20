@@ -56,11 +56,11 @@ abstract class BaseCacheManager {
     this._cacheKey, {
     Duration maxAgeCacheObject = const Duration(days: 30),
     int maxNrOfCacheObjects = 200,
-    FileFetcher fileFetcher,
+    FileService fileService,
   }) {
     _store =
         CacheStore(_fileDir, _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
-    _webHelper = WebHelper(_store, fileFetcher);
+    _webHelper = WebHelper(_store, fileService);
   }
 
   final String _cacheKey;

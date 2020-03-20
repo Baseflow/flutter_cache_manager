@@ -1,42 +1,110 @@
 import 'dart:async';
-import 'dart:typed_data';
-
+import 'package:clock/clock.dart';
+import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:http/http.dart' as http;
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
-typedef Future<FileFetcherResponse> FileFetcher(String url, {Map<String, String> headers});
-
-abstract class FileFetcherResponse {
-  int get statusCode;
-
-  bool hasHeader(String name);
-
-  String header(String name);
-
-  Uint8List get bodyBytes => null;
+/// Defines the interface for a file service.
+/// Most common file service will be an [HttpFileFetcher], however one can
+/// also make something more specialized. For example you could fetch files
+/// from other apps or from local storage.
+abstract class FileService {
+  Future<FileFetcherResponse> get(String url, {Map<String, String> headers});
 }
 
-class HttpFileFetcherResponse implements FileFetcherResponse {
-  const HttpFileFetcherResponse(this._response);
+/// [HttpFileFetcher] is the most common file service and the default for
+/// [WebHelper]. One can easily adapt it to use dio or any other http client.
+class HttpFileFetcher implements FileService {
+  http.Client _httpClient;
+  HttpFileFetcher({http.Client httpClient}){
+    _httpClient = httpClient ?? http.Client();
+  }
 
-  final http.Response _response;
+  @override
+  Future<FileFetcherResponse> get(String url,
+      {Map<String, String> headers = const {}}) async {
+    final req = http.Request('GET', Uri.parse(url));
+    req.headers.addAll(headers);
+    final httpResponse = await _httpClient.send(req);
+
+    return HttpFileFetcherResponse(httpResponse);
+  }
+}
+
+/// Defines the interface for a get result of a [FileService].
+abstract class FileFetcherResponse {
+  /// [content] is a stream of bytes
+  Stream<List<int>> get content => null;
+  /// [statusCode] is expected to conform to an http status code.
+  int get statusCode;
+  /// Defines till when the cache should be assumed to be valid.
+  DateTime get validTill;
+  /// [eTag] is used when asking to update the cache
+  String get eTag;
+  /// Used to save the file on the storage, includes a dot. For example '.jpeg'
+  String get fileExtension;
+}
+
+/// Basic implementation of a [FileFetcherResponse] for http requests.
+class HttpFileFetcherResponse implements FileFetcherResponse {
+  HttpFileFetcherResponse(this._response);
+
+  final DateTime _receivedTime = clock.now();
+
+  final http.StreamedResponse _response;
 
   @override
   int get statusCode => _response.statusCode;
 
-  @override
-  bool hasHeader(String name) {
+  bool _hasHeader(String name) {
     return _response.headers.containsKey(name);
   }
 
-  @override
-  String header(String name) {
+  String _header(String name) {
     return _response.headers[name];
   }
 
   @override
-  Uint8List get bodyBytes => _response.bodyBytes;
+  Stream<List<int>> get content => _response.stream;
+
+  @override
+  DateTime get validTill {
+    // Without a cache-control header we keep the file for a week
+    var ageDuration = const Duration(days: 7);
+    if (_hasHeader('cache-control')) {
+      final controlSettings = _header('cache-control').split(',');
+      for (final setting in controlSettings) {
+        final sanitizedSetting = setting.trim().toLowerCase();
+        if (sanitizedSetting == 'no-cache') {
+          ageDuration = const Duration();
+        }
+        if (sanitizedSetting.startsWith('max-age=')) {
+          var validSeconds = int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
+          if (validSeconds > 0) {
+            ageDuration = Duration(seconds: validSeconds);
+          }
+        }
+      }
+    }
+
+    return _receivedTime.add(ageDuration);
+  }
+
+  @override
+  String get eTag => _hasHeader('etag') ? _header('etag') : null;
+
+  @override
+  String get fileExtension {
+    var fileExtension = '';
+    if (_hasHeader('content-type')) {
+      final type = _header('content-type').split('/');
+      if (type.length == 2) {
+        fileExtension = '.${type[1]}';
+      }
+    }
+    return fileExtension;
+  }
 }

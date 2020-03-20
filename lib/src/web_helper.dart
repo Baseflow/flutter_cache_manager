@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:file/file.dart' as f;
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as p;
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,21 +13,23 @@ import 'package:uuid/uuid.dart';
 ///Released under MIT License.
 
 class WebHelper {
-  WebHelper(this._store, FileFetcher fileFetcher)
+  WebHelper(this._store, FileService fileFetcher)
       : _memCache = {},
-        _fileFetcher = fileFetcher ?? _defaultHttpGetter;
+        _fileFetcher = fileFetcher ?? HttpFileFetcher();
 
   final CacheStore _store;
-  final FileFetcher _fileFetcher;
+  final FileService _fileFetcher;
   final Map<String, Future<FileInfo>> _memCache;
 
   ///Download the file from the url
-  Future<FileInfo> downloadFile(String url, {Map<String, String> authHeaders, bool ignoreMemCache = false}) async {
+  Future<FileInfo> downloadFile(String url,
+      {Map<String, String> authHeaders, bool ignoreMemCache = false}) async {
     if (!_memCache.containsKey(url) || ignoreMemCache) {
       var completer = Completer<FileInfo>();
       unawaited(() async {
         try {
-          final cacheObject = await _downloadRemoteFile(url, authHeaders: authHeaders);
+          final cacheObject =
+              await _downloadRemoteFile(url, authHeaders: authHeaders);
           completer.complete(cacheObject);
         } catch (e) {
           completer.completeError(e);
@@ -44,7 +43,8 @@ class WebHelper {
   }
 
   ///Download the file from the url
-  Future<FileInfo> _downloadRemoteFile(String url, {Map<String, String> authHeaders}) async {
+  Future<FileInfo> _downloadRemoteFile(String url,
+      {Map<String, String> authHeaders}) async {
     var cacheObject = await _store.retrieveCacheData(url);
     cacheObject ??= CacheObject(url);
 
@@ -57,7 +57,7 @@ class WebHelper {
       headers['If-None-Match'] = cacheObject.eTag;
     }
 
-    final response = await _fileFetcher(url, headers: headers);
+    final response = await _fileFetcher.get(url, headers: headers);
     final success = await _handleHttpResponse(response, cacheObject);
     if (!success) {
       throw HttpExceptionWithStatus(
@@ -73,12 +73,8 @@ class WebHelper {
     return FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
-  static Future<FileFetcherResponse> _defaultHttpGetter(String url, {Map<String, String> headers}) async {
-    final httpResponse = await http.get(url, headers: headers);
-    return HttpFileFetcherResponse(httpResponse);
-  }
-
-  Future<bool> _handleHttpResponse(FileFetcherResponse response, CacheObject cacheObject) async {
+  Future<bool> _handleHttpResponse(
+      FileFetcherResponse response, CacheObject cacheObject) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
       final basePath = await _store.fileDir;
       unawaited(_setDataFromHeaders(cacheObject, response));
@@ -87,7 +83,11 @@ class WebHelper {
       if (!(await folder.exists())) {
         folder.createSync(recursive: true);
       }
-      await file.writeAsBytes(response.bodyBytes);
+
+      final sink = file.openWrite();
+      await sink.addStream(response.content);
+      await sink.close();
+
       return true;
     }
     if (response.statusCode == 304) {
@@ -97,38 +97,11 @@ class WebHelper {
     return false;
   }
 
-  Future<void> _setDataFromHeaders(CacheObject cacheObject, FileFetcherResponse response) async {
-    // Without a cache-control header we keep the file for a week
-    var ageDuration = const Duration(days: 7);
-    if (response.hasHeader('cache-control')) {
-      final controlSettings = response.header('cache-control').split(',');
-      for (final setting in controlSettings) {
-        final sanitizedSetting = setting.trim().toLowerCase();
-        if (sanitizedSetting == 'no-cache') {
-          ageDuration = const Duration();
-        }
-        if (sanitizedSetting.startsWith('max-age=')) {
-          var validSeconds = int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
-          if (validSeconds > 0) {
-            ageDuration = Duration(seconds: validSeconds);
-          }
-        }
-      }
-    }
-
-    cacheObject.validTill = DateTime.now().add(ageDuration);
-
-    if (response.hasHeader('etag')) {
-      cacheObject.eTag = response.header('etag');
-    }
-
-    var fileExtension = '';
-    if (response.hasHeader('content-type')) {
-      final type = response.header('content-type').split('/');
-      if (type.length == 2) {
-        fileExtension = '.${type[1]}';
-      }
-    }
+  Future<void> _setDataFromHeaders(
+      CacheObject cacheObject, FileFetcherResponse response) async {
+    cacheObject.validTill = response.validTill;
+    cacheObject.eTag = response.eTag;
+    final fileExtension = response.fileExtension;
 
     final oldPath = cacheObject.relativePath;
     if (oldPath != null && !oldPath.endsWith(fileExtension)) {
@@ -148,6 +121,7 @@ class WebHelper {
 }
 
 class HttpExceptionWithStatus extends HttpException {
-  const HttpExceptionWithStatus(this.statusCode, String message, {Uri uri}) : super(message, uri: uri);
+  const HttpExceptionWithStatus(this.statusCode, String message, {Uri uri})
+      : super(message, uri: uri);
   final int statusCode;
 }
