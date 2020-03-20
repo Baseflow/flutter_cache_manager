@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:clock/clock.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 ///Flutter Cache Manager
@@ -10,11 +12,14 @@ abstract class FileService {
 }
 
 class HttpFileFetcher implements FileService {
-  final http.Client _httpClient = http.Client();
+  http.Client _httpClient;
+  HttpFileFetcher({http.Client httpClient}){
+    _httpClient = httpClient ?? http.Client();
+  }
 
   @override
   Future<FileFetcherResponse> get(String url,
-      {Map<String, String> headers}) async {
+      {Map<String, String> headers = const {}}) async {
     final req = http.Request('GET', Uri.parse(url));
     req.headers.addAll(headers);
     final httpResponse = await _httpClient.send(req);
@@ -34,7 +39,7 @@ abstract class FileFetcherResponse {
 class HttpFileFetcherResponse implements FileFetcherResponse {
   HttpFileFetcherResponse(this._response);
 
-  final DateTime _receivedTime = DateTime.now();
+  final DateTime _receivedTime = clock.now();
 
   final http.StreamedResponse _response;
 
