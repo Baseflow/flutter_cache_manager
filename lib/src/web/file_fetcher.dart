@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:clock/clock.dart';
-import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:http/http.dart' as http;
+import 'mime_converter.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -19,7 +20,7 @@ abstract class FileService {
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
 class HttpFileFetcher implements FileService {
   http.Client _httpClient;
-  HttpFileFetcher({http.Client httpClient}){
+  HttpFileFetcher({http.Client httpClient}) {
     _httpClient = httpClient ?? http.Client();
   }
 
@@ -37,13 +38,17 @@ class HttpFileFetcher implements FileService {
 /// Defines the interface for a get result of a [FileService].
 abstract class FileFetcherResponse {
   /// [content] is a stream of bytes
-  Stream<List<int>> get content => null;
+  Stream<List<int>> get content;
+
   /// [statusCode] is expected to conform to an http status code.
   int get statusCode;
+
   /// Defines till when the cache should be assumed to be valid.
   DateTime get validTill;
+
   /// [eTag] is used when asking to update the cache
   String get eTag;
+
   /// Used to save the file on the storage, includes a dot. For example '.jpeg'
   String get fileExtension;
 }
@@ -100,10 +105,8 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
   String get fileExtension {
     var fileExtension = '';
     if (_hasHeader('content-type')) {
-      final type = _header('content-type').split('/');
-      if (type.length == 2) {
-        fileExtension = '.${type[1]}';
-      }
+      var contentType = ContentType.parse(_header('content-type'));
+      fileExtension = contentType.fileExtension ?? '';
     }
     return fileExtension;
   }

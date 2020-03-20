@@ -4,11 +4,12 @@ import 'dart:typed_data';
 
 import 'package:file/file.dart' as f;
 import 'package:file/local.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/file_fetcher.dart';
+import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
-import 'package:flutter_cache_manager/src/web_helper.dart';
+import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pedantic/pedantic.dart';

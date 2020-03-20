@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/file_fetcher.dart';
+import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
 import 'package:flutter_cache_manager/src/file_info.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
