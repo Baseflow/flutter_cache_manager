@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:clock/clock.dart';
-import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:http/http.dart' as http;
 
 ///Flutter Cache Manager
@@ -37,7 +36,7 @@ class HttpFileFetcher implements FileService {
 /// Defines the interface for a get result of a [FileService].
 abstract class FileFetcherResponse {
   /// [content] is a stream of bytes
-  Stream<List<int>> get content => null;
+  Stream<List<int>> get content;
   /// [statusCode] is expected to conform to an http status code.
   int get statusCode;
   /// Defines till when the cache should be assumed to be valid.
