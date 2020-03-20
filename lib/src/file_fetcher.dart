@@ -1,16 +1,22 @@
 import 'dart:async';
 import 'package:clock/clock.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/src/web_helper.dart';
 import 'package:http/http.dart' as http;
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
+/// Defines the interface for a file service.
+/// Most common file service will be an [HttpFileFetcher], however one can
+/// also make something more specialized. For example you could fetch files
+/// from other apps or from local storage.
 abstract class FileService {
   Future<FileFetcherResponse> get(String url, {Map<String, String> headers});
 }
 
+/// [HttpFileFetcher] is the most common file service and the default for
+/// [WebHelper]. One can easily adapt it to use dio or any other http client.
 class HttpFileFetcher implements FileService {
   http.Client _httpClient;
   HttpFileFetcher({http.Client httpClient}){
@@ -28,14 +34,21 @@ class HttpFileFetcher implements FileService {
   }
 }
 
+/// Defines the interface for a get result of a [FileService].
 abstract class FileFetcherResponse {
+  /// [content] is a stream of bytes
   Stream<List<int>> get content => null;
+  /// [statusCode] is expected to conform to an http status code.
   int get statusCode;
+  /// Defines till when the cache should be assumed to be valid.
   DateTime get validTill;
+  /// [eTag] is used when asking to update the cache
   String get eTag;
+  /// Used to save the file on the storage, includes a dot. For example '.jpeg'
   String get fileExtension;
 }
 
+/// Basic implementation of a [FileFetcherResponse] for http requests.
 class HttpFileFetcherResponse implements FileFetcherResponse {
   HttpFileFetcherResponse(this._response);
 
