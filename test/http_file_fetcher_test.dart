@@ -10,8 +10,8 @@ void main() {
   group('Check header values', () {
     test('Valid headers should be parsed normally', () async {
       var eTag = 'test';
-      var fileExtension = 'jpeg';
-      var contentType = 'image/$fileExtension';
+      var fileExtension = 'jpg';
+      var contentType = 'image/jpeg';
       var maxAge = const Duration(hours: 2);
 
       var client = MockClient((request) async {
