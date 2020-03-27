@@ -215,6 +215,37 @@ void main() {
       verifyNever(store.removeCachedFile(any));
     });
   });
+
+
+  test('Download file just downloads file', () async {
+    var fileUrl = 'baseflow.com/test';
+    var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
+    var store = MockStore();
+    var webHelper = MockWebHelper();
+    when(webHelper.downloadFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
+    var cacheManager = TestCacheManager(store, webHelper);
+    expect(await cacheManager.downloadFile(fileUrl), fileInfo);
+  });
+
+  test('test file from memory', (){
+    var fileUrl = 'baseflow.com/test';
+    var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
+
+    var store = MockStore();
+    when(store.getFileFromMemory(fileUrl)).thenAnswer((_) => fileInfo);
+
+    var webHelper = MockWebHelper();
+    var cacheManager = TestCacheManager(store, webHelper);
+    expect(cacheManager.getFileFromMemory(fileUrl), fileInfo);
+  });
+
+  test('Empty cache empties cache in store', () async {
+    var store = MockStore();
+    var webHelper = MockWebHelper();
+    var cacheManager = TestCacheManager(store, webHelper);
+    await cacheManager.emptyCache();
+    verify(store.emptyCache()).called(1);
+  });
 }
 
 class TestCacheManager extends BaseCacheManager {
