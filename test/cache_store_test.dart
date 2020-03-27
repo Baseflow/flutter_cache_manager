@@ -87,7 +87,7 @@ void main() {
       var result = await store.retrieveCacheData('baseflow.com/test.png');
       expect(result, isNotNull);
       var _  = await store.retrieveCacheData('baseflow.com/test.png');
-      verify(repo.get(argThat(anything))).called(1);
+      verify(repo.get(any)).called(1);
       
     });
 

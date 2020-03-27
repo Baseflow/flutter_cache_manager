@@ -126,7 +126,7 @@ void main() {
       var call2 = webHelper.downloadFile(imageUrl);
       await Future.wait([call1, call2]);
 
-      verify(store.retrieveCacheData(argThat(anything))).called(1);
+      verify(store.retrieveCacheData(any)).called(1);
     });
 
     test('Calling webhelper twice excecutes twice when memcache ignored', () async {
@@ -154,7 +154,7 @@ void main() {
       var call2 = webHelper.downloadFile(imageUrl, ignoreMemCache: true);
       await Future.wait([call1, call2]);
 
-      verify(store.retrieveCacheData(argThat(anything))).called(2);
+      verify(store.retrieveCacheData(any)).called(2);
     });
   });
 
@@ -184,7 +184,7 @@ void main() {
       var webHelper = WebHelper(store, fileService);
       var result = await webHelper.downloadFile(imageUrl);
       expect(result, isNotNull);
-      verify(store.putFile(argThat(anything))).called(1);
+      verify(store.putFile(any)).called(1);
     });
 
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -26,8 +28,7 @@ void main() {
 
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verifyNever(webHelper.downloadFile(argThat(anything),
-          authHeaders: anyNamed('authHeaders')));
+      verifyNever(webHelper.downloadFile(any));
     });
 
     test('Outdated cacheFile should call to web', () async {
@@ -47,9 +48,7 @@ void main() {
 
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verify(webHelper.downloadFile(argThat(anything),
-              authHeaders: anyNamed('authHeaders')))
-          .called(1);
+      verify(webHelper.downloadFile(any)).called(1);
     });
 
     test('Non-existing cacheFile should call to web', () async {
@@ -66,21 +65,16 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
       var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(fileUrl,
-              authHeaders: anyNamed('authHeaders')))
+      when(webHelper.downloadFile(fileUrl))
           .thenAnswer((_) => Future.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verify(webHelper.downloadFile(argThat(anything),
-              authHeaders: anyNamed('authHeaders')))
-          .called(1);
+      verify(webHelper.downloadFile(any)).called(1);
     });
   });
-
-
 
   group('Tests for getFile', () {
     test('Valid cacheFile should not call to web', () async {
@@ -100,8 +94,7 @@ void main() {
 
       var fileStream = cacheManager.getFile(fileUrl);
       expect(fileStream, emits(fileInfo));
-      verifyNever(webHelper.downloadFile(argThat(anything),
-          authHeaders: anyNamed('authHeaders')));
+      verifyNever(webHelper.downloadFile(any));
     });
 
     test('Outdated cacheFile should call to web', () async {
@@ -118,15 +111,16 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(cachedInfo));
 
       var webHelper = MockWebHelper();
-      var downloadedInfo = FileInfo(file, FileSource.Online, DateTime.now().add(const Duration(days: 1)), fileUrl);
-      when(webHelper.downloadFile(fileUrl)).thenAnswer((_) => Future.value(downloadedInfo));
+      var downloadedInfo = FileInfo(file, FileSource.Online,
+          DateTime.now().add(const Duration(days: 1)), fileUrl);
+      when(webHelper.downloadFile(fileUrl))
+          .thenAnswer((_) => Future.value(downloadedInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
 
-      verify(webHelper.downloadFile(argThat(anything),
-          authHeaders: anyNamed('authHeaders'))).called(1);
+      verify(webHelper.downloadFile(any)).called(1);
     });
 
     test('Non-existing cacheFile should call to web', () async {
@@ -143,17 +137,82 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
       var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(fileUrl,
-          authHeaders: anyNamed('authHeaders')))
+      when(webHelper.downloadFile(fileUrl))
           .thenAnswer((_) => Future.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([fileInfo]));
-      verify(webHelper.downloadFile(argThat(anything),
-          authHeaders: anyNamed('authHeaders')))
-          .called(1);
+      verify(webHelper.downloadFile(any)).called(1);
+    });
+
+    test('Errors should be passed to the stream', () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockStore();
+      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
+
+      var webHelper = MockWebHelper();
+      var error = HttpExceptionWithStatus(404, 'Invalid statusCode: 404',
+          uri: Uri.parse(fileUrl));
+      when(webHelper.downloadFile(fileUrl)).thenThrow(error);
+
+      var cacheManager = TestCacheManager(store, webHelper);
+
+      var fileStream = cacheManager.getFile(fileUrl);
+      await expectLater(fileStream, emitsError(error));
+      verify(webHelper.downloadFile(any)).called(1);
+    });
+  });
+
+  group('Testing puting files in cache', () {
+    test('Check if file is written and info is stored', () async {
+      var fileUrl = 'baseflow.com/test';
+      var fileBytes = Uint8List(16);
+      var extension = '.jpg';
+
+      var store = MockStore();
+      when(store.fileDir).thenAnswer((_) => Future.value(
+          MemoryFileSystem().systemTempDirectory.createTemp('test')));
+
+      var webHelper = MockWebHelper();
+      var cacheManager = TestCacheManager(store, webHelper);
+
+      var file = await cacheManager.putFile(fileUrl, fileBytes,
+          fileExtension: extension);
+      expect(await file.exists(), true);
+      expect(await file.readAsBytes(), fileBytes);
+      verify(store.putFile(any)).called(1);
+    });
+  });
+
+  group('Testing remove files from cache', () {
+    test('Remove existing file from cache', () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockStore();
+      when(store.retrieveCacheData(fileUrl))
+          .thenAnswer((_) => Future.value(CacheObject(fileUrl)));
+
+      var webHelper = MockWebHelper();
+      var cacheManager = TestCacheManager(store, webHelper);
+
+      await cacheManager.removeFile(fileUrl);
+      verify(store.removeCachedFile(any)).called(1);
+    });
+
+    test("Don't remove files not in cache", () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockStore();
+      when(store.retrieveCacheData(fileUrl)).thenAnswer((_) => null);
+
+      var webHelper = MockWebHelper();
+      var cacheManager = TestCacheManager(store, webHelper);
+
+      await cacheManager.removeFile(fileUrl);
+      verifyNever(store.removeCachedFile(any));
     });
   });
 }
