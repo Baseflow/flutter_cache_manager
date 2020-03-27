@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:clock/clock.dart';
@@ -16,15 +17,14 @@ void main() {
       var maxAge = const Duration(hours: 2);
 
       var client = MockClient((request) async {
-        return Response.bytes(Uint8List(contentLength), 200,
-            headers: {
-              'etag': 'test',
-              'content-type': contentType,
-              'cache-control': 'max-age=${maxAge.inSeconds}'
+        return Response.bytes(Uint8List(contentLength), 200, headers: {
+          'etag': 'test',
+          'content-type': contentType,
+          'cache-control': 'max-age=${maxAge.inSeconds}'
         });
       });
 
-      await withClock(Clock.fixed(DateTime.now()),() async {
+      await withClock(Clock.fixed(DateTime.now()), () async {
         var httpFileFetcher = HttpFileFetcher(httpClient: client);
         final now = clock.now();
         final response = await httpFileFetcher.get('test.com/image');
@@ -33,7 +33,23 @@ void main() {
         expect(response.eTag, eTag);
         expect(response.fileExtension, '.$fileExtension');
         expect(response.validTill, now.add(maxAge));
+        expect(response.statusCode, 200);
       });
+    });
+
+    test('Weird contenttype should still parse', () async {
+      var fileExtension = 'cov';
+      var contentType = 'unknown/$fileExtension';
+
+      var client = MockClient((request) async {
+        return Response.bytes(Uint8List(16), 200,
+            headers: {'content-type': contentType});
+      });
+
+      var httpFileFetcher = HttpFileFetcher(httpClient: client);
+      final response = await httpFileFetcher.get('test.com/image');
+
+      expect(response.fileExtension, '.$fileExtension');
     });
   });
 }
