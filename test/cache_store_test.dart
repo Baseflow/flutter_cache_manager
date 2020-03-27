@@ -72,6 +72,25 @@ void main() {
       expect(await store.retrieveCacheData('baseflow.com/test.png'), isNotNull);
     });
 
+    test('Store should return CacheInfo from memory when asked twice', () async {
+      var repo = MockRepo();
+
+      var tempDir = createDir();
+      await (await tempDir).childFile('testimage.png').create();
+
+      when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
+          CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
+
+      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
+          cacheRepoProvider: Future.value(repo));
+      
+      var result = await store.retrieveCacheData('baseflow.com/test.png');
+      expect(result, isNotNull);
+      var _  = await store.retrieveCacheData('baseflow.com/test.png');
+      verify(repo.get(argThat(anything))).called(1);
+      
+    });
+
     test(
         'Store should return File from memcache only when file is retrieved before',
         () async {
