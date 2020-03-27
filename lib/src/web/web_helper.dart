@@ -31,7 +31,7 @@ class WebHelper {
           final cacheObject =
               await _downloadRemoteFile(url, authHeaders: authHeaders);
           completer.complete(cacheObject);
-        } catch (e) {
+        } catch (e, stackTrace) {
           completer.completeError(e);
         } finally {
           unawaited(_memCache.remove(url));
@@ -77,7 +77,7 @@ class WebHelper {
       FileFetcherResponse response, CacheObject cacheObject) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
       final basePath = await _store.fileDir;
-      unawaited(_setDataFromHeaders(cacheObject, response));
+      _setDataFromHeaders(cacheObject, response);
       final file = basePath.childFile(cacheObject.relativePath);
       final folder = file.parent;
       if (!(await folder.exists())) {
@@ -91,14 +91,14 @@ class WebHelper {
       return true;
     }
     if (response.statusCode == 304) {
-      await _setDataFromHeaders(cacheObject, response);
+      _setDataFromHeaders(cacheObject, response);
       return true;
     }
     return false;
   }
 
-  Future<void> _setDataFromHeaders(
-      CacheObject cacheObject, FileFetcherResponse response) async {
+  void _setDataFromHeaders(
+      CacheObject cacheObject, FileFetcherResponse response) {
     cacheObject.validTill = response.validTill;
     cacheObject.eTag = response.eTag;
     final fileExtension = response.fileExtension;
