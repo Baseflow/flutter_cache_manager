@@ -12,10 +12,11 @@ void main() {
       var eTag = 'test';
       var fileExtension = 'jpg';
       var contentType = 'image/jpeg';
+      var contentLength = 16;
       var maxAge = const Duration(hours: 2);
 
       var client = MockClient((request) async {
-        return Response.bytes(Uint8List(16), 200,
+        return Response.bytes(Uint8List(contentLength), 200,
             headers: {
               'etag': 'test',
               'content-type': contentType,
@@ -28,6 +29,7 @@ void main() {
         final now = clock.now();
         final response = await httpFileFetcher.get('test.com/image');
 
+        expect(response.contentLength, contentLength);
         expect(response.eTag, eTag);
         expect(response.fileExtension, '.$fileExtension');
         expect(response.validTill, now.add(maxAge));
