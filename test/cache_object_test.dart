@@ -1,28 +1,57 @@
-import 'dart:io';
-
-import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
+import 'package:clock/clock.dart';
+import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
 
 void main() {
-  // Tests with sqflite are broken, because sqflite doesn't provide testing yet.
-//  test('Test adding files to cache sql store', () async {
-//    final url = 'https://cdn2.online-convert.com/example-file/raster%20image/png/example_small.png';
-//    final provider = await getDbProvider();
-//    await provider.open();
-//    await provider.updateOrInsert(CacheObject(url));
-//    await provider.close();
-//    await provider.open();
-//    final storedObject = await provider.get(url);
-//    expect(storedObject, isNotNull);
-//    expect(storedObject.id, isNotNull);
-//  });
-}
+  const columnId = '_id';
+  const columnUrl = 'url';
+  const columnPath = 'relativePath';
+  const columnETag = 'eTag';
+  const columnValidTill = 'validTill';
+  const columnTouched = 'touched';
 
-Future<CacheObjectProvider> getDbProvider() async {
-  final databasesPath = await Directory.systemTemp.createTemp();
-  try {
-    await Directory(databasesPath.path).create(recursive: true);
-  } catch (_) {}
-  return CacheObjectProvider(p.join(databasesPath.path, 'test.db'));
+  const validMillis = 1585301160000;
+  final validDate = DateTime.utc(2020, 03, 27, 09, 26).toLocal();
+  final now = DateTime(2020, 03, 28, 09, 26);
+
+  group('Test CacheObject mapping', () {
+    test('Test making CacheObject from map', () {
+      var map = {
+        columnId: 3,
+        columnUrl: 'baseflow.com/test.png',
+        columnPath: 'test.png',
+        columnETag: 'test1',
+        columnValidTill: validMillis,
+        columnTouched: now.millisecondsSinceEpoch
+      };
+      var object = CacheObject.fromMap(map);
+      expect(object.id, 3);
+      expect(object.url, 'baseflow.com/test.png');
+      expect(object.relativePath, 'test.png');
+      expect(object.eTag, 'test1');
+      expect(object.validTill, validDate);
+    });
+
+    test('Test encoding CacheObject to map', ()
+    async {
+      await withClock(Clock.fixed(now), ()
+        async {
+          var object = CacheObject(
+            'baseflow.com/test.png',
+            relativePath: 'test.png',
+            validTill: validDate,
+            eTag: 'test1',
+            id: 3,
+          );
+
+          var map = object.toMap();
+          expect(map[columnId], 3);
+          expect(map[columnUrl], 'baseflow.com/test.png');
+          expect(map[columnPath], 'test.png');
+          expect(map[columnETag], 'test1');
+          expect(map[columnValidTill], validMillis);
+          expect(map[columnTouched], now.millisecondsSinceEpoch);
+        });
+      });
+  });
 }

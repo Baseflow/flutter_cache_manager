@@ -126,7 +126,7 @@ void main() {
       var call2 = webHelper.downloadFile(imageUrl);
       await Future.wait([call1, call2]);
 
-      verify(store.retrieveCacheData(argThat(anything))).called(1);
+      verify(store.retrieveCacheData(any)).called(1);
     });
 
     test('Calling webhelper twice excecutes twice when memcache ignored', () async {
@@ -154,7 +154,73 @@ void main() {
       var call2 = webHelper.downloadFile(imageUrl, ignoreMemCache: true);
       await Future.wait([call1, call2]);
 
-      verify(store.retrieveCacheData(argThat(anything))).called(2);
+      verify(store.retrieveCacheData(any)).called(2);
+    });
+  });
+
+  group('Miscellaneous', (){
+    test('When not yet cached, new cacheobject should be made',() async {
+
+      const imageUrl = 'baseflow.com/testimage';
+
+      var fileDir = MemoryFileSystem().systemTempDirectory;
+      final store = MockStore();
+      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
+      when(store.retrieveCacheData(imageUrl))
+          .thenAnswer((_) => Future.value(null));
+
+      final fileService = MockFileService();
+      when(fileService.get(imageUrl, headers: anyNamed('headers')))
+          .thenAnswer((_) {
+        return Future.value(MockFileFetcherResponse(
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now()));
+      });
+
+      var webHelper = WebHelper(store, fileService);
+      var result = await webHelper.downloadFile(imageUrl);
+      expect(result, isNotNull);
+      verify(store.putFile(any)).called(1);
+    });
+
+
+    test('File should be removed if extension changed',() async {
+
+      const imageUrl = 'baseflow.com/testimage';
+
+      var imageName = 'image.png';
+      var fileDir = MemoryFileSystem().systemTempDirectory;
+      var file = fileDir.childFile(imageName);
+      await file.create();
+
+      final store = MockStore();
+      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
+      when(store.retrieveCacheData(imageUrl))
+          .thenAnswer((_) => Future.value(
+          CacheObject(imageUrl, relativePath: imageName)
+      ));
+
+      final fileService = MockFileService();
+      when(fileService.get(imageUrl, headers: anyNamed('headers')))
+          .thenAnswer((_) {
+        return Future.value(MockFileFetcherResponse(
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now()));
+      });
+
+      var webHelper = WebHelper(store, fileService);
+
+      expect(await file.exists(), true);
+      var _ = await webHelper.downloadFile(imageUrl);
+      expect(await file.exists(), false);
     });
   });
 }

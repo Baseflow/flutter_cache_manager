@@ -54,14 +54,19 @@ abstract class BaseCacheManager {
   /// The [httpGetter] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy.
   BaseCacheManager(
-    this._cacheKey, {
-    Duration maxAgeCacheObject = const Duration(days: 30),
-    int maxNrOfCacheObjects = 200,
-    FileService fileService,
-  }) {
-    _store =
-        CacheStore(_fileDir, _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
-    _webHelper = WebHelper(_store, fileService);
+      this._cacheKey, {
+        Duration maxAgeCacheObject,
+        int maxNrOfCacheObjects,
+        FileService fileService,
+        CacheStore cacheStore,
+        WebHelper webHelper,
+      }) {
+    var duration = maxAgeCacheObject ??  const Duration(days: 30);
+    var maxSize = maxNrOfCacheObjects ?? 200;
+    _store = cacheStore ??
+        CacheStore(_createFileDir(), _cacheKey, maxSize, duration);
+    _fileDir = _store.fileDir;
+    _webHelper = webHelper ?? WebHelper(_store, fileService);
   }
 
   final String _cacheKey;
@@ -166,12 +171,12 @@ abstract class BaseCacheManager {
     cacheObject.validTill = DateTime.now().add(maxAge);
     cacheObject.eTag = eTag;
 
-    final path = p.join(await getFilePath(), cacheObject.relativePath);
-    final folder = File(path).parent;
+    final file = (await _fileDir).childFile(cacheObject.relativePath);
+    final folder = file.parent;
     if (!(await folder.exists())) {
       folder.createSync(recursive: true);
     }
-    final file = await File(path).writeAsBytes(fileBytes);
+    await file.writeAsBytes(fileBytes);
     unawaited(_store.putFile(cacheObject));
     return file;
   }
@@ -187,10 +192,7 @@ abstract class BaseCacheManager {
   /// Removes all files from the cache
   Future<void> emptyCache() => _store.emptyCache();
 
-  Future<f.Directory> _cachedFileDir;
-  Future<f.Directory> get _fileDir {
-    return _cachedFileDir ??= _createFileDir();
-  }
+  Future<f.Directory> _fileDir;
 
   Future<f.Directory> _createFileDir() async {
     var fs = const LocalFileSystem();
