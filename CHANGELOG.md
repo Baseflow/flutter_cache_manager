@@ -1,3 +1,14 @@
+## [2.0.0] - WIP
+* [BREAKING CHANGE] Changes to FileFetcher and FileFetcherResponse:
+    * FileFetcher is now a FileService and a class instead of a function.
+    * FileFetcherResponse doesn't just give magic headers, but concrete implementation of the needed information.
+    * FileFetcherResponse gives a contentStream instead of content for more efficient handling of the data.
+    * FileFetcherResponse contains contentLength with information about the total size of the content.
+* Changes in CacheStore for testability:
+    * CleanupRunMinInterval can now be set.
+    * Expects a mockable directory instead of a path.
+* Added CacheInfoRepository interface to possibly replace the current CacheObjectProvider based on sqflite.
+
 ## [1.1.3] - 2019-10-17
 * Use try-catch in WebHelper so VM understands that errors are not uncaught.
 
