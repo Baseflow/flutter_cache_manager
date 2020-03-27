@@ -22,6 +22,7 @@ void main() {
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
             Stream.value([0, 1, 2, 3, 4, 5]),
+            0,
             'testv1',
             '.jpg',
             200,
@@ -46,7 +47,7 @@ void main() {
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            null, 'testv1', '.jpg', 200, DateTime.now()));
+            null, 0, 'testv1', '.jpg', 200, DateTime.now()));
       });
 
       var webHelper = WebHelper(store, fileService);
@@ -66,7 +67,7 @@ void main() {
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(
-            MockFileFetcherResponse(null, null, '', 404, DateTime.now()));
+            MockFileFetcherResponse(null, 0, null, '', 404, DateTime.now()));
       });
 
       var webHelper = WebHelper(store, fileService);
@@ -90,7 +91,7 @@ void main() {
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            null, 'testv1', '.jpg', 304, DateTime.now()));
+            null, 0, 'testv1', '.jpg', 304, DateTime.now()));
       });
 
       var webHelper = WebHelper(store, fileService);
@@ -113,7 +114,7 @@ void main() {
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            Stream.value([0, 1, 2, 3, 4, 5]),
+            Stream.value([0, 1, 2, 3, 4, 5]), 6,
             'testv1',
             '.jpg',
             200,
@@ -141,7 +142,7 @@ void main() {
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            Stream.value([0, 1, 2, 3, 4, 5]),
+            Stream.value([0, 1, 2, 3, 4, 5]), 6,
             'testv1',
             '.jpg',
             200,
@@ -164,12 +165,13 @@ class MockFileService extends Mock implements FileService {}
 
 class MockFileFetcherResponse implements FileFetcherResponse {
   final Stream<List<int>> _content;
+  final int _contentLength;
   final String _eTag;
   final String _fileExtension;
   final int _statusCode;
   final DateTime _validTill;
 
-  MockFileFetcherResponse(this._content, this._eTag, this._fileExtension,
+  MockFileFetcherResponse(this._content, this._contentLength, this._eTag, this._fileExtension,
       this._statusCode, this._validTill);
 
   @override
@@ -190,4 +192,8 @@ class MockFileFetcherResponse implements FileFetcherResponse {
   @override
   // TODO: implement validTill
   DateTime get validTill => _validTill;
+
+  @override
+  // TODO: implement contentLength
+  int get contentLength => _contentLength;
 }

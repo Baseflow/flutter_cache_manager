@@ -40,6 +40,10 @@ abstract class FileFetcherResponse {
   /// [content] is a stream of bytes
   Stream<List<int>> get content;
 
+  /// [contentLength] is the total size of the content.
+  /// If the size is not known beforehand contentLength is null.
+  int get contentLength;
+
   /// [statusCode] is expected to conform to an http status code.
   int get statusCode;
 
@@ -74,6 +78,9 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
 
   @override
   Stream<List<int>> get content => _response.stream;
+
+  @override
+  int get contentLength => _response.contentLength;
 
   @override
   DateTime get validTill {
