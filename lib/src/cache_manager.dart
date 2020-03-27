@@ -55,13 +55,17 @@ abstract class BaseCacheManager {
   /// to edit the urls, add headers or use a proxy.
   BaseCacheManager(
     this._cacheKey, {
-    Duration maxAgeCacheObject = const Duration(days: 30),
-    int maxNrOfCacheObjects = 200,
+    Duration maxAgeCacheObject,
+    int maxNrOfCacheObjects,
     FileService fileService,
+    CacheStore cacheStore,
+    WebHelper webHelper,
   }) {
-    _store =
-        CacheStore(_fileDir, _cacheKey, maxNrOfCacheObjects, maxAgeCacheObject);
-    _webHelper = WebHelper(_store, fileService);
+    var duration = maxAgeCacheObject ??  const Duration(days: 30);
+    var maxSize = maxNrOfCacheObjects ?? 200;
+    _store = cacheStore ??
+        CacheStore(_fileDir, _cacheKey, maxSize, duration);
+    _webHelper = webHelper ?? WebHelper(_store, fileService);
   }
 
   final String _cacheKey;
