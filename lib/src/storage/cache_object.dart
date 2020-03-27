@@ -1,3 +1,5 @@
+import 'package:clock/clock.dart';
+
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
@@ -32,7 +34,7 @@ class CacheObject {
       columnPath: relativePath,
       columnETag: eTag,
       columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
-      columnTouched: DateTime.now().millisecondsSinceEpoch
+      columnTouched: clock.now().millisecondsSinceEpoch
     };
     if (id != null) {
       map[columnId] = id;
