@@ -30,7 +30,9 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var result = await webHelper.downloadFile(imageUrl);
+      var result = await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo, orElse: null);
       expect(result, isNotNull);
     });
 
@@ -48,7 +50,8 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      expect(() async => webHelper.downloadFile(imageUrl), throwsA(anything));
+      expect(() async => webHelper.downloadFile(imageUrl).toList(),
+          throwsA(anything));
     });
 
     test('404 throws', () async {
@@ -67,7 +70,7 @@ void main() {
       var webHelper = WebHelper(store, fileService);
 
       expect(
-          () async => webHelper.downloadFile(imageUrl),
+          () async => webHelper.downloadFile(imageUrl).toList(),
           throwsA(predicate(
               (e) => e is HttpExceptionWithStatus && e.statusCode == 404)));
     });
@@ -111,8 +114,9 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var call1 = webHelper.downloadFile(imageUrl);
-      var call2 = webHelper.downloadFile(imageUrl);
+
+      var call1 = webHelper.downloadFile(imageUrl).toList();
+      var call2 = webHelper.downloadFile(imageUrl).toList();
       await Future.wait([call1, call2]);
 
       verify(store.retrieveCacheData(any)).called(1);
@@ -138,8 +142,9 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var call1 = webHelper.downloadFile(imageUrl);
-      var call2 = webHelper.downloadFile(imageUrl, ignoreMemCache: true);
+      var call1 = webHelper.downloadFile(imageUrl).toList();
+      var call2 =
+          webHelper.downloadFile(imageUrl, ignoreMemCache: true).toList();
       await Future.wait([call1, call2]);
 
       verify(store.retrieveCacheData(any)).called(2);
@@ -168,7 +173,7 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var result = await webHelper.downloadFile(imageUrl);
+      var result = await webHelper.downloadFile(imageUrl).firstWhere((r) => r is FileInfo, orElse: null);
       expect(result, isNotNull);
       verify(store.putFile(any)).called(1);
     });
@@ -200,7 +205,7 @@ void main() {
       var webHelper = WebHelper(store, fileService);
 
       expect(await file.exists(), true);
-      var _ = await webHelper.downloadFile(imageUrl);
+      var _ = await webHelper.downloadFile(imageUrl).firstWhere((r) => r is FileInfo, orElse: null);
       expect(await file.exists(), false);
     });
   });

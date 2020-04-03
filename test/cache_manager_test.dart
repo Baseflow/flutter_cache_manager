@@ -44,6 +44,13 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
 
       var webHelper = MockWebHelper();
+      when(webHelper.downloadFile(argThat(anything)))
+          .thenAnswer((i) => Stream.value(FileInfo(
+                null,
+                FileSource.Online,
+                DateTime.now().add(const Duration(days: 7)),
+                i.positionalArguments.first as String,
+              )));
       var cacheManager = TestCacheManager(store, webHelper);
 
       var result = await cacheManager.getSingleFile(fileUrl);
@@ -66,7 +73,7 @@ void main() {
 
       var webHelper = MockWebHelper();
       when(webHelper.downloadFile(fileUrl))
-          .thenAnswer((_) => Future.value(fileInfo));
+          .thenAnswer((_) => Stream.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
@@ -114,7 +121,7 @@ void main() {
       var downloadedInfo = FileInfo(file, FileSource.Online,
           DateTime.now().add(const Duration(days: 1)), fileUrl);
       when(webHelper.downloadFile(fileUrl))
-          .thenAnswer((_) => Future.value(downloadedInfo));
+          .thenAnswer((_) => Stream.value(downloadedInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
       var fileStream = cacheManager.getFile(fileUrl);
@@ -138,7 +145,7 @@ void main() {
 
       var webHelper = MockWebHelper();
       when(webHelper.downloadFile(fileUrl))
-          .thenAnswer((_) => Future.value(fileInfo));
+          .thenAnswer((_) => Stream.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
@@ -216,18 +223,18 @@ void main() {
     });
   });
 
-
   test('Download file just downloads file', () async {
     var fileUrl = 'baseflow.com/test';
     var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
     var store = MockStore();
     var webHelper = MockWebHelper();
-    when(webHelper.downloadFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
+    when(webHelper.downloadFile(fileUrl))
+        .thenAnswer((_) => Stream.value(fileInfo));
     var cacheManager = TestCacheManager(store, webHelper);
     expect(await cacheManager.downloadFile(fileUrl), fileInfo);
   });
 
-  test('test file from memory', (){
+  test('test file from memory', () {
     var fileUrl = 'baseflow.com/test';
     var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
 

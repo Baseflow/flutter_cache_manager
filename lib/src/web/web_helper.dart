@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
-import 'package:flutter_cache_manager/src/file_info.dart';
+import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:pedantic/pedantic.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
 
 ///Flutter Cache Manager
@@ -22,26 +24,28 @@ class WebHelper {
 
   final CacheStore _store;
   final FileService _fileFetcher;
-  final Map<String, Future<FileInfo>> _memCache;
+  final Map<String, BehaviorSubject<FileResponse>> _memCache;
 
   ///Download the file from the url
-  Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders, bool ignoreMemCache = false}) async {
+  Stream<FileResponse> downloadFile(String url,
+      {Map<String, String> authHeaders, bool ignoreMemCache = false}) {
     if (!_memCache.containsKey(url) || ignoreMemCache) {
-      var completer = Completer<FileInfo>();
+      var subject = BehaviorSubject<FileResponse>();
+      _memCache[url] = subject;
+
       unawaited(() async {
         try {
           final cacheObject = await _updateFile(url, authHeaders: authHeaders);
-          completer.complete(cacheObject);
+          subject.add(cacheObject);
         } catch (e, stackTrace) {
-          completer.completeError(e);
+          subject.addError(e, stackTrace);
         } finally {
-          unawaited(_memCache.remove(url));
+          await subject.close();
+          _memCache.remove(url);
         }
       }());
-      _memCache[url] = completer.future;
     }
-    return _memCache[url];
+    return _memCache[url].stream;
   }
 
   ///Download the file from the url

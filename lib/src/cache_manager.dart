@@ -5,10 +5,12 @@ import 'dart:typed_data';
 import 'package:file/file.dart' as f;
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/src/result/download_progress.dart';
+import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
-import 'package:flutter_cache_manager/src/file_info.dart';
+import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -54,14 +56,14 @@ abstract class BaseCacheManager {
   /// The [httpGetter] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy.
   BaseCacheManager(
-      this._cacheKey, {
-        Duration maxAgeCacheObject,
-        int maxNrOfCacheObjects,
-        FileService fileService,
-        CacheStore cacheStore,
-        WebHelper webHelper,
-      }) {
-    var duration = maxAgeCacheObject ??  const Duration(days: 30);
+    this._cacheKey, {
+    Duration maxAgeCacheObject,
+    int maxNrOfCacheObjects,
+    FileService fileService,
+    CacheStore cacheStore,
+    WebHelper webHelper,
+  }) {
+    var duration = maxAgeCacheObject ?? const Duration(days: 30);
     var maxSize = maxNrOfCacheObjects ?? 200;
     _store = cacheStore ??
         CacheStore(_createFileDir(), _cacheKey, maxSize, duration);
@@ -89,30 +91,48 @@ abstract class BaseCacheManager {
     final cacheFile = await getFileFromCache(url);
     if (cacheFile != null) {
       if (cacheFile.validTill.isBefore(DateTime.now())) {
-        unawaited(_webHelper.downloadFile(url, authHeaders: headers));
+        unawaited(downloadFile(url, authHeaders: headers));
       }
       return cacheFile.file;
     }
-    return (await _webHelper.downloadFile(url, authHeaders: headers)).file;
+    return (await downloadFile(url, authHeaders: headers)).file;
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
+  @Deprecated('Prefer to use the new getFileStream method')
   Stream<FileInfo> getFile(String url, {Map<String, String> headers}) {
-    final streamController = StreamController<FileInfo>();
-    _pushFileToStream(streamController, url, headers);
+    return getFileStream(url, withProgress: false).map((r) => r as FileInfo);
+  }
+
+  /// Get the file from the cache and/or online, depending on availability and age.
+  /// Downloaded form [url], [headers] can be used for example for authentication.
+  /// The files are returned as stream. First the cached file if available, when the
+  /// cached file is too old the newly downloaded file is returned afterwards.
+  ///
+  /// The [FileResponse] is either a [FileInfo] object for fully downloaded files
+  /// or a [DownloadProgress] object for when a file is being downloaded.
+  /// The [DownloadProgress] objects are only dispatched when [withProgress] is
+  /// set on true and the file is not available in the cache. When the file is
+  /// returned from the cache there will be no progress given, although the file
+  /// might be outdated and a new file is being downloaded in the background.
+  Stream<FileResponse> getFileStream(String url,
+      {Map<String, String> headers, bool withProgress}) {
+    final streamController = StreamController<FileResponse>();
+    _pushFileToStream(streamController, url, headers, withProgress ?? false);
     return streamController.stream;
   }
 
   Future<void> _pushFileToStream(StreamController streamController, String url,
-      Map<String, String> headers) async {
+      Map<String, String> headers, bool withProgress) async {
     FileInfo cacheFile;
     try {
       cacheFile = await getFileFromCache(url);
       if (cacheFile != null) {
         streamController.add(cacheFile);
+        withProgress = false;
       }
     } catch (e) {
       print(
@@ -120,10 +140,13 @@ abstract class BaseCacheManager {
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
-        final webFile =
-            await _webHelper.downloadFile(url, authHeaders: headers);
-        if (webFile != null) {
-          streamController.add(webFile);
+        await for(var response in _webHelper.downloadFile(url, authHeaders: headers)){
+          if(response is DownloadProgress && withProgress){
+            streamController.add(response);
+          }
+          if(response is FileInfo){
+            streamController.add(response);
+          }
         }
       } catch (e) {
         assert(() {
@@ -141,9 +164,10 @@ abstract class BaseCacheManager {
 
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,
-      {Map<String, String> authHeaders, bool force = false}) {
-    return _webHelper.downloadFile(url,
-        authHeaders: authHeaders, ignoreMemCache: force);
+      {Map<String, String> authHeaders, bool force = false}) async {
+    var fileResponse = await _webHelper.downloadFile(url,
+        authHeaders: authHeaders, ignoreMemCache: force).firstWhere((r) => r is FileInfo);
+    return fileResponse as FileInfo;
   }
 
   ///Get the file from the cache
