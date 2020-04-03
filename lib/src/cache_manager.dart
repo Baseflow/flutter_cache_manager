@@ -49,7 +49,7 @@ abstract class BaseCacheManager {
   ///
   /// The [_cacheKey] is used for the sqlite database file and should be unique.
   /// Files are removed when they haven't been used for longer than [_maxAgeCacheObject]
-  /// or when this cache has grown to big. When the cache is larger than [_maxNrOfCacheObjects]
+  /// or when this cache has grown too big. When the cache is larger than [_maxNrOfCacheObjects]
   /// files the files that haven't been used longest will be removed.
   /// The [httpGetter] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy.
