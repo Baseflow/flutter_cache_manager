@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter_cache_manager/src/result/file_response.dart';
-import 'package:meta/meta.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor

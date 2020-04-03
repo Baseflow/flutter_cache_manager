@@ -89,7 +89,7 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var result = await webHelper.downloadFile(imageUrl);
+      var result = await webHelper.downloadFile(imageUrl).firstWhere((r) => r is FileInfo, orElse: null);
       expect(result, isNotNull);
     });
   });

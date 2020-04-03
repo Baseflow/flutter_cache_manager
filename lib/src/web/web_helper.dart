@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
@@ -35,8 +36,9 @@ class WebHelper {
 
       unawaited(() async {
         try {
-          final cacheObject = await _updateFile(url, authHeaders: authHeaders);
-          subject.add(cacheObject);
+           await for(var result in _updateFile(url, authHeaders: authHeaders)) {
+             subject.add(result);
+           }
         } catch (e, stackTrace) {
           subject.addError(e, stackTrace);
         } finally {
@@ -49,15 +51,15 @@ class WebHelper {
   }
 
   ///Download the file from the url
-  Future<FileInfo> _updateFile(String url,
-      {Map<String, String> authHeaders}) async {
+  Stream<FileResponse> _updateFile(String url,
+      {Map<String, String> authHeaders}) async* {
     var cacheObject = await _store.retrieveCacheData(url);
     cacheObject ??= CacheObject(url);
     final response = await _download(cacheObject, authHeaders);
-    await _manageResponse(cacheObject, response);
+    yield* _manageResponse(cacheObject, response);
 
     final file = (await _store.fileDir).childFile(cacheObject.relativePath);
-    return FileInfo(file, FileSource.Online, cacheObject.validTill, url);
+    yield FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
   Future<FileFetcherResponse> _download(
@@ -74,8 +76,8 @@ class WebHelper {
     return _fileFetcher.get(cacheObject.url, headers: headers);
   }
 
-  Future _manageResponse(
-      CacheObject cacheObject, FileFetcherResponse response) async {
+  Stream<DownloadProgress> _manageResponse(
+      CacheObject cacheObject, FileFetcherResponse response) async* {
     final hasNewFile = statusCodesNewFile.contains(response.statusCode);
     final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
     if (!hasNewFile && !keepOldFile) {
@@ -90,7 +92,10 @@ class WebHelper {
     var newCacheFile = cacheObject.relativePath;
     _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
-      await _saveFile(cacheObject, response);
+      await for (var progress in _saveFile(cacheObject, response)) {
+        yield DownloadProgress(
+            cacheObject.url, response.contentLength, progress);
+      }
       newCacheFile = cacheObject.relativePath;
     }
 
@@ -116,8 +121,20 @@ class WebHelper {
     cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
   }
 
-  Future _saveFile(
-      CacheObject cacheObject, FileFetcherResponse response) async {
+  Stream<int> _saveFile(CacheObject cacheObject, FileFetcherResponse response) {
+    var receivedBytesResultController = StreamController<int>();
+    unawaited(_saveFileAndPostUpdates(
+      receivedBytesResultController,
+      cacheObject,
+      response,
+    ));
+    return receivedBytesResultController.stream;
+  }
+
+  Future _saveFileAndPostUpdates(
+      StreamController<int> receivedBytesResultController,
+      CacheObject cacheObject,
+      FileFetcherResponse response) async {
     final basePath = await _store.fileDir;
 
     final file = basePath.childFile(cacheObject.relativePath);
@@ -125,10 +142,18 @@ class WebHelper {
     if (!(await folder.exists())) {
       folder.createSync(recursive: true);
     }
-
-    final sink = file.openWrite();
-    await sink.addStream(response.content);
-    await sink.close();
+    try {
+      var receivedBytes = 0;
+      final sink = file.openWrite();
+      await response.content.map((s) {
+        receivedBytes += s.length;
+        receivedBytesResultController.add(receivedBytes);
+        return s;
+      }).pipe(sink);
+    }catch(e, stacktrace){
+      receivedBytesResultController.addError(e, stacktrace);
+    }
+    await receivedBytesResultController.close();
   }
 
   Future<void> _removeOldFile(String relativePath) async {

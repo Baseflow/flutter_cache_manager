@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:file/file.dart' as f;
 import 'package:file/local.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
