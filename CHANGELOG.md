@@ -8,6 +8,8 @@
     * CleanupRunMinInterval can now be set.
     * Expects a mockable directory instead of a path.
 * Added CacheInfoRepository interface to possibly replace the current CacheObjectProvider based on sqflite.
+* Changes in WebHelper
+    * Files are now always saved with a new name. Files are first saved to storage before old file is removed.
 
 ## [1.1.3] - 2019-10-17
 * Use try-catch in WebHelper so VM understands that errors are not uncaught.

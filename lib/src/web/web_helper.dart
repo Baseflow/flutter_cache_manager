@@ -12,6 +12,9 @@ import 'package:uuid/uuid.dart';
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
+const statusCodesNewFile = [HttpStatus.ok, HttpStatus.accepted];
+const statusCodesFileNotChanged = [HttpStatus.notModified];
+
 class WebHelper {
   WebHelper(this._store, FileService fileFetcher)
       : _memCache = {},
@@ -28,8 +31,7 @@ class WebHelper {
       var completer = Completer<FileInfo>();
       unawaited(() async {
         try {
-          final cacheObject =
-              await _downloadRemoteFile(url, authHeaders: authHeaders);
+          final cacheObject = await _updateFile(url, authHeaders: authHeaders);
           completer.complete(cacheObject);
         } catch (e, stackTrace) {
           completer.completeError(e);
@@ -43,58 +45,56 @@ class WebHelper {
   }
 
   ///Download the file from the url
-  Future<FileInfo> _downloadRemoteFile(String url,
+  Future<FileInfo> _updateFile(String url,
       {Map<String, String> authHeaders}) async {
     var cacheObject = await _store.retrieveCacheData(url);
     cacheObject ??= CacheObject(url);
+    final response = await _download(cacheObject, authHeaders);
+    await _manageResponse(cacheObject, response);
 
+    final file = (await _store.fileDir).childFile(cacheObject.relativePath);
+    return FileInfo(file, FileSource.Online, cacheObject.validTill, url);
+  }
+
+  Future<FileFetcherResponse> _download(
+      CacheObject cacheObject, Map<String, String> authHeaders) {
     final headers = <String, String>{};
     if (authHeaders != null) {
       headers.addAll(authHeaders);
     }
 
     if (cacheObject.eTag != null) {
-      headers['If-None-Match'] = cacheObject.eTag;
+      headers[HttpHeaders.ifNoneMatchHeader] = cacheObject.eTag;
     }
 
-    final response = await _fileFetcher.get(url, headers: headers);
-    final success = await _handleHttpResponse(response, cacheObject);
-    if (!success) {
+    return _fileFetcher.get(cacheObject.url, headers: headers);
+  }
+
+  Future _manageResponse(
+      CacheObject cacheObject, FileFetcherResponse response) async {
+    final hasNewFile = statusCodesNewFile.contains(response.statusCode);
+    final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
+    if (!hasNewFile && !keepOldFile) {
       throw HttpExceptionWithStatus(
         response.statusCode,
         'Invalid statusCode: ${response?.statusCode}',
-        uri: Uri.parse(url),
+        uri: Uri.parse(cacheObject.url),
       );
     }
 
-    unawaited(_store.putFile(cacheObject));
+    final oldCacheFile = cacheObject.relativePath;
+    var newCacheFile = cacheObject.relativePath;
+    _setDataFromHeaders(cacheObject, response);
+    if (statusCodesNewFile.contains(response.statusCode)) {
+      await _saveFile(cacheObject, response);
+      newCacheFile = cacheObject.relativePath;
+    }
 
-    final file = (await _store.fileDir).childFile(cacheObject.relativePath);
-    return FileInfo(file, FileSource.Online, cacheObject.validTill, url);
-  }
-
-  Future<bool> _handleHttpResponse(
-      FileFetcherResponse response, CacheObject cacheObject) async {
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final basePath = await _store.fileDir;
-      _setDataFromHeaders(cacheObject, response);
-      final file = basePath.childFile(cacheObject.relativePath);
-      final folder = file.parent;
-      if (!(await folder.exists())) {
-        folder.createSync(recursive: true);
+    unawaited(_store.putFile(cacheObject).then((_) {
+      if (newCacheFile != oldCacheFile) {
+        _removeOldFile(oldCacheFile);
       }
-
-      final sink = file.openWrite();
-      await sink.addStream(response.content);
-      await sink.close();
-
-      return true;
-    }
-    if (response.statusCode == 304) {
-      _setDataFromHeaders(cacheObject, response);
-      return true;
-    }
-    return false;
+    }));
   }
 
   void _setDataFromHeaders(
@@ -112,7 +112,23 @@ class WebHelper {
     cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
   }
 
+  Future _saveFile(
+      CacheObject cacheObject, FileFetcherResponse response) async {
+    final basePath = await _store.fileDir;
+
+    final file = basePath.childFile(cacheObject.relativePath);
+    final folder = file.parent;
+    if (!(await folder.exists())) {
+      folder.createSync(recursive: true);
+    }
+
+    final sink = file.openWrite();
+    await sink.addStream(response.content);
+    await sink.close();
+  }
+
   Future<void> _removeOldFile(String relativePath) async {
+    if (relativePath == null) return;
     final file = (await _store.fileDir).childFile(relativePath);
     if (await file.exists()) {
       await file.delete();

@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
@@ -12,10 +15,7 @@ void main() {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(CacheObject(imageUrl)));
+      final store = _createStore(fileDir);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -38,10 +38,7 @@ void main() {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(CacheObject(imageUrl)));
+      final store = _createStore(fileDir);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -58,10 +55,7 @@ void main() {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(CacheObject(imageUrl)));
+      final store = _createStore(fileDir);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -82,10 +76,7 @@ void main() {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(CacheObject(imageUrl)));
+      final store = _createStore(fileDir);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -100,21 +91,19 @@ void main() {
     });
   });
 
-  group('Parallel logic', (){
+  group('Parallel logic', () {
     test('Calling webhelper twice excecutes once', () async {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(CacheObject(imageUrl)));
+      final store = _createStore(fileDir);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            Stream.value([0, 1, 2, 3, 4, 5]), 6,
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
             'testv1',
             '.jpg',
             200,
@@ -129,20 +118,19 @@ void main() {
       verify(store.retrieveCacheData(any)).called(1);
     });
 
-    test('Calling webhelper twice excecutes twice when memcache ignored', () async {
+    test('Calling webhelper twice excecutes twice when memcache ignored',
+        () async {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(CacheObject(imageUrl)));
+      final store = _createStore(fileDir);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            Stream.value([0, 1, 2, 3, 4, 5]), 6,
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
             'testv1',
             '.jpg',
             200,
@@ -158,14 +146,12 @@ void main() {
     });
   });
 
-  group('Miscellaneous', (){
-    test('When not yet cached, new cacheobject should be made',() async {
-
+  group('Miscellaneous', () {
+    test('When not yet cached, new cacheobject should be made', () async {
       const imageUrl = 'baseflow.com/testimage';
 
       var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
+      final store = _createStore(fileDir);
       when(store.retrieveCacheData(imageUrl))
           .thenAnswer((_) => Future.value(null));
 
@@ -187,9 +173,7 @@ void main() {
       verify(store.putFile(any)).called(1);
     });
 
-
-    test('File should be removed if extension changed',() async {
-
+    test('File should be removed if extension changed', () async {
       const imageUrl = 'baseflow.com/testimage';
 
       var imageName = 'image.png';
@@ -197,12 +181,9 @@ void main() {
       var file = fileDir.childFile(imageName);
       await file.create();
 
-      final store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(
-          CacheObject(imageUrl, relativePath: imageName)
-      ));
+      final store = _createStore(fileDir);
+      when(store.retrieveCacheData(imageUrl)).thenAnswer(
+          (_) => Future.value(CacheObject(imageUrl, relativePath: imageName)));
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -225,6 +206,17 @@ void main() {
   });
 }
 
+MockStore _createStore(Directory fileDir) {
+  final store = MockStore();
+  when(store.putFile(argThat(anything)))
+      .thenAnswer((_) => Future.value(VoidCallback));
+  when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
+  when(store.retrieveCacheData(argThat(anything))).thenAnswer((invocation) =>
+      Future.value(
+          CacheObject(invocation.positionalArguments.first as String)));
+  return store;
+}
+
 class MockStore extends Mock implements CacheStore {}
 
 class MockFileService extends Mock implements FileService {}
@@ -237,8 +229,8 @@ class MockFileFetcherResponse implements FileFetcherResponse {
   final int _statusCode;
   final DateTime _validTill;
 
-  MockFileFetcherResponse(this._content, this._contentLength, this._eTag, this._fileExtension,
-      this._statusCode, this._validTill);
+  MockFileFetcherResponse(this._content, this._contentLength, this._eTag,
+      this._fileExtension, this._statusCode, this._validTill);
 
   @override
   Stream<List<int>> get content => _content;
