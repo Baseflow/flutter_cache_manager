@@ -338,10 +338,12 @@ void main() {
       downloadStreamController.add([4]);
       downloadStreamController.add([5]);
       await downloadStreamController.close();
+
+      // Only expect a FileInfo Result and no DownloadProgress status objects.
       expect(
           fileStream,
-          neverEmits([
-            isA<DownloadProgress>(),
+          emitsInOrder([
+            isA<FileInfo>(),
           ]));
     });
   });
