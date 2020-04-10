@@ -86,8 +86,8 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
   DateTime get validTill {
     // Without a cache-control header we keep the file for a week
     var ageDuration = const Duration(days: 7);
-    if (_hasHeader('cache-control')) {
-      final controlSettings = _header('cache-control').split(',');
+    if (_hasHeader(HttpHeaders.cacheControlHeader)) {
+      final controlSettings = _header(HttpHeaders.cacheControlHeader).split(',');
       for (final setting in controlSettings) {
         final sanitizedSetting = setting.trim().toLowerCase();
         if (sanitizedSetting == 'no-cache') {
@@ -106,13 +106,13 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
   }
 
   @override
-  String get eTag => _hasHeader('etag') ? _header('etag') : null;
+  String get eTag => _hasHeader(HttpHeaders.etagHeader) ? _header(HttpHeaders.etagHeader) : null;
 
   @override
   String get fileExtension {
     var fileExtension = '';
-    if (_hasHeader('content-type')) {
-      var contentType = ContentType.parse(_header('content-type'));
+    if (_hasHeader(HttpHeaders.contentTypeHeader)) {
+      var contentType = ContentType.parse(_header(HttpHeaders.contentTypeHeader));
       fileExtension = contentType.fileExtension ?? '';
     }
     return fileExtension;

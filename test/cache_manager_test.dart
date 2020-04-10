@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui';
 
-import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+
+import 'web_helper_test.dart';
 
 void main() {
   group('Tests for getSingleFile', () {
@@ -44,6 +47,13 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
 
       var webHelper = MockWebHelper();
+      when(webHelper.downloadFile(argThat(anything)))
+          .thenAnswer((i) => Stream.value(FileInfo(
+                null,
+                FileSource.Online,
+                DateTime.now().add(const Duration(days: 7)),
+                i.positionalArguments.first as String,
+              )));
       var cacheManager = TestCacheManager(store, webHelper);
 
       var result = await cacheManager.getSingleFile(fileUrl);
@@ -66,7 +76,7 @@ void main() {
 
       var webHelper = MockWebHelper();
       when(webHelper.downloadFile(fileUrl))
-          .thenAnswer((_) => Future.value(fileInfo));
+          .thenAnswer((_) => Stream.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
@@ -114,7 +124,7 @@ void main() {
       var downloadedInfo = FileInfo(file, FileSource.Online,
           DateTime.now().add(const Duration(days: 1)), fileUrl);
       when(webHelper.downloadFile(fileUrl))
-          .thenAnswer((_) => Future.value(downloadedInfo));
+          .thenAnswer((_) => Stream.value(downloadedInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
       var fileStream = cacheManager.getFile(fileUrl);
@@ -138,7 +148,7 @@ void main() {
 
       var webHelper = MockWebHelper();
       when(webHelper.downloadFile(fileUrl))
-          .thenAnswer((_) => Future.value(fileInfo));
+          .thenAnswer((_) => Stream.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
@@ -216,18 +226,18 @@ void main() {
     });
   });
 
-
   test('Download file just downloads file', () async {
     var fileUrl = 'baseflow.com/test';
     var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
     var store = MockStore();
     var webHelper = MockWebHelper();
-    when(webHelper.downloadFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
+    when(webHelper.downloadFile(fileUrl))
+        .thenAnswer((_) => Stream.value(fileInfo));
     var cacheManager = TestCacheManager(store, webHelper);
     expect(await cacheManager.downloadFile(fileUrl), fileInfo);
   });
 
-  test('test file from memory', (){
+  test('test file from memory', () {
     var fileUrl = 'baseflow.com/test';
     var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
 
@@ -246,11 +256,104 @@ void main() {
     await cacheManager.emptyCache();
     verify(store.emptyCache()).called(1);
   });
+
+  group('Progress tests', () {
+    test('Test progress from download', () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockStore();
+      when(store.fileDir).thenAnswer((_) => Future.value(
+          MemoryFileSystem().systemTempDirectory.createTemp('test')));
+      when(store.putFile(argThat(anything)))
+          .thenAnswer((_) => Future.value(VoidCallback));
+
+      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
+
+      var fileService = MockFileService();
+      var downloadStreamController = StreamController<List<int>>();
+      when(fileService.get(fileUrl, headers: anyNamed('headers')))
+          .thenAnswer((_) {
+        return Future.value(MockFileFetcherResponse(
+            downloadStreamController.stream,
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now()));
+      });
+
+      var cacheManager =
+          TestCacheManager(store, null, fileService: fileService);
+
+      var fileStream = cacheManager.getFileStream(fileUrl, withProgress: true);
+      downloadStreamController.add([0]);
+      downloadStreamController.add([1]);
+      downloadStreamController.add([2, 3]);
+      downloadStreamController.add([4]);
+      downloadStreamController.add([5]);
+      await downloadStreamController.close();
+      expect(
+          fileStream,
+          emitsInOrder([
+            isA<DownloadProgress>().having((p) => p.progress, '1/6', 1 / 6),
+            isA<DownloadProgress>().having((p) => p.progress, '2/6', 2 / 6),
+            isA<DownloadProgress>().having((p) => p.progress, '4/6', 4 / 6),
+            isA<DownloadProgress>().having((p) => p.progress, '5/6', 5 / 6),
+            isA<DownloadProgress>().having((p) => p.progress, '6/6', 1),
+            isA<FileInfo>(),
+          ]));
+    });
+
+    test("Don't get progress when not asked", () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockStore();
+      when(store.fileDir).thenAnswer((_) => Future.value(
+          MemoryFileSystem().systemTempDirectory.createTemp('test')));
+      when(store.putFile(argThat(anything)))
+          .thenAnswer((_) => Future.value(VoidCallback));
+
+      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
+
+      var fileService = MockFileService();
+      var downloadStreamController = StreamController<List<int>>();
+      when(fileService.get(fileUrl, headers: anyNamed('headers')))
+          .thenAnswer((_) {
+        return Future.value(MockFileFetcherResponse(
+            downloadStreamController.stream,
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now()));
+      });
+
+      var cacheManager =
+          TestCacheManager(store, null, fileService: fileService);
+
+      var fileStream = cacheManager.getFileStream(fileUrl);
+      downloadStreamController.add([0]);
+      downloadStreamController.add([1]);
+      downloadStreamController.add([2, 3]);
+      downloadStreamController.add([4]);
+      downloadStreamController.add([5]);
+      await downloadStreamController.close();
+
+      // Only expect a FileInfo Result and no DownloadProgress status objects.
+      expect(
+          fileStream,
+          emitsInOrder([
+            isA<FileInfo>(),
+          ]));
+    });
+  });
 }
 
 class TestCacheManager extends BaseCacheManager {
-  TestCacheManager(CacheStore store, WebHelper webHelper)
-      : super('test', cacheStore: store, webHelper: webHelper);
+  TestCacheManager(CacheStore store, WebHelper webHelper,
+      {FileService fileService})
+      : super('test',
+            cacheStore: store, webHelper: webHelper, fileService: fileService);
 
   @override
   Future<String> getFilePath() {
