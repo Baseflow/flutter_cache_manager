@@ -1,4 +1,4 @@
-## [1.2.0] - WIP
+## [1.2.0] - 2020-04-10
 * Added getFileStream to CacheManager
     * getFileStream has an optional parameter 'withProgress' to receive progress.
     * getFileStream returns a FileResponse which is either a FileInfo or a DownloadProgress.
@@ -12,7 +12,7 @@
     * Expects a mockable directory instead of a path.
 * Added CacheInfoRepository interface to possibly replace the current CacheObjectProvider based on sqflite.
 * Changes in WebHelper
-    * Files are now always saved with a new name. Files are first saved to storage before old file is removed.
+  * Files are now always saved with a new name. Files are first saved to storage before old file is removed.
 * General code quality improvements
 
 ## [1.1.3] - 2019-10-17

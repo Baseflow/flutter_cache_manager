@@ -7,7 +7,8 @@ import 'package:http/http.dart' as http;
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
-@Deprecated('Use FileService instead')
+
+/// Deprecated FileFetcher function
 typedef Future<FileFetcherResponse> FileFetcher(String url,
     {Map<String, String> headers});
 

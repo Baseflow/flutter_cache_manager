@@ -22,14 +22,14 @@ import 'package:uuid/uuid.dart';
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
+/// The DefaultCacheManager that can be easily used directly. The code of
+/// this implementation can be used as inspiration for more complex cache
+/// managers.
 class DefaultCacheManager extends BaseCacheManager {
   static const key = 'libCachedImageData';
 
   static DefaultCacheManager _instance;
 
-  /// The DefaultCacheManager that can be easily used directly. The code of
-  /// this implementation can be used as inspiration for more complex cache
-  /// managers.
   factory DefaultCacheManager() {
     _instance ??= DefaultCacheManager._();
     return _instance;
@@ -51,11 +51,12 @@ abstract class BaseCacheManager {
   /// used in singleton patterns.
   ///
   /// The [_cacheKey] is used for the sqlite database file and should be unique.
-  /// Files are removed when they haven't been used for longer than [_maxAgeCacheObject]
-  /// or when this cache has grown too big. When the cache is larger than [_maxNrOfCacheObjects]
+  /// Files are removed when they haven't been used for longer than [maxAgeCacheObject]
+  /// or when this cache has grown too big. When the cache is larger than [maxNrOfCacheObjects]
   /// files the files that haven't been used longest will be removed.
-  /// The [httpGetter] can be used to customize how files are downloaded. For example
-  /// to edit the urls, add headers or use a proxy.
+  /// The [fileService] can be used to customize how files are downloaded. For example
+  /// to edit the urls, add headers or use a proxy. You can also choose to supply
+  /// a CacheStore or WebHelper directly if you want more customization.
   BaseCacheManager(
     this._cacheKey, {
     Duration maxAgeCacheObject,

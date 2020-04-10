@@ -1,8 +1,8 @@
 # flutter_cache_manager
 
 [![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
-[![Build Status](https://app.bitrise.io/app/b3454de795b5c22a/status.svg?token=vEfW1ztZ-tkoUx64yXeklg&branch=develop)](https://app.bitrise.io/app/b3454de795b5c22a)
-[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/develop/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
+[![Build Status](https://app.bitrise.io/app/b3454de795b5c22a/status.svg?token=vEfW1ztZ-tkoUx64yXeklg&branch=master)](https://app.bitrise.io/app/b3454de795b5c22a)
+[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/master/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
 
 A CacheManager to download and cache files in the cache directory of the app. Various settings on how long to keep a file can be changed.
 
@@ -18,7 +18,9 @@ The easiest way to get a single file is call `.getSingleFile`.
 ```
     var file = await DefaultCacheManager().getSingleFile(url);
 ```
-`getFile(url)` returns a stream with the first result being the cached file and later optionally the downloaded file.
+`getFileStream(url)` returns a stream with the first result being the cached file and later optionally the downloaded file.
+
+`getFileStream(url, withProgress: true)` when you set withProgress on true, this stream will also emit DownloadProgress when the file is not found in the cache.
 
 `downloadFile(url)` directly downloads from the web.
 
@@ -35,7 +37,7 @@ The easiest way to get a single file is call `.getSingleFile`.
 ## Settings
 The cache manager is customizable by extending the BaseCacheManager.
 Below is an example with other settings for the maximum age of files, maximum number of objects
-and a custom http getter. The key parameter in the constructor and the getFilePath method are mandatory.
+and a custom FileService. The key parameter in the constructor and the getFilePath method are mandatory.
 
 ```
 
@@ -53,17 +55,11 @@ class CustomCacheManager extends BaseCacheManager {
 
   CustomCacheManager._() : super(key,
       maxAgeCacheObject: Duration(days: 7),
-      maxNrOfCacheObjects: 20,
-      fileFetcher: _customHttpGetter);
+      maxNrOfCacheObjects: 20);
 
   Future<String> getFilePath() async {
     var directory = await getTemporaryDirectory();
     return p.join(directory.path, key);
-  }
-
-  static Future<FileFetcherResponse> _customHttpGetter(String url, {Map<String, String> headers}) async {
-    // Do things with headers, the url or whatever.
-    return HttpFileFetcherResponse(await http.get(url, headers: headers));
   }
 }
 
