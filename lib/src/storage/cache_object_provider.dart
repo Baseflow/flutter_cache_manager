@@ -1,4 +1,3 @@
-
 import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:sqflite/sqflite.dart';
@@ -13,7 +12,8 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future open() async {
-    db = await openDatabase(path, version: 1, onCreate: (Database db, int version) async {
+    db = await openDatabase(path, version: 1,
+        onCreate: (Database db, int version) async {
       await db.execute('''
       create table $_tableCacheObject ( 
         ${CacheObject.columnId} integer primary key, 
@@ -44,7 +44,8 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future<CacheObject> get(String url) async {
-    List<Map> maps = await db.query(_tableCacheObject, columns: null, where: '${CacheObject.columnUrl} = ?', whereArgs: [url]);
+    List<Map> maps = await db.query(_tableCacheObject,
+        columns: null, where: '${CacheObject.columnUrl} = ?', whereArgs: [url]);
     if (maps.isNotEmpty) {
       return CacheObject.fromMap(maps.first.cast<String, dynamic>());
     }
@@ -53,17 +54,20 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future<int> delete(int id) {
-    return db.delete(_tableCacheObject, where: '${CacheObject.columnId} = ?', whereArgs: [id]);
+    return db.delete(_tableCacheObject,
+        where: '${CacheObject.columnId} = ?', whereArgs: [id]);
   }
 
   @override
   Future deleteAll(Iterable<int> ids) {
-    return db.delete(_tableCacheObject, where: '${CacheObject.columnId} IN (' + ids.join(',') + ')');
+    return db.delete(_tableCacheObject,
+        where: '${CacheObject.columnId} IN (' + ids.join(',') + ')');
   }
 
   @override
   Future<int> update(CacheObject cacheObject) {
-    return db.update(_tableCacheObject, cacheObject.toMap(), where: '${CacheObject.columnId} = ?', whereArgs: [cacheObject.id]);
+    return db.update(_tableCacheObject, cacheObject.toMap(),
+        where: '${CacheObject.columnId} = ?', whereArgs: [cacheObject.id]);
   }
 
   @override
@@ -80,7 +84,9 @@ class CacheObjectProvider implements CacheInfoRepository {
       columns: null,
       orderBy: '${CacheObject.columnTouched} DESC',
       where: '${CacheObject.columnTouched} < ?',
-      whereArgs: [DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch],
+      whereArgs: [
+        DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch
+      ],
       limit: 100,
       offset: capacity,
     ));

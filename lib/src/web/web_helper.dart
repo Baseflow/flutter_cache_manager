@@ -121,8 +121,7 @@ class WebHelper {
     cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
   }
 
-  Stream<int> _saveFile(
-      CacheObject cacheObject, FileServiceResponse response) {
+  Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {
     var receivedBytesResultController = StreamController<int>();
     unawaited(_saveFileAndPostUpdates(
       receivedBytesResultController,

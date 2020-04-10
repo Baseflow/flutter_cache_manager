@@ -13,13 +13,15 @@ class CacheObject {
   static const columnValidTill = 'validTill';
   static const columnTouched = 'touched';
 
-  CacheObject(this.url, {this.relativePath, this.validTill, this.eTag, this.id});
+  CacheObject(this.url,
+      {this.relativePath, this.validTill, this.eTag, this.id});
 
   CacheObject.fromMap(Map<String, dynamic> map)
       : id = map[columnId] as int,
         url = map[columnUrl] as String,
         relativePath = map[columnPath] as String,
-        validTill = DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
+        validTill =
+            DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
         eTag = map[columnETag] as String;
 
   int id;

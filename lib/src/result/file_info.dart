@@ -17,8 +17,10 @@ class FileInfo extends FileResponse {
 
   /// Fetched file
   final File file;
+
   /// Source from the file, can be cache or online (web).
   final FileSource source;
+
   /// Validity date of the file. After this date the validity is not guaranteed
   /// and the CacheManager will try to update the file.
   final DateTime validTill;
