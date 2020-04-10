@@ -36,9 +36,9 @@ class WebHelper {
 
       unawaited(() async {
         try {
-           await for(var result in _updateFile(url, authHeaders: authHeaders)) {
-             subject.add(result);
-           }
+          await for (var result in _updateFile(url, authHeaders: authHeaders)) {
+            subject.add(result);
+          }
         } catch (e, stackTrace) {
           subject.addError(e, stackTrace);
         } finally {
@@ -121,7 +121,8 @@ class WebHelper {
     cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
   }
 
-  Stream<int> _saveFile(CacheObject cacheObject, FileServiceGetResponse response) {
+  Stream<int> _saveFile(
+      CacheObject cacheObject, FileServiceGetResponse response) {
     var receivedBytesResultController = StreamController<int>();
     unawaited(_saveFileAndPostUpdates(
       receivedBytesResultController,
@@ -150,7 +151,7 @@ class WebHelper {
         receivedBytesResultController.add(receivedBytes);
         return s;
       }).pipe(sink);
-    }catch(e, stacktrace){
+    } catch (e, stacktrace) {
       receivedBytesResultController.addError(e, stacktrace);
     }
     await receivedBytesResultController.close();

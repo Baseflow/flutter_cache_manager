@@ -31,8 +31,10 @@ class CacheStore {
   DateTime lastCleanupRun = DateTime.now();
   Timer _scheduledCleanup;
 
-  CacheStore(Future<f.Directory> basedir, this.storeKey, this._capacity, this._maxAge,
-    {Future<CacheInfoRepository> cacheRepoProvider, this.cleanupRunMinInterval = const Duration(seconds: 10)}) {
+  CacheStore(
+      Future<f.Directory> basedir, this.storeKey, this._capacity, this._maxAge,
+      {Future<CacheInfoRepository> cacheRepoProvider,
+      this.cleanupRunMinInterval = const Duration(seconds: 10)}) {
     fileDir = basedir.then((dir) => _fileDir = dir);
     _cacheInfoRepository = cacheRepoProvider ?? _getObjectProvider();
   }
@@ -161,7 +163,8 @@ class CacheStore {
     await provider.deleteAll(toRemove);
   }
 
-  Future<void> _removeCachedFile(CacheObject cacheObject, List<int> toRemove) async {
+  Future<void> _removeCachedFile(
+      CacheObject cacheObject, List<int> toRemove) async {
     if (!toRemove.contains(cacheObject.id)) {
       toRemove.add(cacheObject.id);
       if (_memCache.containsKey(cacheObject.url)) {
