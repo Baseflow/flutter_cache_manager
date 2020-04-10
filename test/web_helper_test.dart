@@ -226,7 +226,7 @@ class MockStore extends Mock implements CacheStore {}
 
 class MockFileService extends Mock implements FileService {}
 
-class MockFileFetcherResponse implements FileServiceGetResponse {
+class MockFileFetcherResponse implements FileServiceResponse {
   final Stream<List<int>> _content;
   final int _contentLength;
   final String _eTag;

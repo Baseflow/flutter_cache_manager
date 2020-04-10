@@ -13,7 +13,7 @@ import 'mime_converter.dart';
 /// also make something more specialized. For example you could fetch files
 /// from other apps or from local storage.
 abstract class FileService {
-  Future<FileServiceGetResponse> get(String url, {Map<String, String> headers});
+  Future<FileServiceResponse> get(String url, {Map<String, String> headers});
 }
 
 /// [HttpFileService] is the most common file service and the default for
@@ -25,7 +25,7 @@ class HttpFileService implements FileService {
   }
 
   @override
-  Future<FileServiceGetResponse> get(String url,
+  Future<FileServiceResponse> get(String url,
       {Map<String, String> headers = const {}}) async {
     final req = http.Request('GET', Uri.parse(url));
     req.headers.addAll(headers);
@@ -36,7 +36,7 @@ class HttpFileService implements FileService {
 }
 
 /// Defines the interface for a get result of a [FileService].
-abstract class FileServiceGetResponse {
+abstract class FileServiceResponse {
   /// [content] is a stream of bytes
   Stream<List<int>> get content;
 
@@ -57,8 +57,8 @@ abstract class FileServiceGetResponse {
   String get fileExtension;
 }
 
-/// Basic implementation of a [FileServiceGetResponse] for http requests.
-class HttpGetResponse implements FileServiceGetResponse {
+/// Basic implementation of a [FileServiceResponse] for http requests.
+class HttpGetResponse implements FileServiceResponse {
   HttpGetResponse(this._response);
 
   final DateTime _receivedTime = clock.now();

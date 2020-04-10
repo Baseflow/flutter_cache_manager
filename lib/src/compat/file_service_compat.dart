@@ -11,14 +11,14 @@ class FileServiceCompat implements FileService {
   FileServiceCompat(this.fileFetcher);
 
   @override
-  Future<FileServiceGetResponse> get(String url,
+  Future<FileServiceResponse> get(String url,
       {Map<String, String> headers}) async {
     var legacyResponse = await fileFetcher(url, headers: headers);
     return CompatFileServiceGetResponse(legacyResponse);
   }
 }
 
-class CompatFileServiceGetResponse implements FileServiceGetResponse {
+class CompatFileServiceGetResponse implements FileServiceResponse {
   final FileFetcherResponse legacyResponse;
   final DateTime _receivedTime = clock.now();
 

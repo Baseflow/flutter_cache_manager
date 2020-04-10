@@ -62,7 +62,7 @@ class WebHelper {
     yield FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
-  Future<FileServiceGetResponse> _download(
+  Future<FileServiceResponse> _download(
       CacheObject cacheObject, Map<String, String> authHeaders) {
     final headers = <String, String>{};
     if (authHeaders != null) {
@@ -77,7 +77,7 @@ class WebHelper {
   }
 
   Stream<DownloadProgress> _manageResponse(
-      CacheObject cacheObject, FileServiceGetResponse response) async* {
+      CacheObject cacheObject, FileServiceResponse response) async* {
     final hasNewFile = statusCodesNewFile.contains(response.statusCode);
     final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
     if (!hasNewFile && !keepOldFile) {
@@ -107,7 +107,7 @@ class WebHelper {
   }
 
   void _setDataFromHeaders(
-      CacheObject cacheObject, FileServiceGetResponse response) {
+      CacheObject cacheObject, FileServiceResponse response) {
     cacheObject.validTill = response.validTill;
     cacheObject.eTag = response.eTag;
     final fileExtension = response.fileExtension;
@@ -122,7 +122,7 @@ class WebHelper {
   }
 
   Stream<int> _saveFile(
-      CacheObject cacheObject, FileServiceGetResponse response) {
+      CacheObject cacheObject, FileServiceResponse response) {
     var receivedBytesResultController = StreamController<int>();
     unawaited(_saveFileAndPostUpdates(
       receivedBytesResultController,
@@ -135,7 +135,7 @@ class WebHelper {
   Future _saveFileAndPostUpdates(
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
-      FileServiceGetResponse response) async {
+      FileServiceResponse response) async {
     final basePath = await _store.fileDir;
 
     final file = basePath.childFile(cacheObject.relativePath);
