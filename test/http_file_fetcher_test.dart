@@ -24,7 +24,7 @@ void main() {
       });
 
       await withClock(Clock.fixed(DateTime.now()), () async {
-        var httpFileFetcher = HttpFileFetcher(httpClient: client);
+        var httpFileFetcher = HttpFileService(httpClient: client);
         final now = clock.now();
         final response = await httpFileFetcher.get('test.com/image');
 
@@ -45,7 +45,7 @@ void main() {
             headers: {'content-type': contentType});
       });
 
-      var httpFileFetcher = HttpFileFetcher(httpClient: client);
+      var httpFileFetcher = HttpFileService(httpClient: client);
       final response = await httpFileFetcher.get('test.com/image');
 
       expect(response.fileExtension, '.$fileExtension');

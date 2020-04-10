@@ -5,7 +5,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
+import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:rxdart/rxdart.dart';
@@ -21,7 +21,7 @@ const statusCodesFileNotChanged = [HttpStatus.notModified];
 class WebHelper {
   WebHelper(this._store, FileService fileFetcher)
       : _memCache = {},
-        _fileFetcher = fileFetcher ?? HttpFileFetcher();
+        _fileFetcher = fileFetcher ?? HttpFileService();
 
   final CacheStore _store;
   final FileService _fileFetcher;
@@ -62,7 +62,7 @@ class WebHelper {
     yield FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
-  Future<FileFetcherResponse> _download(
+  Future<FileServiceGetResponse> _download(
       CacheObject cacheObject, Map<String, String> authHeaders) {
     final headers = <String, String>{};
     if (authHeaders != null) {
@@ -77,7 +77,7 @@ class WebHelper {
   }
 
   Stream<DownloadProgress> _manageResponse(
-      CacheObject cacheObject, FileFetcherResponse response) async* {
+      CacheObject cacheObject, FileServiceGetResponse response) async* {
     final hasNewFile = statusCodesNewFile.contains(response.statusCode);
     final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
     if (!hasNewFile && !keepOldFile) {
@@ -107,7 +107,7 @@ class WebHelper {
   }
 
   void _setDataFromHeaders(
-      CacheObject cacheObject, FileFetcherResponse response) {
+      CacheObject cacheObject, FileServiceGetResponse response) {
     cacheObject.validTill = response.validTill;
     cacheObject.eTag = response.eTag;
     final fileExtension = response.fileExtension;
@@ -121,7 +121,7 @@ class WebHelper {
     cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
   }
 
-  Stream<int> _saveFile(CacheObject cacheObject, FileFetcherResponse response) {
+  Stream<int> _saveFile(CacheObject cacheObject, FileServiceGetResponse response) {
     var receivedBytesResultController = StreamController<int>();
     unawaited(_saveFileAndPostUpdates(
       receivedBytesResultController,
@@ -134,7 +134,7 @@ class WebHelper {
   Future _saveFileAndPostUpdates(
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
-      FileFetcherResponse response) async {
+      FileServiceGetResponse response) async {
     final basePath = await _store.fileDir;
 
     final file = basePath.childFile(cacheObject.relativePath);

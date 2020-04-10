@@ -8,7 +8,7 @@ import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
+import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:path/path.dart' as p;
