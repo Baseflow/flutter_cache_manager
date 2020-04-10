@@ -4,11 +4,13 @@ import 'dart:typed_data';
 
 import 'package:file/file.dart' as f;
 import 'package:file/local.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/compat/file_service_compat.dart';
 import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/web/file_fetcher.dart';
+import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:path/path.dart' as p;
@@ -61,12 +63,29 @@ abstract class BaseCacheManager {
     FileService fileService,
     CacheStore cacheStore,
     WebHelper webHelper,
+    @Deprecated('Use FileService instead') FileFetcher fileFetcher,
   }) {
+    assert(
+        (maxAgeCacheObject == null && maxNrOfCacheObjects == null) ||
+            cacheStore == null,
+        'When supplying a cacheStore maxAgeCacheObject and maxNrOfCacheObjects will be ignored. Supply these to the store instead.');
+    assert(fileService == null || fileFetcher == null,
+        "FileService is the replacement of the deprecated FileFetcher. Don't supply both");
+    assert(fileService == null || webHelper == null,
+        'When you supply a WebHelper the FileService  will be ignored, you have to supply that to the WebHelper');
+    assert(fileFetcher == null || webHelper == null,
+        'When you supply a WebHelper the FileFetcher will be ignored, you have to supply that to the WebHelper');
+
     var duration = maxAgeCacheObject ?? const Duration(days: 30);
     var maxSize = maxNrOfCacheObjects ?? 200;
     _store = cacheStore ??
         CacheStore(_createFileDir(), _cacheKey, maxSize, duration);
     _fileDir = _store.fileDir;
+
+    if (fileService == null && fileFetcher != null) {
+      fileService = FileServiceCompat(fileFetcher);
+    }
+
     _webHelper = webHelper ?? WebHelper(_store, fileService);
   }
 
@@ -139,11 +158,12 @@ abstract class BaseCacheManager {
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
-        await for(var response in _webHelper.downloadFile(url, authHeaders: headers)){
-          if(response is DownloadProgress && withProgress){
+        await for (var response
+            in _webHelper.downloadFile(url, authHeaders: headers)) {
+          if (response is DownloadProgress && withProgress) {
             streamController.add(response);
           }
-          if(response is FileInfo){
+          if (response is FileInfo) {
             streamController.add(response);
           }
         }
@@ -164,8 +184,9 @@ abstract class BaseCacheManager {
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,
       {Map<String, String> authHeaders, bool force = false}) async {
-    var fileResponse = await _webHelper.downloadFile(url,
-        authHeaders: authHeaders, ignoreMemCache: force).firstWhere((r) => r is FileInfo);
+    var fileResponse = await _webHelper
+        .downloadFile(url, authHeaders: authHeaders, ignoreMemCache: force)
+        .firstWhere((r) => r is FileInfo);
     return fileResponse as FileInfo;
   }
 

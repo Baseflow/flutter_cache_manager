@@ -9,34 +9,34 @@ import 'mime_converter.dart';
 ///Released under MIT License.
 
 /// Defines the interface for a file service.
-/// Most common file service will be an [HttpFileFetcher], however one can
+/// Most common file service will be an [HttpFileService], however one can
 /// also make something more specialized. For example you could fetch files
 /// from other apps or from local storage.
 abstract class FileService {
-  Future<FileFetcherResponse> get(String url, {Map<String, String> headers});
+  Future<FileServiceGetResponse> get(String url, {Map<String, String> headers});
 }
 
-/// [HttpFileFetcher] is the most common file service and the default for
+/// [HttpFileService] is the most common file service and the default for
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
-class HttpFileFetcher implements FileService {
+class HttpFileService implements FileService {
   http.Client _httpClient;
-  HttpFileFetcher({http.Client httpClient}) {
+  HttpFileService({http.Client httpClient}) {
     _httpClient = httpClient ?? http.Client();
   }
 
   @override
-  Future<FileFetcherResponse> get(String url,
+  Future<FileServiceGetResponse> get(String url,
       {Map<String, String> headers = const {}}) async {
     final req = http.Request('GET', Uri.parse(url));
     req.headers.addAll(headers);
     final httpResponse = await _httpClient.send(req);
 
-    return HttpFileFetcherResponse(httpResponse);
+    return HttpGetResponse(httpResponse);
   }
 }
 
 /// Defines the interface for a get result of a [FileService].
-abstract class FileFetcherResponse {
+abstract class FileServiceGetResponse {
   /// [content] is a stream of bytes
   Stream<List<int>> get content;
 
@@ -57,9 +57,9 @@ abstract class FileFetcherResponse {
   String get fileExtension;
 }
 
-/// Basic implementation of a [FileFetcherResponse] for http requests.
-class HttpFileFetcherResponse implements FileFetcherResponse {
-  HttpFileFetcherResponse(this._response);
+/// Basic implementation of a [FileServiceGetResponse] for http requests.
+class HttpGetResponse implements FileServiceGetResponse {
+  HttpGetResponse(this._response);
 
   final DateTime _receivedTime = clock.now();
 
@@ -87,7 +87,8 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
     // Without a cache-control header we keep the file for a week
     var ageDuration = const Duration(days: 7);
     if (_hasHeader(HttpHeaders.cacheControlHeader)) {
-      final controlSettings = _header(HttpHeaders.cacheControlHeader).split(',');
+      final controlSettings =
+          _header(HttpHeaders.cacheControlHeader).split(',');
       for (final setting in controlSettings) {
         final sanitizedSetting = setting.trim().toLowerCase();
         if (sanitizedSetting == 'no-cache') {
@@ -106,13 +107,16 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
   }
 
   @override
-  String get eTag => _hasHeader(HttpHeaders.etagHeader) ? _header(HttpHeaders.etagHeader) : null;
+  String get eTag => _hasHeader(HttpHeaders.etagHeader)
+      ? _header(HttpHeaders.etagHeader)
+      : null;
 
   @override
   String get fileExtension {
     var fileExtension = '';
     if (_hasHeader(HttpHeaders.contentTypeHeader)) {
-      var contentType = ContentType.parse(_header(HttpHeaders.contentTypeHeader));
+      var contentType =
+          ContentType.parse(_header(HttpHeaders.contentTypeHeader));
       fileExtension = contentType.fileExtension ?? '';
     }
     return fileExtension;
