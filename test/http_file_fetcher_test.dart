@@ -52,6 +52,21 @@ void main() {
       expect(response.fileExtension, '.$fileExtension');
     });
 
+    test('Content-Type parameters should be ignored', () async {
+      var fileExtension = 'mp3';
+      var contentType = 'audio/mpeg;chartset=UTF-8';
+
+      var client = MockClient((request) async {
+        return Response.bytes(Uint8List(16), 200,
+            headers: {'content-type': contentType});
+      });
+
+      var httpFileFetcher = HttpFileService(httpClient: client);
+      final response = await httpFileFetcher.get('test.com/document');
+
+      expect(response.fileExtension, '.$fileExtension');
+    });
+
     test('Test CompatFileService', () async {
       var eTag = 'test';
       var fileExtension = 'jpg';
