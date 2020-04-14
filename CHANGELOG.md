@@ -1,3 +1,6 @@
+## [1.2.1] - 2020-04-14
+* Fixed optional parameters in the Content-Type header ([#164](https://github.com/Baseflow/flutter_cache_manager/issues/164)).
+
 ## [1.2.0] - 2020-04-10
 * Added getFileStream to CacheManager
     * getFileStream has an optional parameter 'withProgress' to receive progress.
