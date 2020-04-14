@@ -4,7 +4,7 @@ import 'dart:io';
 extension ContentTypeConverter on ContentType {
   String get fileExtension {
     if (this == null) return null;
-    if (mimeTypes.containsKey(toString())) return mimeTypes[toString()];
+    if (mimeTypes.containsKey(mimeType)) return mimeTypes[mimeType];
     return '.$subType';
   }
 }
