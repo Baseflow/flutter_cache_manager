@@ -1,3 +1,6 @@
+## [1.2.2] - 2020-04-16
+* Support for RxDart 0.24.x
+
 ## [1.2.1] - 2020-04-14
 * Fixed optional parameters in the Content-Type header ([#164](https://github.com/Baseflow/flutter_cache_manager/issues/164)).
 

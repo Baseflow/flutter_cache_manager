@@ -32,26 +32,24 @@ void main() {
       expect(object.validTill, validDate);
     });
 
-    test('Test encoding CacheObject to map', ()
-    async {
-      await withClock(Clock.fixed(now), ()
-        async {
-          var object = CacheObject(
-            'baseflow.com/test.png',
-            relativePath: 'test.png',
-            validTill: validDate,
-            eTag: 'test1',
-            id: 3,
-          );
+    test('Test encoding CacheObject to map', () async {
+      await withClock(Clock.fixed(now), () async {
+        var object = CacheObject(
+          'baseflow.com/test.png',
+          relativePath: 'test.png',
+          validTill: validDate,
+          eTag: 'test1',
+          id: 3,
+        );
 
-          var map = object.toMap();
-          expect(map[columnId], 3);
-          expect(map[columnUrl], 'baseflow.com/test.png');
-          expect(map[columnPath], 'test.png');
-          expect(map[columnETag], 'test1');
-          expect(map[columnValidTill], validMillis);
-          expect(map[columnTouched], now.millisecondsSinceEpoch);
-        });
+        var map = object.toMap();
+        expect(map[columnId], 3);
+        expect(map[columnUrl], 'baseflow.com/test.png');
+        expect(map[columnPath], 'test.png');
+        expect(map[columnETag], 'test1');
+        expect(map[columnValidTill], validMillis);
+        expect(map[columnTouched], now.millisecondsSinceEpoch);
       });
+    });
   });
 }
