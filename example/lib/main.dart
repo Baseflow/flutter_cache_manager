@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
 }
 
 const url =
-    'https://cdn2.online-convert.com/example-file/raster%20image/png/example.png';
+    'https://file-examples.com/wp-content/uploads/2018/04/file_example_AVI_1280_1_5MG.avi';
 
 class MyHomePage extends StatefulWidget {
   @override
