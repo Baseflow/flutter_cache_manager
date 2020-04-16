@@ -89,7 +89,9 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var result = await webHelper.downloadFile(imageUrl).firstWhere((r) => r is FileInfo, orElse: null);
+      var result = await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo, orElse: null);
       expect(result, isNotNull);
     });
   });
@@ -173,7 +175,9 @@ void main() {
       });
 
       var webHelper = WebHelper(store, fileService);
-      var result = await webHelper.downloadFile(imageUrl).firstWhere((r) => r is FileInfo, orElse: null);
+      var result = await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo, orElse: null);
       expect(result, isNotNull);
       verify(store.putFile(any)).called(1);
     });
@@ -205,7 +209,9 @@ void main() {
       var webHelper = WebHelper(store, fileService);
 
       expect(await file.exists(), true);
-      var _ = await webHelper.downloadFile(imageUrl).firstWhere((r) => r is FileInfo, orElse: null);
+      var _ = await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo, orElse: null);
       expect(await file.exists(), false);
     });
   });
