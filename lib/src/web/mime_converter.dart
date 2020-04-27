@@ -13,6 +13,7 @@ extension ContentTypeConverter on ContentType {
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 /// Updated on 20th of March in 2020 while being quarantined
 const mimeTypes = {
+  'application/vnd.android.package-archive': '.apk',
   'application/epub+zip': '.epub',
   'application/gzip': '.gz',
   'application/java-archive': '.jar',
