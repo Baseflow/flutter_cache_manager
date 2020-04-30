@@ -68,7 +68,7 @@ class DownloadPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FileResponse>(
-      stream: DefaultCacheManager().getFileStream(url, withProgress: true),
+      stream: fileStream,
       builder: (context, snapshot) {
         Widget body;
 
