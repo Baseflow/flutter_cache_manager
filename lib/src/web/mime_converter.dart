@@ -56,6 +56,7 @@ const mimeTypes = {
   'audio/3gpp': '.3gp',
   'audio/3gpp2': '.3g2',
   'audio/aac': '.aac',
+  'audio/x-aac': '.aac',
   'audio/midi audio/x-midi': '.midi',
   'audio/mpeg': '.mp3',
   'audio/ogg': '.oga',
