@@ -88,5 +88,7 @@ const mimeTypes = {
   'video/mpeg': '.mpeg',
   'video/ogg': '.ogv',
   'video/webm': '.webm',
-  'video/x-msvideo': '.avi'
+  'video/x-msvideo': '.avi',
+  'video/quicktime': '.mov'
+    
 };
