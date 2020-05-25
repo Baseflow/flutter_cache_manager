@@ -47,7 +47,7 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
 
       var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(argThat(anything)))
+      when(webHelper.downloadFile(argThat(anything), key: anyNamed('key')))
           .thenAnswer((i) => Stream.value(FileInfo(
                 null,
                 FileSource.Online,
@@ -58,7 +58,7 @@ void main() {
 
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verify(webHelper.downloadFile(any)).called(1);
+      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
 
     test('Non-existing cacheFile should call to web', () async {
@@ -75,14 +75,14 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
       var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(fileUrl))
+      when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
           .thenAnswer((_) => Stream.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verify(webHelper.downloadFile(any)).called(1);
+      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
   });
 
@@ -123,14 +123,14 @@ void main() {
       var webHelper = MockWebHelper();
       var downloadedInfo = FileInfo(file, FileSource.Online,
           DateTime.now().add(const Duration(days: 1)), fileUrl);
-      when(webHelper.downloadFile(fileUrl))
+      when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
           .thenAnswer((_) => Stream.value(downloadedInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
 
-      verify(webHelper.downloadFile(any)).called(1);
+      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
 
     test('Non-existing cacheFile should call to web', () async {
@@ -147,14 +147,14 @@ void main() {
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
       var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(fileUrl))
+      when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
           .thenAnswer((_) => Stream.value(fileInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
 
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([fileInfo]));
-      verify(webHelper.downloadFile(any)).called(1);
+      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
 
     test('Errors should be passed to the stream', () async {
@@ -166,13 +166,14 @@ void main() {
       var webHelper = MockWebHelper();
       var error = HttpExceptionWithStatus(404, 'Invalid statusCode: 404',
           uri: Uri.parse(fileUrl));
-      when(webHelper.downloadFile(fileUrl)).thenThrow(error);
+      when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
+          .thenThrow(error);
 
       var cacheManager = TestCacheManager(store, webHelper);
 
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsError(error));
-      verify(webHelper.downloadFile(any)).called(1);
+      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
   });
 
@@ -231,7 +232,7 @@ void main() {
     var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
     var store = MockStore();
     var webHelper = MockWebHelper();
-    when(webHelper.downloadFile(fileUrl))
+    when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
         .thenAnswer((_) => Stream.value(fileInfo));
     var cacheManager = TestCacheManager(store, webHelper);
     expect(await cacheManager.downloadFile(fileUrl), fileInfo);
