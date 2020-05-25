@@ -2,8 +2,6 @@ import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'cache_object.dart';
-
 const _tableCacheObject = 'cacheObject';
 
 class CacheObjectProvider implements CacheInfoRepository {
