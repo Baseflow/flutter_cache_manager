@@ -84,6 +84,87 @@ void main() {
       expect(result, isNotNull);
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
+    group('Explicit key', () {
+      test('Valid cacheFile should not call to web', () async {
+        var fileName = 'test.jpg';
+        var fileUrl = 'baseflow.com/test';
+        var fileKey = 'test1234';
+        var validTill = DateTime.now().add(const Duration(days: 1));
+
+        var store = MockStore();
+        when(store.fileDir).thenAnswer((_) => Future.value(
+            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+        var file = (await store.fileDir).childFile(fileName);
+        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(fileInfo));
+
+        var webHelper = MockWebHelper();
+        var cacheManager = TestCacheManager(store, webHelper);
+
+        var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+        expect(result, isNotNull);
+        verifyNever(webHelper.downloadFile(any));
+      });
+
+      test('Outdated cacheFile should call to web', () async {
+        var fileName = 'test.jpg';
+        var fileUrl = 'baseflow.com/test';
+        var fileKey = 'test1234';
+        var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+        var store = MockStore();
+        when(store.fileDir).thenAnswer((_) => Future.value(
+            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+        var file = (await store.fileDir).childFile(fileName);
+        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(fileInfo));
+
+        var webHelper = MockWebHelper();
+        when(webHelper.downloadFile(argThat(anything), key: anyNamed('key')))
+            .thenAnswer((i) => Stream.value(FileInfo(
+                  null,
+                  FileSource.Online,
+                  DateTime.now().add(const Duration(days: 7)),
+                  i.positionalArguments.first as String,
+                )));
+        var cacheManager = TestCacheManager(store, webHelper);
+
+        var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+        expect(result, isNotNull);
+        verify(webHelper.downloadFile(
+          fileUrl,
+          key: argThat(equals(fileKey), named: 'key'),
+        )).called(1);
+      });
+
+      test('Non-existing cacheFile should call to web', () async {
+        var fileName = 'test.jpg';
+        var fileUrl = 'baseflow.com/test';
+        var fileKey = 'test1234';
+        var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+        var store = MockStore();
+        when(store.fileDir).thenAnswer((_) => Future.value(
+            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+        var file = (await store.fileDir).childFile(fileName);
+        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+
+        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(null));
+
+        var webHelper = MockWebHelper();
+        when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
+            .thenAnswer((_) => Stream.value(fileInfo));
+
+        var cacheManager = TestCacheManager(store, webHelper);
+
+        var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+        expect(result, isNotNull);
+        verify(webHelper.downloadFile(
+          fileUrl,
+          key: argThat(equals(fileKey), named: 'key'),
+        )).called(1);
+      });
+    });
   });
 
   group('Tests for getFile', () {
@@ -175,6 +256,86 @@ void main() {
       await expectLater(fileStream, emitsError(error));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
+    group('explicit key', () {
+      test('Valid cacheFile should not call to web', () async {
+        var fileName = 'test.jpg';
+        var fileUrl = 'baseflow.com/test';
+        var fileKey = 'test1234';
+        var validTill = DateTime.now().add(const Duration(days: 1));
+
+        var store = MockStore();
+        when(store.fileDir).thenAnswer((_) => Future.value(
+            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+        var file = (await store.fileDir).childFile(fileName);
+        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(fileInfo));
+
+        var webHelper = MockWebHelper();
+        var cacheManager = TestCacheManager(store, webHelper);
+
+        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
+        expect(fileStream, emits(fileInfo));
+        verifyNever(webHelper.downloadFile(any));
+      });
+
+      test('Outdated cacheFile should call to web', () async {
+        var fileName = 'test.jpg';
+        var fileUrl = 'baseflow.com/test';
+        var fileKey = 'test1234';
+        var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+        var store = MockStore();
+        when(store.fileDir).thenAnswer((_) => Future.value(
+            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+
+        var file = (await store.fileDir).childFile(fileName);
+        var cachedInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+        when(store.getFile(fileKey))
+            .thenAnswer((_) => Future.value(cachedInfo));
+
+        var webHelper = MockWebHelper();
+        var downloadedInfo = FileInfo(file, FileSource.Online,
+            DateTime.now().add(const Duration(days: 1)), fileUrl);
+        when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
+            .thenAnswer((_) => Stream.value(downloadedInfo));
+
+        var cacheManager = TestCacheManager(store, webHelper);
+        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
+        await expectLater(
+            fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
+
+        verify(webHelper.downloadFile(any,
+                key: argThat(equals('test1234'), named: 'key')))
+            .called(1);
+      });
+
+      test('Non-existing cacheFile should call to web', () async {
+        var fileName = 'test.jpg';
+        var fileUrl = 'baseflow.com/test';
+        var fileKey = 'test1234';
+        var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+        var store = MockStore();
+        when(store.fileDir).thenAnswer((_) => Future.value(
+            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+        var file = (await store.fileDir).childFile(fileName);
+        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+
+        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(null));
+
+        var webHelper = MockWebHelper();
+        when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
+            .thenAnswer((_) => Stream.value(fileInfo));
+
+        var cacheManager = TestCacheManager(store, webHelper);
+
+        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
+        await expectLater(fileStream, emitsInOrder([fileInfo]));
+        verify(webHelper.downloadFile(any,
+                key: argThat(equals('test1234'), named: 'key')))
+            .called(1);
+      });
+    });
   });
 
   group('Testing puting files in cache', () {
@@ -195,6 +356,28 @@ void main() {
       expect(await file.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
       verify(store.putFile(any)).called(1);
+    });
+    test('Check if file is written and info is stored, explicit key', () async {
+      var fileUrl = 'baseflow.com/test';
+      var fileBytes = Uint8List(16);
+      var fileKey = 'test1234';
+      var extension = '.jpg';
+
+      var store = MockStore();
+      when(store.fileDir).thenAnswer((_) => Future.value(
+          MemoryFileSystem().systemTempDirectory.createTemp('test')));
+
+      var webHelper = MockWebHelper();
+      var cacheManager = TestCacheManager(store, webHelper);
+
+      var file = await cacheManager.putFile(fileUrl, fileBytes,
+          key: fileKey, fileExtension: extension);
+      expect(await file.exists(), true);
+      expect(await file.readAsBytes(), fileBytes);
+      final arg =
+          verify(store.putFile(captureAny)).captured.first as CacheObject;
+      expect(arg.key, fileKey);
+      expect(arg.url, fileUrl);
     });
   });
 

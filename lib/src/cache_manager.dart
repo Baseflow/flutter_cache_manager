@@ -127,8 +127,13 @@ abstract class BaseCacheManager {
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
   @Deprecated('Prefer to use the new getFileStream method')
-  Stream<FileInfo> getFile(String url, {Map<String, String> headers}) {
-    return getFileStream(url, withProgress: false).map((r) => r as FileInfo);
+  Stream<FileInfo> getFile(String url,
+      {String key, Map<String, String> headers}) {
+    return getFileStream(
+      url,
+      key: key,
+      withProgress: false,
+    ).map((r) => r as FileInfo);
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
