@@ -158,6 +158,7 @@ abstract class BaseCacheManager {
 
   Future<void> _pushFileToStream(StreamController streamController, String url,
       String key, Map<String, String> headers, bool withProgress) async {
+    key ??= url;
     FileInfo cacheFile;
     try {
       cacheFile = await getFileFromCache(key);
