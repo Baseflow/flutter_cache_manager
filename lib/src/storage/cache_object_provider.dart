@@ -36,12 +36,12 @@ class CacheObjectProvider implements CacheInfoRepository {
         await db.execute('''
         alter table $_tableCacheObject add ${CacheObject.columnKey} text;
 
-        create unique index $_tableCacheObject${CacheObject.columnKey} 
-          on $_tableCacheObject (${CacheObject.columnKey});
-
         update $_tableCacheObject 
           set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
           where ${CacheObject.columnKey} is null;
+
+        create unique index $_tableCacheObject${CacheObject.columnKey} 
+          on $_tableCacheObject (${CacheObject.columnKey});
         ''');
       }
     });
