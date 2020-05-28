@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:clock/clock.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_storage/firebase_storage.dart';
 import 'mime_converter.dart';
 
 ///Flutter Cache Manager
@@ -33,20 +32,6 @@ class HttpFileService implements FileService {
     final httpResponse = await _httpClient.send(req);
 
     return HttpGetResponse(httpResponse);
-  }
-}
-
-/// [FirebaseHttpFileService] is another common file service which parses a
-/// firebase reference into, to standard url which can be passed to the
-/// standard [HttpFileService].
-class FirebaseHttpFileService extends HttpFileService {
-  @override
-  Future<FileServiceResponse> get(String url,
-      {Map<String, String> headers = const {}}) async {
-    var ref = FirebaseStorage.instance.ref().child(url);
-    var _url = await ref.getDownloadURL() as String;
-
-    return super.get(_url);
   }
 }
 
