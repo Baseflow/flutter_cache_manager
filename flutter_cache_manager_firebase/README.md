@@ -8,7 +8,7 @@ This library contains FirebaseCacheManager and FirebaseHttpFileService.
 
 You can easily fetch a file stored on Firebase with 
 ```dart
-var file = await DefaultCacheManager().getSingleFile(url);
+var file = await FirebaseCacheManager().getSingleFile(url);
 ```
 
 You could also write your own CacheManager which uses the FirebaseHttpFileService.

@@ -1,6 +1,6 @@
 name: flutter_cache_manager_firebase
 description: CacheManager implementation for firebase_storage.
-version: 1.0.0
+version: 1.0.0+1
 homepage: https://github.com/Baseflow/flutter_cache_manager
 
 environment:
