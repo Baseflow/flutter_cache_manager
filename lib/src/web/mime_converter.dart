@@ -90,5 +90,4 @@ const mimeTypes = {
   'video/webm': '.webm',
   'video/x-msvideo': '.avi',
   'video/quicktime': '.mov'
-    
 };

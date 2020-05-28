@@ -21,7 +21,6 @@ import 'package:uuid/uuid.dart';
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
-
 /// The DefaultCacheManager that can be easily used directly. The code of
 /// this implementation can be used as inspiration for more complex cache
 /// managers.

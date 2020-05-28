@@ -64,6 +64,31 @@ class CustomCacheManager extends BaseCacheManager {
 }
 
 ```
+If the file is located on Firebase Storage it can be accessed by using the provided `FirebaseHttpFileService`.
+Wherever the url is provided now becomes a Firebase Storage path, e.g. `getFileStream(firebaseStoragePath)`.
+
+```
+
+class FirebaseCacheManager extends BaseCacheManager {
+  static const key = 'firebaseCache';
+
+  static FirebaseCacheManager _instance;
+
+  factory FirebaseCacheManager() {
+    _instance ??= FirebaseCacheManager._();
+    return _instance;
+  }
+
+  FirebaseCacheManager._() : super(key, fileService: FirebaseHttpFileService());
+
+  @override
+  Future<String> getFilePath() async {
+    var directory = await getTemporaryDirectory();
+    return p.join(directory.path, key);
+  }
+}
+
+```
 
 ## How it works
 By default the cached files are stored in the temporary directory of the app. This means the OS can delete the files any time.
