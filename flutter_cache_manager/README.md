@@ -33,8 +33,10 @@ The easiest way to get a single file is call `.getSingleFile`.
 
 `emptyCache` removes all files from the cache. 
 
+## Other implementations
+When your files are stored on Firebase Storage you can use [flutter_cache_manager_firebase](https://pub.dev/packages/flutter_cache_manager_firebase).
 
-## Settings
+## Customize
 The cache manager is customizable by extending the BaseCacheManager.
 Below is an example with other settings for the maximum age of files, maximum number of objects
 and a custom FileService. The key parameter in the constructor and the getFilePath method are mandatory.
@@ -57,31 +59,6 @@ class CustomCacheManager extends BaseCacheManager {
       maxAgeCacheObject: Duration(days: 7),
       maxNrOfCacheObjects: 20);
 
-  Future<String> getFilePath() async {
-    var directory = await getTemporaryDirectory();
-    return p.join(directory.path, key);
-  }
-}
-
-```
-If the file is located on Firebase Storage it can be accessed by using the provided `FirebaseHttpFileService`.
-Wherever the url is provided now becomes a Firebase Storage path, e.g. `getFileStream(firebaseStoragePath)`.
-
-```
-
-class FirebaseCacheManager extends BaseCacheManager {
-  static const key = 'firebaseCache';
-
-  static FirebaseCacheManager _instance;
-
-  factory FirebaseCacheManager() {
-    _instance ??= FirebaseCacheManager._();
-    return _instance;
-  }
-
-  FirebaseCacheManager._() : super(key, fileService: FirebaseHttpFileService());
-
-  @override
   Future<String> getFilePath() async {
     var directory = await getTemporaryDirectory();
     return p.join(directory.path, key);

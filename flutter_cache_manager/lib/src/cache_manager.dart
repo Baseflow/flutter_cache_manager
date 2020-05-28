@@ -248,7 +248,7 @@ abstract class BaseCacheManager {
   }
 
   CacheStore _createCacheStore(int maxSize, Duration maxAge) {
-    if(kIsWeb){
+    if (kIsWeb) {
       return _createStoreForWeb();
     }
     return CacheStore(_createFileDir(), _cacheKey, maxSize, maxAge);

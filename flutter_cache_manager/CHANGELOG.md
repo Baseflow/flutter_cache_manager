@@ -1,3 +1,10 @@
+## [1.3.0] - 2020-05-28
+* Basic web support. (At least it downloads the file for you.)
+* Support for the following mimetypes:
+    * application/vnd.android.package-archive (apk)
+    * audio/x-aac (aac)
+    * video/quicktime (mov)
+
 ## [1.2.2] - 2020-04-16
 * Support for RxDart 0.24.x
 

@@ -57,5 +57,4 @@ class NonStoringObjectProvider implements CacheInfoRepository {
   Future updateOrInsert(CacheObject cacheObject) {
     return Future.value();
   }
-
 }
