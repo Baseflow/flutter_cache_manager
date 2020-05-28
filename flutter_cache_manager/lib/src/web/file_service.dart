@@ -36,20 +36,6 @@ class HttpFileService implements FileService {
   }
 }
 
-/// [FirebaseHttpFileService] is another common file service which parses a
-/// firebase reference into, to standard url which can be passed to the
-/// standard [HttpFileService].
-class FirebaseHttpFileService extends HttpFileService {
-  @override
-  Future<FileServiceResponse> get(String url,
-      {Map<String, String> headers = const {}}) async {
-    var ref = FirebaseStorage.instance.ref().child(url);
-    var _url = await ref.getDownloadURL() as String;
-
-    return super.get(_url);
-  }
-}
-
 /// Defines the interface for a get result of a [FileService].
 abstract class FileServiceResponse {
   /// [content] is a stream of bytes
