@@ -13,8 +13,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-const url =
-    'https://file-examples.com/wp-content/uploads/2018/04/file_example_AVI_1280_1_5MG.avi';
+const url = 'https://blurha.sh/assets/images/img1.jpg';
 
 class MyHomePage extends StatefulWidget {
   @override

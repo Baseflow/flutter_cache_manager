@@ -4,12 +4,15 @@ import 'dart:typed_data';
 
 import 'package:file/file.dart' as f;
 import 'package:file/local.dart';
+import 'package:file/memory.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/compat/file_service_compat.dart';
 import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/storage/non_storing_object_provider.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
@@ -78,8 +81,7 @@ abstract class BaseCacheManager {
 
     var duration = maxAgeCacheObject ?? const Duration(days: 30);
     var maxSize = maxNrOfCacheObjects ?? 200;
-    _store = cacheStore ??
-        CacheStore(_createFileDir(), _cacheKey, maxSize, duration);
+    _store = cacheStore ?? _createCacheStore(maxSize, duration);
     _fileDir = _store.fileDir;
 
     if (fileService == null && fileFetcher != null) {
@@ -243,5 +245,26 @@ abstract class BaseCacheManager {
     var directory = fs.directory((await getFilePath()));
     await directory.create(recursive: true);
     return directory;
+  }
+
+  CacheStore _createCacheStore(int maxSize, Duration maxAge) {
+    if(kIsWeb){
+      return _createStoreForWeb();
+    }
+    return CacheStore(_createFileDir(), _cacheKey, maxSize, maxAge);
+  }
+
+  CacheStore _createStoreForWeb() {
+    if (!kIsWeb) return null;
+    var memDir = MemoryFileSystem().systemTempDirectory.createTemp('cache');
+    var cacheObjectProvider = NonStoringObjectProvider();
+
+    return CacheStore(
+      memDir,
+      _cacheKey,
+      200,
+      const Duration(days: 1),
+      cacheRepoProvider: Future.value(cacheObjectProvider),
+    );
   }
 }
