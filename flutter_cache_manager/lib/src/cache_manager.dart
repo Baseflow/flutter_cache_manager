@@ -7,14 +7,14 @@ import 'package:file/local.dart';
 import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/compat/file_service_compat.dart';
 import 'package:flutter_cache_manager/src/result/download_progress.dart';
+import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/storage/non_storing_object_provider.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
-import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -98,6 +98,9 @@ abstract class BaseCacheManager {
 
   /// Store helper for cached files
   CacheStore _store;
+
+  /// Get the underlying store helper
+  CacheStore get store => _store;
 
   /// WebHelper to download and store files
   WebHelper _webHelper;

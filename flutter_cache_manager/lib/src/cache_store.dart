@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file/file.dart' as f;
+import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:pedantic/pedantic.dart';
@@ -78,7 +78,7 @@ class CacheStore {
         completer.complete(cacheObject);
 
         _memCache[url] = cacheObject;
-        _futureCache[url] = null;
+        _futureCache.remove(url);
       });
       _futureCache[url] = completer.future;
     }
@@ -154,6 +154,10 @@ class CacheStore {
       unawaited(_removeCachedFile(cacheObject, toRemove));
     }
     await provider.deleteAll(toRemove);
+  }
+
+  void emptyMemoryCache() {
+    _memCache.clear();
   }
 
   Future<void> removeCachedFile(CacheObject cacheObject) async {
