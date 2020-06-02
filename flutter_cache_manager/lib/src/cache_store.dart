@@ -49,8 +49,9 @@ class CacheStore {
     return provider;
   }
 
-  Future<FileInfo> getFile(String url) async {
-    final cacheObject = await retrieveCacheData(url);
+  Future<FileInfo> getFile(String url, {bool ignoreMemCache = false}) async {
+    final cacheObject =
+        await retrieveCacheData(url, ignoreMemCache: ignoreMemCache);
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
@@ -63,8 +64,9 @@ class CacheStore {
     await _updateCacheDataInDatabase(cacheObject);
   }
 
-  Future<CacheObject> retrieveCacheData(String url) {
-    if (_memCache.containsKey(url)) {
+  Future<CacheObject> retrieveCacheData(String url,
+      {bool ignoreMemCache = false}) {
+    if (!ignoreMemCache && _memCache.containsKey(url)) {
       return Future.value(_memCache[url]);
     }
     if (!_futureCache.containsKey(url)) {
@@ -78,7 +80,7 @@ class CacheStore {
         completer.complete(cacheObject);
 
         _memCache[url] = cacheObject;
-        _futureCache.remove(url);
+        unawaited(_futureCache.remove(url));
       });
       _futureCache[url] = completer.future;
     }

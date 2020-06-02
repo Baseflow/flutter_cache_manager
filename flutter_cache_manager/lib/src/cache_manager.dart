@@ -198,8 +198,11 @@ abstract class BaseCacheManager {
     return fileResponse as FileInfo;
   }
 
-  ///Get the file from the cache
-  Future<FileInfo> getFileFromCache(String url) => _store.getFile(url);
+  /// Get the file from the cache.
+  /// Specify [ignoreMemCache] to force a re-read from the database
+  Future<FileInfo> getFileFromCache(String url,
+          {bool ignoreMemCache = false}) =>
+      _store.getFile(url, ignoreMemCache: ignoreMemCache);
 
   ///Returns the file from memory if it has already been fetched
   FileInfo getFileFromMemory(String url) => _store.getFileFromMemory(url);
