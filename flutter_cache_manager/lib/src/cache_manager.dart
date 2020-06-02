@@ -105,6 +105,9 @@ abstract class BaseCacheManager {
   /// WebHelper to download and store files
   WebHelper _webHelper;
 
+  /// Get the underlying web helper
+  WebHelper get webHelper => _webHelper;
+
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// When a file is cached it is return directly, when it is too old the file is
