@@ -171,14 +171,14 @@ class CacheStore {
 
   Future<void> _removeCachedFile(
       CacheObject cacheObject, List<int> toRemove) async {
-    if (!toRemove.contains(cacheObject.id)) {
-      toRemove.add(cacheObject.id);
-      if (_memCache.containsKey(cacheObject.url)) {
-        _memCache.remove(cacheObject.url);
-      }
-      if (_futureCache.containsKey(cacheObject.url)) {
-        unawaited(_futureCache.remove(cacheObject.url));
-      }
+    if (toRemove.contains(cacheObject.id)) return;
+
+    toRemove.add(cacheObject.id);
+    if (_memCache.containsKey(cacheObject.url)) {
+      _memCache.remove(cacheObject.url);
+    }
+    if (_futureCache.containsKey(cacheObject.url)) {
+      unawaited(_futureCache.remove(cacheObject.url));
     }
     final file = (await fileDir).childFile(cacheObject.relativePath);
     if (await file.exists()) {

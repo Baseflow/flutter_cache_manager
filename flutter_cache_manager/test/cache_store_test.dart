@@ -197,6 +197,37 @@ void main() {
       verify(repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
     });
 
+
+
+    test('Store should remove file old and over capacity', () async {
+      var repo = MockRepo();
+      var directory = createDir();
+
+      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
+          cacheRepoProvider: Future.value(repo),
+          cleanupRunMinInterval: const Duration());
+
+      var cacheObject = CacheObject('baseflow.com/test.png',
+          relativePath: 'testimage.png', id: 1);
+      var file = await (await directory).childFile('testimage.png').create();
+
+      when(repo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([cacheObject]));
+      when(repo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([cacheObject]));
+      when(repo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
+
+      expect(await store.getFile('baseflow.com/test.png'), isNotNull);
+
+      await untilCalled(repo.deleteAll(any));
+      await Future.delayed(const Duration(milliseconds: 5));
+
+      verify(repo.getObjectsOverCapacity(any)).called(1);
+      verify(repo.getOldObjects(any)).called(1);
+      verify(repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+    });
+
     test('Store should not remove files that are not old or over capacity',
         () async {
       var repo = MockRepo();
