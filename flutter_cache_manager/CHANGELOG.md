@@ -1,3 +1,7 @@
+## [1.4.0] - 2020-06-04
+* Allow cleaning of memory cache ([PR #183](https://github.com/Baseflow/flutter_cache_manager/pull/183)).
+* Bugfix: Cleaning doesn't want to delete a file twice anymore ([PR #185](https://github.com/Baseflow/flutter_cache_manager/pull/185)).
+
 ## [1.3.0] - 2020-05-28
 * Basic web support. (At least it downloads the file for you.)
 * Support for the following mimetypes:
