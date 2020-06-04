@@ -7,14 +7,14 @@ import 'package:file/local.dart';
 import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/compat/file_service_compat.dart';
 import 'package:flutter_cache_manager/src/result/download_progress.dart';
+import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/storage/non_storing_object_provider.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
-import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -99,8 +99,14 @@ abstract class BaseCacheManager {
   /// Store helper for cached files
   CacheStore _store;
 
+  /// Get the underlying store helper
+  CacheStore get store => _store;
+
   /// WebHelper to download and store files
   WebHelper _webHelper;
+
+  /// Get the underlying web helper
+  WebHelper get webHelper => _webHelper;
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
@@ -192,8 +198,11 @@ abstract class BaseCacheManager {
     return fileResponse as FileInfo;
   }
 
-  ///Get the file from the cache
-  Future<FileInfo> getFileFromCache(String url) => _store.getFile(url);
+  /// Get the file from the cache.
+  /// Specify [ignoreMemCache] to force a re-read from the database
+  Future<FileInfo> getFileFromCache(String url,
+          {bool ignoreMemCache = false}) =>
+      _store.getFile(url, ignoreMemCache: ignoreMemCache);
 
   ///Returns the file from memory if it has already been fetched
   FileInfo getFileFromMemory(String url) => _store.getFileFromMemory(url);

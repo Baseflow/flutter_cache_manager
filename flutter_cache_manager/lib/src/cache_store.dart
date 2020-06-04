@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file/file.dart' as f;
+import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:pedantic/pedantic.dart';
@@ -49,8 +49,9 @@ class CacheStore {
     return provider;
   }
 
-  Future<FileInfo> getFile(String url) async {
-    final cacheObject = await retrieveCacheData(url);
+  Future<FileInfo> getFile(String url, {bool ignoreMemCache = false}) async {
+    final cacheObject =
+        await retrieveCacheData(url, ignoreMemCache: ignoreMemCache);
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
@@ -63,8 +64,9 @@ class CacheStore {
     await _updateCacheDataInDatabase(cacheObject);
   }
 
-  Future<CacheObject> retrieveCacheData(String url) {
-    if (_memCache.containsKey(url)) {
+  Future<CacheObject> retrieveCacheData(String url,
+      {bool ignoreMemCache = false}) {
+    if (!ignoreMemCache && _memCache.containsKey(url)) {
       return Future.value(_memCache[url]);
     }
     if (!_futureCache.containsKey(url)) {
@@ -78,7 +80,7 @@ class CacheStore {
         completer.complete(cacheObject);
 
         _memCache[url] = cacheObject;
-        _futureCache[url] = null;
+        unawaited(_futureCache.remove(url));
       });
       _futureCache[url] = completer.future;
     }
@@ -154,6 +156,10 @@ class CacheStore {
       unawaited(_removeCachedFile(cacheObject, toRemove));
     }
     await provider.deleteAll(toRemove);
+  }
+
+  void emptyMemoryCache() {
+    _memCache.clear();
   }
 
   Future<void> removeCachedFile(CacheObject cacheObject) async {
