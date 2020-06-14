@@ -34,17 +34,22 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
       if (oldVersion <= 1) {
-        await db.execute('''
-        alter table $_tableCacheObject 
-        add ${CacheObject.columnKey} text;
 
-        update $_tableCacheObject 
-          set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
-          where ${CacheObject.columnKey} is null;
-
-        create unique index $_tableCacheObject${CacheObject.columnKey} 
-          on $_tableCacheObject (${CacheObject.columnKey});
-        ''');
+        await db.transaction((txn) async {
+          await txn.execute('''
+            alter table $_tableCacheObject 
+            add ${CacheObject.columnKey} text;
+            ''');
+          await txn.execute('''
+            update $_tableCacheObject 
+              set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
+              where ${CacheObject.columnKey} is null;
+            ''');
+          await txn.execute('''
+            create unique index $_tableCacheObject${CacheObject.columnKey} 
+              on $_tableCacheObject (${CacheObject.columnKey});
+            ''');
+        });
       }
       if (oldVersion <= 2) {
         await db.execute('''
