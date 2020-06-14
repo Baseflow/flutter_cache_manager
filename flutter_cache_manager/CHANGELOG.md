@@ -1,3 +1,7 @@
+## [1.4.1] - 2020-06-14
+* Bugfix: CacheManager returned a file that didn't exist when the file was removed by the OS (or any other external system)
+while the app was active. This also prevented the CacheManager to redownload the file ([PR #190](https://github.com/Baseflow/flutter_cache_manager/pull/190)).
+
 ## [1.4.0] - 2020-06-04
 * Allow cleaning of memory cache ([PR #183](https://github.com/Baseflow/flutter_cache_manager/pull/183)).
 * Bugfix: Cleaning doesn't want to delete a file twice anymore ([PR #185](https://github.com/Baseflow/flutter_cache_manager/pull/185)).
