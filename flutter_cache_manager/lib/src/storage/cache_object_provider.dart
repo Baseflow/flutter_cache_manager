@@ -12,18 +12,38 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future open() async {
-    db = await openDatabase(path, version: 1,
+    db = await openDatabase(path, version: 2,
         onCreate: (Database db, int version) async {
       await db.execute('''
       create table $_tableCacheObject ( 
         ${CacheObject.columnId} integer primary key, 
         ${CacheObject.columnUrl} text, 
+        ${CacheObject.columnKey} text, 
         ${CacheObject.columnPath} text,
         ${CacheObject.columnETag} text,
         ${CacheObject.columnValidTill} integer,
         ${CacheObject.columnTouched} integer
-        )
+        );
+        create unique index $_tableCacheObject${CacheObject.columnKey} 
+        ON $_tableCacheObject (${CacheObject.columnKey});
       ''');
+    }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
+      // Migration for adding the optional key, does the following:
+      // Adds the new column
+      // Creates a unique index for the column
+      // Migrates over any existing URLs to keys
+      if (oldVersion == 1) {
+        await db.execute('''
+        alter table $_tableCacheObject add ${CacheObject.columnKey} text;
+
+        update $_tableCacheObject 
+          set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
+          where ${CacheObject.columnKey} is null;
+
+        create unique index $_tableCacheObject${CacheObject.columnKey} 
+          on $_tableCacheObject (${CacheObject.columnKey});
+        ''');
+      }
     });
   }
 
@@ -43,9 +63,9 @@ class CacheObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future<CacheObject> get(String url) async {
+  Future<CacheObject> get(String key) async {
     List<Map> maps = await db.query(_tableCacheObject,
-        columns: null, where: '${CacheObject.columnUrl} = ?', whereArgs: [url]);
+        columns: null, where: '${CacheObject.columnKey} = ?', whereArgs: [key]);
     if (maps.isNotEmpty) {
       return CacheObject.fromMap(maps.first.cast<String, dynamic>());
     }
