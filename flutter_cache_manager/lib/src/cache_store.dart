@@ -65,23 +65,25 @@ class CacheStore {
   }
 
   Future<CacheObject> retrieveCacheData(String url,
-      {bool ignoreMemCache = false}) {
+      {bool ignoreMemCache = false}) async{
     if (!ignoreMemCache && _memCache.containsKey(url)) {
-      return Future.value(_memCache[url]);
+      if(await _fileExists(_memCache[url])){
+        return _memCache[url];
+      }
     }
     if (!_futureCache.containsKey(url)) {
       final completer = Completer<CacheObject>();
-      _getCacheDataFromDatabase(url).then((cacheObject) async {
+      unawaited(_getCacheDataFromDatabase(url).then((cacheObject) async {
         if (cacheObject != null && !await _fileExists(cacheObject)) {
           final provider = await _cacheInfoRepository;
-          unawaited(provider.delete(cacheObject.id));
+          await provider.delete(cacheObject.id);
           cacheObject = null;
         }
-        completer.complete(cacheObject);
-
+        
         _memCache[url] = cacheObject;
+        completer.complete(cacheObject);
         unawaited(_futureCache.remove(url));
-      });
+      }));
       _futureCache[url] = completer.future;
     }
     return _futureCache[url];
