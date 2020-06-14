@@ -13,6 +13,7 @@ class CacheObject {
   static const columnETag = 'eTag';
   static const columnValidTill = 'validTill';
   static const columnTouched = 'touched';
+  static const columnLength = 'length';
 
   CacheObject(
     this.url, {
@@ -21,6 +22,7 @@ class CacheObject {
     this.validTill,
     this.eTag,
     this.id,
+    this.length,
   }) {
     key ??= url;
   }
@@ -32,7 +34,8 @@ class CacheObject {
         relativePath = map[columnPath] as String,
         validTill =
             DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
-        eTag = map[columnETag] as String;
+        eTag = map[columnETag] as String,
+        length = map[columnLength] as int;
 
   /// Internal ID used to represent this cache object
   int id;
@@ -54,6 +57,9 @@ class CacheObject {
   /// eTag provided by the server for cache expiry
   String eTag;
 
+  /// The length of the cached file
+  int length;
+
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
       columnUrl: url,
@@ -61,7 +67,8 @@ class CacheObject {
       columnPath: relativePath,
       columnETag: eTag,
       columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
-      columnTouched: clock.now().millisecondsSinceEpoch
+      columnTouched: clock.now().millisecondsSinceEpoch,
+      columnLength: length,
     };
     if (id != null) {
       map[columnId] = id;

@@ -22,7 +22,8 @@ class CacheObjectProvider implements CacheInfoRepository {
         ${CacheObject.columnPath} text,
         ${CacheObject.columnETag} text,
         ${CacheObject.columnValidTill} integer,
-        ${CacheObject.columnTouched} integer
+        ${CacheObject.columnTouched} integer,
+        ${CacheObject.columnLength} integer
         );
         create unique index $_tableCacheObject${CacheObject.columnKey} 
         ON $_tableCacheObject (${CacheObject.columnKey});
@@ -34,7 +35,9 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Migrates over any existing URLs to keys
       if (oldVersion == 1) {
         await db.execute('''
-        alter table $_tableCacheObject add ${CacheObject.columnKey} text;
+        alter table $_tableCacheObject 
+        add ${CacheObject.columnKey} text
+        add ${CacheObject.columnLength} integer;
 
         update $_tableCacheObject 
           set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
