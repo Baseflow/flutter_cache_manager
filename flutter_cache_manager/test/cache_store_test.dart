@@ -240,6 +240,10 @@ void main() {
           relativePath: 'testimage.png', id: 1);
       var file = await (await directory).childFile('testimage.png').create();
 
+      when(repo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([]));
+      when(repo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
       when(repo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
