@@ -61,8 +61,8 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future<CacheObject> insert(CacheObject cacheObject) async {
-    cacheObject.id = await db.insert(_tableCacheObject, cacheObject.toMap());
-    return cacheObject;
+    var id = await db.insert(_tableCacheObject, cacheObject.toMap());
+    return cacheObject.copyWith(id: id);
   }
 
   @override

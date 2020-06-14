@@ -240,8 +240,11 @@ abstract class BaseCacheManager {
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject ??= CacheObject(url,
         key: key, relativePath: '${Uuid().v1()}.$fileExtension');
-    cacheObject.validTill = DateTime.now().add(maxAge);
-    cacheObject.eTag = eTag;
+
+    cacheObject = cacheObject.copyWith(
+      validTill: DateTime.now().add(maxAge),
+      eTag: eTag,
+    );
 
     final file = (await _fileDir).childFile(cacheObject.relativePath);
     final folder = file.parent;

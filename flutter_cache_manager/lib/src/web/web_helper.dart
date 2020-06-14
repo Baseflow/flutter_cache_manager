@@ -92,39 +92,43 @@ class WebHelper {
       );
     }
 
-    final oldCacheFile = cacheObject.relativePath;
-    var newCacheFile = cacheObject.relativePath;
-    _setDataFromHeaders(cacheObject, response);
+    final oldCacheObject = cacheObject;
+    var newCacheObject = _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
       int savedBytes;
-      await for (var progress in _saveFile(cacheObject, response)) {
+      await for (var progress in _saveFile(newCacheObject, response)) {
         savedBytes = progress;
         yield DownloadProgress(
             cacheObject.url, response.contentLength, progress);
       }
-      newCacheFile = cacheObject.relativePath;
-      cacheObject.length = savedBytes;
+      newCacheObject = newCacheObject.copyWith(length: savedBytes);
     }
 
-    unawaited(_store.putFile(cacheObject).then((_) {
-      if (newCacheFile != oldCacheFile) {
-        _removeOldFile(oldCacheFile);
+    unawaited(_store.putFile(newCacheObject).then((_) {
+      if (newCacheObject.relativePath != oldCacheObject.relativePath) {
+        _removeOldFile(oldCacheObject.relativePath);
       }
     }));
   }
 
-  void _setDataFromHeaders(
+  CacheObject _setDataFromHeaders(
       CacheObject cacheObject, FileServiceResponse response) {
-    cacheObject.validTill = response.validTill;
-    cacheObject.eTag = response.eTag;
     final fileExtension = response.fileExtension;
+    var filePath = cacheObject.relativePath;
 
-    final oldPath = cacheObject.relativePath;
-    if (oldPath != null && !oldPath.endsWith(fileExtension)) {
-      unawaited(_removeOldFile(oldPath));
-      cacheObject.relativePath = null;
+    if (filePath != null && !statusCodesFileNotChanged.contains(response.statusCode)) {
+      if(!filePath.endsWith(fileExtension)) {
+        //Delete old file directly when file extension changed
+        unawaited(_removeOldFile(filePath));
+      }
+      // Store new file on different path
+      filePath = null;
     }
-    cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
+    return cacheObject.copyWith(
+      relativePath: filePath ?? '${Uuid().v1()}$fileExtension',
+      validTill: response.validTill,
+      eTag: response.eTag,
+    );
   }
 
   Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {

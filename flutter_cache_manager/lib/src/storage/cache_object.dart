@@ -17,15 +17,13 @@ class CacheObject {
 
   CacheObject(
     this.url, {
-    this.key,
+    String key,
     this.relativePath,
     this.validTill,
     this.eTag,
     this.id,
     this.length,
-  }) {
-    key ??= url;
-  }
+  }): key = key ?? url;
 
   CacheObject.fromMap(Map<String, dynamic> map)
       : id = map[columnId] as int,
@@ -38,27 +36,27 @@ class CacheObject {
         length = map[columnLength] as int;
 
   /// Internal ID used to represent this cache object
-  int id;
+  final int id;
 
   /// The URL that was used to download the file
-  String url;
+  final String url;
 
   /// The key used to identify the object in the cache.
   ///
   /// This key is optional and will default to [url] if not specified
-  String key;
+  final String key;
 
   /// Where the cached file is stored
-  String relativePath;
+  final String relativePath;
 
   /// When this cached item becomes invalid
-  DateTime validTill;
+  final DateTime validTill;
 
   /// eTag provided by the server for cache expiry
-  String eTag;
+  final String eTag;
 
   /// The length of the cached file
-  int length;
+  final int length;
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
@@ -78,5 +76,20 @@ class CacheObject {
 
   static List<CacheObject> fromMapList(List<Map<String, dynamic>> list) {
     return list.map((map) => CacheObject.fromMap(map)).toList();
+  }
+
+  CacheObject copyWith({int id,
+    String relativePath,
+    DateTime validTill,
+    String eTag,
+  int length,}){
+    return CacheObject(url,
+      id: id ?? this.id,
+      key: key,
+      relativePath: relativePath ?? this.relativePath,
+      validTill: validTill ?? this.validTill,
+      eTag: eTag ?? this.eTag,
+      length: length ?? this.length,
+    );
   }
 }

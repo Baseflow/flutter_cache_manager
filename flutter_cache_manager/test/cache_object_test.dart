@@ -15,6 +15,12 @@ void main() {
   final validDate = DateTime.utc(2020, 03, 27, 09, 26).toLocal();
   final now = DateTime(2020, 03, 28, 09, 26);
 
+  final testId = 1;
+  final relativePath = 'test.png';
+  final testUrl = 'www.test.com/image';
+  final testKey = 'test123';
+  final eTag = 'test1';
+
   test('constructor, no explicit key', () {
     final object = CacheObject(
       'baseflow.com/test.png',
@@ -98,6 +104,108 @@ void main() {
         expect(map[columnValidTill], validMillis);
         expect(map[columnTouched], now.millisecondsSinceEpoch);
       });
+    });
+  });
+
+  group('Test CacheObject copy', () {
+    test('copy with id', () {
+      var cacheObject = CacheObject(
+        testUrl,
+        id: null,
+        key: testKey,
+        relativePath: relativePath,
+        validTill: now,
+        eTag: eTag,
+        length: 200,
+      );
+      var newObject = cacheObject.copyWith(id: testId);
+      expect(newObject.id, testId);
+      expect(newObject.url, testUrl);
+      expect(newObject.key, testKey);
+      expect(newObject.relativePath, relativePath);
+      expect(newObject.validTill, now);
+      expect(newObject.eTag, eTag);
+      expect(newObject.length, 200);
+    });
+
+    test('copy with path', () {
+      var cacheObject = CacheObject(
+        testUrl,
+        id: testId,
+        key: testKey,
+        relativePath: relativePath,
+        validTill: now,
+        eTag: eTag,
+        length: 200,
+      );
+      var newObject = cacheObject.copyWith(relativePath: 'newPath.jpg');
+      expect(newObject.id, testId);
+      expect(newObject.url, testUrl);
+      expect(newObject.key, testKey);
+      expect(newObject.relativePath, 'newPath.jpg');
+      expect(newObject.validTill, now);
+      expect(newObject.eTag, eTag);
+      expect(newObject.length, 200);
+    });
+
+    test('copy with validTill', () {
+      var cacheObject = CacheObject(
+        testUrl,
+        id: testId,
+        key: testKey,
+        relativePath: relativePath,
+        validTill: now,
+        eTag: eTag,
+        length: 200,
+      );
+      var newObject = cacheObject.copyWith(validTill: validDate);
+      expect(newObject.id, testId);
+      expect(newObject.url, testUrl);
+      expect(newObject.key, testKey);
+      expect(newObject.relativePath, relativePath);
+      expect(newObject.validTill, validDate);
+      expect(newObject.eTag, eTag);
+      expect(newObject.length, 200);
+    });
+
+    test('copy with eTag', () {
+      var cacheObject = CacheObject(
+        testUrl,
+        id: testId,
+        key: testKey,
+        relativePath: relativePath,
+        validTill: now,
+        eTag: eTag,
+        length: 200,
+      );
+      var newObject = cacheObject.copyWith(eTag: 'fileChangedRecently');
+      expect(newObject.id, testId);
+      expect(newObject.url, testUrl);
+      expect(newObject.key, testKey);
+      expect(newObject.relativePath, relativePath);
+      expect(newObject.validTill, now);
+      expect(newObject.eTag, 'fileChangedRecently');
+      expect(newObject.length, 200);
+    });
+
+    test('copy with length', () {
+      var cacheObject = CacheObject(
+        testUrl,
+        id: testId,
+        key: testKey,
+        relativePath: relativePath,
+        validTill: now,
+        eTag: eTag,
+        length: 200,
+      );
+      var newObject = cacheObject.copyWith(length: 300);
+      expect(newObject.id, testId);
+      expect(newObject.url, testUrl);
+      expect(newObject.key, testKey);
+      expect(newObject.relativePath, relativePath);
+      expect(newObject.validTill, now);
+      expect(newObject.eTag, eTag);
+      expect(newObject.length, 300);
     });
   });
 }

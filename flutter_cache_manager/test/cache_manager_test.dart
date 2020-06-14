@@ -338,7 +338,7 @@ void main() {
     });
   });
 
-  group('Testing puting files in cache', () {
+  group('Testing putting files in cache', () {
     test('Check if file is written and info is stored', () async {
       var fileUrl = 'baseflow.com/test';
       var fileBytes = Uint8List(16);
@@ -357,6 +357,7 @@ void main() {
       expect(await file.readAsBytes(), fileBytes);
       verify(store.putFile(any)).called(1);
     });
+
     test('Check if file is written and info is stored, explicit key', () async {
       var fileUrl = 'baseflow.com/test';
       var fileBytes = Uint8List(16);
