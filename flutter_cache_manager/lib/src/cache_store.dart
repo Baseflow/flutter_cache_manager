@@ -65,9 +65,9 @@ class CacheStore {
   }
 
   Future<CacheObject> retrieveCacheData(String url,
-      {bool ignoreMemCache = false}) async{
+      {bool ignoreMemCache = false}) async {
     if (!ignoreMemCache && _memCache.containsKey(url)) {
-      if(await _fileExists(_memCache[url])){
+      if (await _fileExists(_memCache[url])) {
         return _memCache[url];
       }
     }
@@ -79,7 +79,7 @@ class CacheStore {
           await provider.delete(cacheObject.id);
           cacheObject = null;
         }
-        
+
         _memCache[url] = cacheObject;
         completer.complete(cacheObject);
         unawaited(_futureCache.remove(url));
