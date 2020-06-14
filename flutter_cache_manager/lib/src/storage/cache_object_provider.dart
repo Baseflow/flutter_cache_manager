@@ -12,7 +12,7 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future open() async {
-    db = await openDatabase(path, version: 2,
+    db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''
       create table $_tableCacheObject ( 
@@ -36,8 +36,7 @@ class CacheObjectProvider implements CacheInfoRepository {
       if (oldVersion <= 1) {
         await db.execute('''
         alter table $_tableCacheObject 
-        add ${CacheObject.columnKey} text,
-            ${CacheObject.columnLength} integer;
+        add ${CacheObject.columnKey} text;
 
         update $_tableCacheObject 
           set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
@@ -45,6 +44,12 @@ class CacheObjectProvider implements CacheInfoRepository {
 
         create unique index $_tableCacheObject${CacheObject.columnKey} 
           on $_tableCacheObject (${CacheObject.columnKey});
+        ''');
+      }
+      if (oldVersion <= 2) {
+        await db.execute('''
+        alter table $_tableCacheObject 
+        add ${CacheObject.columnLength} integer;
         ''');
       }
     });
