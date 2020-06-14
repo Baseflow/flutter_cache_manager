@@ -228,6 +228,26 @@ void main() {
       verify(repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
     });
 
+    test('Store should recheck cache info when file is removed', () async {
+      var repo = MockRepo();
+      var directory = createDir();
+
+      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
+          cacheRepoProvider: Future.value(repo),
+          cleanupRunMinInterval: const Duration());
+
+      var cacheObject = CacheObject('baseflow.com/test.png',
+          relativePath: 'testimage.png', id: 1);
+      var file = await (await directory).childFile('testimage.png').create();
+
+      when(repo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
+
+      expect(await store.getFile('baseflow.com/test.png'), isNotNull);
+      await file.delete();
+      expect(await store.getFile('baseflow.com/test.png'), isNull);
+    });
+
     test('Store should not remove files that are not old or over capacity',
         () async {
       var repo = MockRepo();
