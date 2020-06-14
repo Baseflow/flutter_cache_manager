@@ -33,11 +33,11 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Adds the new column
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
-      if (oldVersion == 1) {
+      if (oldVersion <= 1) {
         await db.execute('''
         alter table $_tableCacheObject 
-        add ${CacheObject.columnKey} text
-        add ${CacheObject.columnLength} integer;
+        add ${CacheObject.columnKey} text,
+            ${CacheObject.columnLength} integer;
 
         update $_tableCacheObject 
           set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
