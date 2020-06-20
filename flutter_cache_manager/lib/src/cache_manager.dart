@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show File;
 import 'dart:typed_data';
 
 import 'package:file/file.dart' as f;
@@ -13,38 +13,16 @@ import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/storage/non_storing_object_provider.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/non_storing_object_provider.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
-/// The DefaultCacheManager that can be easily used directly. The code of
-/// this implementation can be used as inspiration for more complex cache
-/// managers.
-class DefaultCacheManager extends BaseCacheManager {
-  static const key = 'libCachedImageData';
 
-  static DefaultCacheManager _instance;
-
-  factory DefaultCacheManager() {
-    _instance ??= DefaultCacheManager._();
-    return _instance;
-  }
-
-  DefaultCacheManager._() : super(key);
-
-  @override
-  Future<String> getFilePath() async {
-    var directory = await getTemporaryDirectory();
-    return p.join(directory.path, key);
-  }
-}
 
 abstract class BaseCacheManager {
   /// Creates a new instance of a cache manager. This can be used to retrieve

@@ -1,10 +1,11 @@
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories'
+    '/cache_info_repository.dart';
 
 void main() {
   group('Retrieving files from store', () {

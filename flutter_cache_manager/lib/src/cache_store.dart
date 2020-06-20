@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:file/file.dart' as f;
-import 'package:flutter_cache_manager/src/result/file_info.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
-import 'package:path/path.dart' as p;
 import 'package:pedantic/pedantic.dart';
-import 'package:sqflite/sqflite.dart';
+
+import 'result/file_info.dart';
+import 'storage/cache_info_repositories/_default_object_provider_io.dart';
+import 'storage/cache_info_repositories/cache_info_repository.dart';
+import 'storage/cache_object.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -40,11 +38,7 @@ class CacheStore {
   }
 
   Future<CacheInfoRepository> _getObjectProvider() async {
-    final databasesPath = await getDatabasesPath();
-    try {
-      await Directory(databasesPath).create(recursive: true);
-    } catch (_) {}
-    final provider = CacheObjectProvider(p.join(databasesPath, '$storeKey.db'));
+    final provider = DefaultObjectProvider();
     await provider.open();
     return provider;
   }
