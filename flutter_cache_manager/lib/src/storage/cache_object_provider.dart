@@ -12,7 +12,7 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future open() async {
-    db = await openDatabase(path, version: 2,
+    db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''
       create table $_tableCacheObject ( 
@@ -34,17 +34,27 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
       if (oldVersion <= 1) {
+
+        await db.transaction((txn) async {
+          await txn.execute('''
+            alter table $_tableCacheObject 
+            add ${CacheObject.columnKey} text;
+            ''');
+          await txn.execute('''
+            update $_tableCacheObject 
+              set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
+              where ${CacheObject.columnKey} is null;
+            ''');
+          await txn.execute('''
+            create unique index $_tableCacheObject${CacheObject.columnKey} 
+              on $_tableCacheObject (${CacheObject.columnKey});
+            ''');
+        });
+      }
+      if (oldVersion <= 2) {
         await db.execute('''
         alter table $_tableCacheObject 
-        add ${CacheObject.columnKey} text,
-            ${CacheObject.columnLength} integer;
-
-        update $_tableCacheObject 
-          set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
-          where ${CacheObject.columnKey} is null;
-
-        create unique index $_tableCacheObject${CacheObject.columnKey} 
-          on $_tableCacheObject (${CacheObject.columnKey});
+        add ${CacheObject.columnLength} integer;
         ''');
       }
     });
