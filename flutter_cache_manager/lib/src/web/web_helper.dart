@@ -96,11 +96,14 @@ class WebHelper {
     var newCacheFile = cacheObject.relativePath;
     _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
+      int savedBytes;
       await for (var progress in _saveFile(cacheObject, response)) {
+        savedBytes = progress;
         yield DownloadProgress(
             cacheObject.url, response.contentLength, progress);
       }
       newCacheFile = cacheObject.relativePath;
+      cacheObject.length = savedBytes;
     }
 
     unawaited(_store.putFile(cacheObject).then((_) {
@@ -121,7 +124,6 @@ class WebHelper {
       unawaited(_removeOldFile(oldPath));
       cacheObject.relativePath = null;
     }
-
     cacheObject.relativePath ??= '${Uuid().v1()}$fileExtension';
   }
 

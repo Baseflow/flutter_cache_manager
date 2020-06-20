@@ -12,7 +12,7 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future open() async {
-    db = await openDatabase(path, version: 2,
+    db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''
       create table $_tableCacheObject ( 
@@ -22,7 +22,8 @@ class CacheObjectProvider implements CacheInfoRepository {
         ${CacheObject.columnPath} text,
         ${CacheObject.columnETag} text,
         ${CacheObject.columnValidTill} integer,
-        ${CacheObject.columnTouched} integer
+        ${CacheObject.columnTouched} integer,
+        ${CacheObject.columnLength} integer
         );
         create unique index $_tableCacheObject${CacheObject.columnKey} 
         ON $_tableCacheObject (${CacheObject.columnKey});
@@ -32,16 +33,28 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Adds the new column
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
-      if (oldVersion == 1) {
+      if (oldVersion <= 1) {
+
+        await db.transaction((txn) async {
+          await txn.execute('''
+            alter table $_tableCacheObject 
+            add ${CacheObject.columnKey} text;
+            ''');
+          await txn.execute('''
+            update $_tableCacheObject 
+              set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
+              where ${CacheObject.columnKey} is null;
+            ''');
+          await txn.execute('''
+            create unique index $_tableCacheObject${CacheObject.columnKey} 
+              on $_tableCacheObject (${CacheObject.columnKey});
+            ''');
+        });
+      }
+      if (oldVersion <= 2) {
         await db.execute('''
-        alter table $_tableCacheObject add ${CacheObject.columnKey} text;
-
-        update $_tableCacheObject 
-          set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
-          where ${CacheObject.columnKey} is null;
-
-        create unique index $_tableCacheObject${CacheObject.columnKey} 
-          on $_tableCacheObject (${CacheObject.columnKey});
+        alter table $_tableCacheObject 
+        add ${CacheObject.columnLength} integer;
         ''');
       }
     });
