@@ -23,7 +23,7 @@ class CacheObject {
     this.eTag,
     this.id,
     this.length,
-  }): key = key ?? url;
+  }) : key = key ?? url;
 
   CacheObject.fromMap(Map<String, dynamic> map)
       : id = map[columnId] as int,
@@ -78,12 +78,16 @@ class CacheObject {
     return list.map((map) => CacheObject.fromMap(map)).toList();
   }
 
-  CacheObject copyWith({int id,
+  CacheObject copyWith({
+    String url,
+    int id,
     String relativePath,
     DateTime validTill,
     String eTag,
-  int length,}){
-    return CacheObject(url,
+    int length,
+  }) {
+    return CacheObject(
+      url ?? this.url,
       id: id ?? this.id,
       key: key,
       relativePath: relativePath ?? this.relativePath,

@@ -128,6 +128,27 @@ void main() {
       expect(newObject.length, 200);
     });
 
+    test('copy with url', () {
+      var cacheObject = CacheObject(
+        testUrl,
+        id: testId,
+        key: testKey,
+        relativePath: relativePath,
+        validTill: now,
+        eTag: eTag,
+        length: 200,
+      );
+      const newUrl = 'www.someotherurl.com';
+      final newObject = cacheObject.copyWith(url: newUrl);
+      expect(newObject.id, testId);
+      expect(newObject.url, newUrl);
+      expect(newObject.key, testKey);
+      expect(newObject.relativePath, relativePath);
+      expect(newObject.validTill, now);
+      expect(newObject.eTag, eTag);
+      expect(newObject.length, 200);
+    });
+
     test('copy with path', () {
       var cacheObject = CacheObject(
         testUrl,

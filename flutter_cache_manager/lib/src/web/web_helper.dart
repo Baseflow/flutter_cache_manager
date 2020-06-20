@@ -58,7 +58,9 @@ class WebHelper {
   Stream<FileResponse> _updateFile(String url, String key,
       {Map<String, String> authHeaders}) async* {
     var cacheObject = await _store.retrieveCacheData(key);
-    cacheObject ??= CacheObject(url, key: key);
+    cacheObject = cacheObject == null
+        ? CacheObject(url, key: key)
+        : cacheObject.copyWith(url: url);
     final response = await _download(cacheObject, authHeaders);
     yield* _manageResponse(cacheObject, response);
 
@@ -116,8 +118,9 @@ class WebHelper {
     final fileExtension = response.fileExtension;
     var filePath = cacheObject.relativePath;
 
-    if (filePath != null && !statusCodesFileNotChanged.contains(response.statusCode)) {
-      if(!filePath.endsWith(fileExtension)) {
+    if (filePath != null &&
+        !statusCodesFileNotChanged.contains(response.statusCode)) {
+      if (!filePath.endsWith(fileExtension)) {
         //Delete old file directly when file extension changed
         unawaited(_removeOldFile(filePath));
       }
