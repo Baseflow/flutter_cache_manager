@@ -64,7 +64,7 @@ class WebHelper {
     final response = await _download(cacheObject, authHeaders);
     yield* _manageResponse(cacheObject, response);
 
-    final file = (await _store.fileDir).childFile(cacheObject.relativePath);
+    final file = await _store.fileSystem.createFile(cacheObject.relativePath);
     yield FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
@@ -148,13 +148,10 @@ class WebHelper {
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
       FileServiceResponse response) async {
-    final basePath = await _store.fileDir;
 
-    final file = basePath.childFile(cacheObject.relativePath);
-    final folder = file.parent;
-    if (!(await folder.exists())) {
-      folder.createSync(recursive: true);
-    }
+    final file = await _store.fileSystem.createFile(cacheObject.relativePath);
+    await file.createParent();
+
     try {
       var receivedBytes = 0;
       final sink = file.openWrite();
@@ -171,7 +168,7 @@ class WebHelper {
 
   Future<void> _removeOldFile(String relativePath) async {
     if (relativePath == null) return;
-    final file = (await _store.fileDir).childFile(relativePath);
+    final file = await _store.fileSystem.createFile(relativePath);
     if (await file.exists()) {
       await file.delete();
     }
