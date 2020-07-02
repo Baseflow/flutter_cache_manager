@@ -63,9 +63,6 @@ class WebHelper {
         : cacheObject.copyWith(url: url);
     final response = await _download(cacheObject, authHeaders);
     yield* _manageResponse(cacheObject, response);
-
-    final file = (await _store.fileDir).childFile(cacheObject.relativePath);
-    yield FileInfo(file, FileSource.Online, cacheObject.validTill, url);
   }
 
   Future<FileServiceResponse> _download(
@@ -82,7 +79,7 @@ class WebHelper {
     return _fileFetcher.get(cacheObject.url, headers: headers);
   }
 
-  Stream<DownloadProgress> _manageResponse(
+  Stream<FileResponse> _manageResponse(
       CacheObject cacheObject, FileServiceResponse response) async* {
     final hasNewFile = statusCodesNewFile.contains(response.statusCode);
     final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
@@ -111,6 +108,14 @@ class WebHelper {
         _removeOldFile(oldCacheObject.relativePath);
       }
     }));
+
+    final file = (await _store.fileDir).childFile(newCacheObject.relativePath);
+    yield FileInfo(
+      file,
+      FileSource.Online,
+      newCacheObject.validTill,
+      newCacheObject.url,
+    );
   }
 
   CacheObject _setDataFromHeaders(
