@@ -37,4 +37,10 @@ class CacheFile implements def.CacheFile {
   Future writeAsBytes(Uint8List bytes) {
     return _file.writeAsBytes(bytes);
   }
+
+  @override
+  Future<Uint8List> readAsBytes() {
+    return _file.readAsBytes();
+  }
+
 }

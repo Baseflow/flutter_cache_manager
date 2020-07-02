@@ -13,7 +13,7 @@ import 'storage/cache_object.dart';
 ///Released under MIT License.
 
 class CacheStore {
-  Duration cleanupRunMinInterval;
+  Duration cleanupRunMinInterval = const Duration(seconds: 10);
 
   final _futureCache = <String, Future<CacheObject>>{};
   final _memCache = <String, CacheObject>{};
