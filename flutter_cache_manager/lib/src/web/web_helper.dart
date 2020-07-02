@@ -115,7 +115,7 @@ class WebHelper {
     yield FileInfo(
       file,
       FileSource.Online,
-      cacheObject.validTill,
+      newCacheObject.validTill,
       newCacheObject.url,
     );
   }
