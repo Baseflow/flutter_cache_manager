@@ -256,6 +256,43 @@ abstract class BaseCacheManager {
     return file;
   }
 
+  /// Put a Exist file in the cache. It is recommended to specify the [eTag] and the
+  /// [maxAge]. When [maxAge] is passed and the eTag is not set the file will
+  /// always be downloaded again. The [fileExtension] should be without a dot,
+  /// for example "jpg". When cache info is available for the url that path
+  /// is re-used.
+  /// The returned [File] is saved on disk.
+  Future<File> putExistFile(String url,
+      File source, {
+        String eTag,
+        Duration maxAge = const Duration(days: 30),
+        String fileExtension = 'file',
+      }) async {
+    var cacheObject = await _store.retrieveCacheData(url);
+    cacheObject ??=
+        CacheObject(url, relativePath: '${Uuid().v1()}.$fileExtension');
+    cacheObject.validTill = DateTime.now().add(maxAge);
+    cacheObject.eTag = eTag;
+
+    final fileDir = await _fileDir;
+    File file;
+
+    if (!(await fileDir.exists())) {
+      fileDir.createSync(recursive: true);
+    }
+    final sourceFolder = source.parent;
+    if (sourceFolder.path == fileDir.path) {
+      file =
+      await source.rename(p.join(fileDir.path, cacheObject.relativePath));
+    }
+    else {
+      file = await source.copy(p.join(fileDir.path, cacheObject.relativePath));
+    }
+
+    unawaited(_store.putFile(cacheObject));
+    return file;
+  }
+
   /// Remove a file from the cache
   Future<void> removeFile(String key) async {
     final cacheObject = await _store.retrieveCacheData(key);
