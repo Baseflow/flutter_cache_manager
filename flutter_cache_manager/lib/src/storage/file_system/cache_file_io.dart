@@ -43,4 +43,7 @@ class CacheFile implements def.CacheFile {
     return _file.readAsBytes();
   }
 
+  @override
+  String get path => _file.path;
+
 }

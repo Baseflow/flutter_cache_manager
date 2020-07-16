@@ -1,6 +1,6 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
-
-import 'package:file/file.dart';
 
 import 'cache_file.dart' as def;
 
@@ -30,7 +30,7 @@ class CacheFile implements def.CacheFile {
   }
 
   @override
-  IOSink openWrite() {
+  StreamSink<List<int>> openWrite() {
     return _file.openWrite();
   }
 
@@ -43,4 +43,7 @@ class CacheFile implements def.CacheFile {
   Future<Uint8List> readAsBytes() {
     return _file.readAsBytes();
   }
+
+  @override
+  String get path => _file.path;
 }

@@ -1,13 +1,15 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:file/file.dart';
 
 abstract class CacheFile {
     Future<bool> exists();
     Future<void> delete();
     Future<void> createParent();
-    IOSink openWrite();
+    StreamSink<List<int>> openWrite();
     Future writeAsBytes(Uint8List bytes);
+    String get path;
 
     /// Read the entire file contents as a list of bytes. Returns a
     /// `Future<Uint8List>` that completes with the list of bytes that is the
