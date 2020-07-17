@@ -264,13 +264,15 @@ abstract class BaseCacheManager {
   /// The returned [File] is saved on disk.
   Future<File> putExistFile(String url,
       File source, {
+        String key,
         String eTag,
         Duration maxAge = const Duration(days: 30),
         String fileExtension = 'file',
       }) async {
-    var cacheObject = await _store.retrieveCacheData(url);
+    key ??= url;
+    var cacheObject = await _store.retrieveCacheData(key);
     cacheObject ??=
-        CacheObject(url, relativePath: '${Uuid().v1()}.$fileExtension');
+        CacheObject(key, relativePath: '${Uuid().v1()}.$fileExtension');
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
@@ -283,14 +285,9 @@ abstract class BaseCacheManager {
     if (!(await fileDir.exists())) {
       fileDir.createSync(recursive: true);
     }
-    final sourceFolder = source.parent;
-    if (sourceFolder.path == fileDir.path) {
-      file =
-      await source.rename(p.join(fileDir.path, cacheObject.relativePath));
-    }
-    else {
-      file = await source.copy(p.join(fileDir.path, cacheObject.relativePath));
-    }
+
+    // Always copy file
+    file = await source.copy(p.join(fileDir.path, cacheObject.relativePath));
 
     unawaited(_store.putFile(cacheObject));
     return file;
