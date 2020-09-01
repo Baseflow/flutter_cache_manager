@@ -183,7 +183,7 @@ void main() {
       var webHelper = MockWebHelper();
       var cacheManager = TestCacheManager(store, webHelper);
 
-      var fileStream = cacheManager.getFile(fileUrl);
+      var fileStream = cacheManager.getFileStream(fileUrl);
       expect(fileStream, emits(fileInfo));
       verifyNever(webHelper.downloadFile(any));
     });
@@ -208,7 +208,7 @@ void main() {
           .thenAnswer((_) => Stream.value(downloadedInfo));
 
       var cacheManager = TestCacheManager(store, webHelper);
-      var fileStream = cacheManager.getFile(fileUrl);
+      var fileStream = cacheManager.getFileStream(fileUrl);
       await expectLater(fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
 
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
@@ -233,7 +233,7 @@ void main() {
 
       var cacheManager = TestCacheManager(store, webHelper);
 
-      var fileStream = cacheManager.getFile(fileUrl);
+      var fileStream = cacheManager.getFileStream(fileUrl);
       await expectLater(fileStream, emitsInOrder([fileInfo]));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
@@ -252,7 +252,7 @@ void main() {
 
       var cacheManager = TestCacheManager(store, webHelper);
 
-      var fileStream = cacheManager.getFile(fileUrl);
+      var fileStream = cacheManager.getFileStream(fileUrl);
       await expectLater(fileStream, emitsError(error));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
@@ -273,7 +273,7 @@ void main() {
         var webHelper = MockWebHelper();
         var cacheManager = TestCacheManager(store, webHelper);
 
-        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
+        var fileStream = cacheManager.getFileStream(fileUrl, key: fileKey);
         expect(fileStream, emits(fileInfo));
         verifyNever(webHelper.downloadFile(any));
       });
@@ -300,7 +300,7 @@ void main() {
             .thenAnswer((_) => Stream.value(downloadedInfo));
 
         var cacheManager = TestCacheManager(store, webHelper);
-        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
+        var fileStream = cacheManager.getFileStream(fileUrl, key: fileKey);
         await expectLater(
             fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
 
@@ -329,7 +329,7 @@ void main() {
 
         var cacheManager = TestCacheManager(store, webHelper);
 
-        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
+        var fileStream = cacheManager.getFileStream(fileUrl, key: fileKey);
         await expectLater(fileStream, emitsInOrder([fileInfo]));
         verify(webHelper.downloadFile(any,
                 key: argThat(equals('test1234'), named: 'key')))

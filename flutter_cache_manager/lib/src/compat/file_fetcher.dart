@@ -12,7 +12,7 @@ typedef Future<FileFetcherResponse> FileFetcher(String url,
     {Map<String, String> headers});
 
 abstract class FileFetcherResponse {
-  get statusCode;
+  int get statusCode;
 
   Uint8List get bodyBytes => null;
 
@@ -22,7 +22,7 @@ abstract class FileFetcherResponse {
 }
 
 class HttpFileFetcherResponse implements FileFetcherResponse {
-  http.Response _response;
+  final http.Response _response;
 
   HttpFileFetcherResponse(this._response);
 
@@ -40,5 +40,5 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
   Uint8List get bodyBytes => _response.bodyBytes;
 
   @override
-  get statusCode => _response.statusCode;
+  int get statusCode => _response.statusCode;
 }

@@ -79,5 +79,5 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
   }
 
   @override
-  int get statusCode => legacyResponse.statusCode as int;
+  int get statusCode => legacyResponse.statusCode;
 }

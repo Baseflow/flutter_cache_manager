@@ -34,7 +34,6 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
       if (oldVersion <= 1) {
-
         await db.transaction((txn) async {
           await txn.execute('''
             alter table $_tableCacheObject 
