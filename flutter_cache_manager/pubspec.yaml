@@ -16,7 +16,7 @@ dependencies:
   sqflite: "^1.1.7+2"
   pedantic: "^1.8.0+1"
   clock: ^1.0.1
-  file: ^5.1.0
+  file: ">=5.1.0 <7.0.0"
   rxdart: '>=0.23.1 <0.25.0'
   
 dev_dependencies:
