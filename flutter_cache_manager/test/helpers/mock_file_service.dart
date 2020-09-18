@@ -5,12 +5,14 @@ import 'package:mockito/mockito.dart';
 
 class MockFileService extends Mock implements FileService {
   MockFileService._();
-  factory MockFileService(){
+  factory MockFileService({bool includeStandardResponse = true}){
     var fileService = MockFileService._();
-    when(fileService.get(any, headers: anyNamed('headers')))
-        .thenAnswer((realInvocation) async {
-          return TestResponse();
-        });
+    if(includeStandardResponse) {
+      when(fileService.get(any, headers: anyNamed('headers')))
+          .thenAnswer((realInvocation) async {
+        return TestResponse();
+      });
+    }
     return fileService;
   }
 }
@@ -26,7 +28,7 @@ class TestResponse extends FileServiceResponse{
   String get eTag => 'test';
 
   @override
-  String get fileExtension => 'jpg';
+  String get fileExtension => '.jpg';
 
   @override
   int get statusCode => 200;

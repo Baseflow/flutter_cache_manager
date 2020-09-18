@@ -4,6 +4,7 @@ import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,14 +12,16 @@ import 'package:mockito/mockito.dart';
 
 import 'helpers/mock_file_fetcher_response.dart';
 import 'helpers/mock_file_service.dart';
+import 'helpers/test_configuration.dart';
+import 'helpers/config_extensions.dart';
 
 void main() {
   group('Test status codes', () {
     test('200 is OK', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
+      var config = createTestConfig();
+      var store = CacheStore(config);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -41,9 +44,8 @@ void main() {
 
     test('200 needs content', () async {
       const imageUrl = 'baseflow.com/testimage';
-
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
+      var config = createTestConfig();
+      var store = CacheStore(config);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -60,8 +62,8 @@ void main() {
     test('404 throws', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
+      var config = createTestConfig();
+      var store = CacheStore(config);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -81,8 +83,8 @@ void main() {
     test('304 ignores content', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
+      var config = createTestConfig();
+      var store = CacheStore(config);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -103,8 +105,8 @@ void main() {
     test('Calling webhelper twice excecutes once', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
+      var config = createTestConfig();
+      var store = _createStore(config);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -131,8 +133,8 @@ void main() {
         () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
+      var config = createTestConfig();
+      var store = _createStore(config);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -159,11 +161,12 @@ void main() {
   group('Miscellaneous', () {
     test('When not yet cached, new cacheobject should be made', () async {
       const imageUrl = 'baseflow.com/testimage';
+      const fileName = 'testv1.jpg';
+      final validTill = DateTime.now();
 
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      final store = _createStore(fileDir);
-      when(store.retrieveCacheData(imageUrl))
-          .thenAnswer((_) => Future.value(null));
+      var config = createTestConfig();
+      var store = _createStore(config);
+      config.returnsCacheObject(imageUrl, fileName, validTill);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
@@ -187,28 +190,14 @@ void main() {
 
     test('File should be removed if extension changed', () async {
       const imageUrl = 'baseflow.com/testimage';
-
       var imageName = 'image.png';
-      var fileDir = MemoryFileSystem().systemTempDirectory;
-      var file = fileDir.childFile(imageName);
-      await file.create();
 
-      final store = _createStore(fileDir);
-      when(store.retrieveCacheData(imageUrl)).thenAnswer(
-          (_) => Future.value(CacheObject(imageUrl, relativePath: imageName)));
+      var config = createTestConfig();
+      var store = CacheStore(config);
+      var file = await config.returnsFile(imageName);
+      config.returnsCacheObject(imageUrl, imageName, DateTime.now());
 
       final fileService = MockFileService();
-      when(fileService.get(imageUrl, headers: anyNamed('headers')))
-          .thenAnswer((_) {
-        return Future.value(MockFileFetcherResponse(
-            Stream.value([0, 1, 2, 3, 4, 5]),
-            6,
-            'testv1',
-            '.jpg',
-            200,
-            DateTime.now()));
-      });
-
       var webHelper = WebHelper(store, fileService);
 
       expect(await file.exists(), true);
@@ -220,13 +209,14 @@ void main() {
   });
 }
 
-MockStore _createStore(Directory fileDir) {
+MockStore _createStore(Config config) {
   final store = MockStore();
   when(store.putFile(argThat(anything)))
       .thenAnswer((_) => Future.value(VoidCallback));
   when(store.retrieveCacheData(argThat(anything))).thenAnswer((invocation) =>
       Future.value(
           CacheObject(invocation.positionalArguments.first as String)));
+  when(store.fileSystem).thenReturn(config.fileSystem);
   return store;
 }
 
