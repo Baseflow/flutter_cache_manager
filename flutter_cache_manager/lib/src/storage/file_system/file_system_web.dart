@@ -2,7 +2,7 @@ import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/cache_file_web.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 
-class WebFileSystem implements FileSystem {
+class MemoryCacheSystem implements FileSystem {
   final directory = MemoryFileSystem().systemTempDirectory.createTemp('cache');
 
   @override
