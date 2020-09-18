@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
@@ -21,10 +22,11 @@ const statusCodesFileNotChanged = [HttpStatus.notModified];
 class WebHelper {
   WebHelper(this._store, FileService fileFetcher)
       : _memCache = {},
-        _fileFetcher = fileFetcher ?? HttpFileService();
+        fileFetcher = fileFetcher ?? HttpFileService();
 
   final CacheStore _store;
-  final FileService _fileFetcher;
+  @visibleForTesting
+  final FileService fileFetcher;
   final Map<String, BehaviorSubject<FileResponse>> _memCache;
 
   ///Download the file from the url
@@ -76,7 +78,7 @@ class WebHelper {
       headers[HttpHeaders.ifNoneMatchHeader] = cacheObject.eTag;
     }
 
-    return _fileFetcher.get(cacheObject.url, headers: headers);
+    return fileFetcher.get(cacheObject.url, headers: headers);
   }
 
   Stream<FileResponse> _manageResponse(

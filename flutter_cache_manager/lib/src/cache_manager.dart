@@ -42,7 +42,18 @@ abstract class BaseCacheManager {
   BaseCacheManager(Config config) {
     _config = config;
     _store = CacheStore(config);
-    _webHelper =  WebHelper(_store, HttpFileService());
+    _webHelper = WebHelper(_store, config.fileService);
+  }
+
+  @visibleForTesting
+  BaseCacheManager.custom(
+    Config config, {
+    CacheStore cacheStore,
+    WebHelper webHelper,
+  }) {
+    _config = config;
+    _store = cacheStore ?? CacheStore(config);
+    _webHelper = webHelper ?? WebHelper(_store, config.fileService);
   }
 
   Config _config;
@@ -158,8 +169,12 @@ abstract class BaseCacheManager {
       {String key, Map<String, String> authHeaders, bool force = false}) async {
     key ??= url;
     var fileResponse = await _webHelper
-        .downloadFile(url,
-            key: key, authHeaders: authHeaders, ignoreMemCache: force)
+        .downloadFile(
+          url,
+          key: key,
+          authHeaders: authHeaders,
+          ignoreMemCache: force,
+        )
         .firstWhere((r) => r is FileInfo);
     return fileResponse as FileInfo;
   }
@@ -215,5 +230,4 @@ abstract class BaseCacheManager {
 
   /// Removes all files from the cache
   Future<void> emptyCache() => _store.emptyCache();
-
 }

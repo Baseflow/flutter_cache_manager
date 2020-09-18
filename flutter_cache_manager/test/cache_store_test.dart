@@ -7,14 +7,14 @@ import 'package:mockito/mockito.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories'
     '/cache_info_repository.dart';
 
+import 'helpers/test_configuration.dart';
+
 void main() {
   group('Retrieving files from store', () {
     test('Store should return null when file not cached', () async {
       var repo = MockRepo();
       when(repo.get(any)).thenAnswer((_) => Future.value(null));
-
-      var store = CacheStore(createDir(), 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       expect(await store.getFile('This is a test'), null);
     });
@@ -27,9 +27,7 @@ void main() {
 
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
     });
@@ -41,9 +39,7 @@ void main() {
 
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       expect(await store.getFile('baseflow.com/test.png'), null);
     });
@@ -51,9 +47,7 @@ void main() {
     test('Store should return no CacheInfo when file not cached', () async {
       var repo = MockRepo();
       when(repo.get(any)).thenAnswer((_) => Future.value(null));
-
-      var store = CacheStore(createDir(), 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       expect(await store.retrieveCacheData('This is a test'), null);
     });
@@ -66,9 +60,7 @@ void main() {
 
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       expect(await store.retrieveCacheData('baseflow.com/test.png'), isNotNull);
     });
@@ -82,9 +74,7 @@ void main() {
 
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       var result = await store.retrieveCacheData('baseflow.com/test.png');
       expect(result, isNotNull);
@@ -102,9 +92,7 @@ void main() {
 
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       expect(store.getFileFromMemory('baseflow.com/test.png'), null);
       await store.getFile('baseflow.com/test.png');
@@ -117,9 +105,7 @@ void main() {
       var repo = MockRepo();
 
       var tempDir = createDir();
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       var cacheObject =
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png');
@@ -134,9 +120,7 @@ void main() {
       var repo = MockRepo();
 
       var tempDir = createDir();
-
-      var store = CacheStore(tempDir, 'test', 30, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo));
+      var store = CacheStore(createTestConfig());
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -148,10 +132,7 @@ void main() {
     test('Store should remove file over capacity', () async {
       var repo = MockRepo();
       var directory = createDir();
-
-      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo),
-          cleanupRunMinInterval: const Duration());
+      var store = CacheStore(createTestConfig());
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -175,9 +156,10 @@ void main() {
       var repo = MockRepo();
       var directory = createDir();
 
-      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo),
-          cleanupRunMinInterval: const Duration());
+//      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
+//          cacheRepoProvider: Future.value(repo),
+//          cleanupRunMinInterval: const Duration());
+      var store = CacheStore(createTestConfig());
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -198,15 +180,14 @@ void main() {
       verify(repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
     });
 
-
-
     test('Store should remove file old and over capacity', () async {
       var repo = MockRepo();
       var directory = createDir();
 
-      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo),
-          cleanupRunMinInterval: const Duration());
+//      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
+//          cacheRepoProvider: Future.value(repo),
+//          cleanupRunMinInterval: const Duration());
+      var store = CacheStore(createTestConfig());
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -233,9 +214,7 @@ void main() {
       var repo = MockRepo();
       var directory = createDir();
 
-      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo),
-          cleanupRunMinInterval: const Duration());
+      var store = CacheStore(createTestConfig());
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -243,8 +222,7 @@ void main() {
 
       when(repo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
-      when(repo.getOldObjects(any))
-          .thenAnswer((_) => Future.value([]));
+      when(repo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
       when(repo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
@@ -258,9 +236,7 @@ void main() {
       var repo = MockRepo();
       var directory = createDir();
 
-      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo),
-          cleanupRunMinInterval: const Duration());
+      var store = CacheStore(createTestConfig());
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -282,11 +258,7 @@ void main() {
 
     test('Store should remove all files when emptying cache', () async {
       var repo = MockRepo();
-      var directory = createDir();
-
-      var store = CacheStore(directory, 'test', 2, const Duration(days: 7),
-          cacheRepoProvider: Future.value(repo),
-          cleanupRunMinInterval: const Duration());
+      var store = CacheStore(createTestConfig());
 
       var co1 = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage1.png', id: 1);

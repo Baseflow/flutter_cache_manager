@@ -9,6 +9,9 @@ import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
+import 'helpers/mock_file_fetcher_response.dart';
+import 'helpers/mock_file_service.dart';
+
 void main() {
   group('Test status codes', () {
     test('200 is OK', () async {
@@ -221,7 +224,6 @@ MockStore _createStore(Directory fileDir) {
   final store = MockStore();
   when(store.putFile(argThat(anything)))
       .thenAnswer((_) => Future.value(VoidCallback));
-  when(store.fileDir).thenAnswer((_) => Future.value(fileDir));
   when(store.retrieveCacheData(argThat(anything))).thenAnswer((invocation) =>
       Future.value(
           CacheObject(invocation.positionalArguments.first as String)));
@@ -229,40 +231,3 @@ MockStore _createStore(Directory fileDir) {
 }
 
 class MockStore extends Mock implements CacheStore {}
-
-class MockFileService extends Mock implements FileService {}
-
-class MockFileFetcherResponse implements FileServiceResponse {
-  final Stream<List<int>> _content;
-  final int _contentLength;
-  final String _eTag;
-  final String _fileExtension;
-  final int _statusCode;
-  final DateTime _validTill;
-
-  MockFileFetcherResponse(this._content, this._contentLength, this._eTag,
-      this._fileExtension, this._statusCode, this._validTill);
-
-  @override
-  Stream<List<int>> get content => _content;
-
-  @override
-  // TODO: implement eTag
-  String get eTag => _eTag;
-
-  @override
-  // TODO: implement fileExtension
-  String get fileExtension => _fileExtension;
-
-  @override
-  // TODO: implement statusCode
-  int get statusCode => _statusCode;
-
-  @override
-  // TODO: implement validTill
-  DateTime get validTill => _validTill;
-
-  @override
-  // TODO: implement contentLength
-  int get contentLength => _contentLength;
-}

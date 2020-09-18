@@ -63,8 +63,11 @@ class CacheStore {
     }
     if (!_futureCache.containsKey(key)) {
       final completer = Completer<CacheObject>();
+      print('fetching from database');
       unawaited(_getCacheDataFromDatabase(key).then((cacheObject) async {
+        print('object fetched from database, path is ${cacheObject?.relativePath}');
         if (cacheObject != null && !await _fileExists(cacheObject)) {
+          print('file does not exist');
           final provider = await _cacheInfoRepository;
           await provider.delete(cacheObject.id);
           cacheObject = null;

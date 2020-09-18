@@ -2,20 +2,23 @@ import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/non_storing_object_provider.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system_web.dart';
+import 'package:flutter_cache_manager/src/web/file_service.dart';
 
 import 'config.dart' as def;
 
 class Config implements def.Config {
-  Config(this.cacheKey, {
+  Config(
+    this.cacheKey, {
     Duration maxAgeCacheObject,
     int maxNrOfCacheObjects,
     CacheInfoRepository repo,
     FileSystem fileSystem,
-  })  :
-        maxAgeCacheObject = maxAgeCacheObject ?? const Duration(days: 30),
+    FileService fileService,
+  })  : maxAgeCacheObject = maxAgeCacheObject ?? const Duration(days: 30),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
         repo = repo ?? NonStoringObjectProvider(),
-        fileSystem = fileSystem ?? WebFileSystem();
+        fileSystem = fileSystem ?? WebFileSystem(),
+        fileService = fileService ?? HttpFileService();
 
   @override
   final CacheInfoRepository repo;
@@ -31,4 +34,7 @@ class Config implements def.Config {
 
   @override
   final int maxNrOfCacheObjects;
+
+  @override
+  final FileService fileService;
 }

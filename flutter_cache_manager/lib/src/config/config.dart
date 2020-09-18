@@ -1,3 +1,4 @@
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 
@@ -12,6 +13,7 @@ abstract class Config {
       int maxNrOfCacheObjects,
     CacheInfoRepository repo,
     FileSystem fileSystem,
+        FileService fileService,
   }) = impl.Config;
 
   String get cacheKey;
@@ -19,4 +21,5 @@ abstract class Config {
   int get maxNrOfCacheObjects;
   CacheInfoRepository get repo;
   FileSystem get fileSystem;
+  FileService get fileService;
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
+import 'package:flutter_cache_manager/src/web/file_service.dart';
 
 import 'config.dart' as def;
 
@@ -9,6 +10,7 @@ class Config implements def.Config {
     int maxNrOfCacheObjects,
     CacheInfoRepository repo,
     FileSystem fileSystem,
+    FileService fileService,
   }) {
     throw UnsupportedError('Platform is not supported');
   }
@@ -27,4 +29,8 @@ class Config implements def.Config {
 
   @override
   int get maxNrOfCacheObjects => throw UnimplementedError();
+
+  @override
+  // TODO: implement fileService
+  FileService get fileService => throw UnimplementedError();
 }
