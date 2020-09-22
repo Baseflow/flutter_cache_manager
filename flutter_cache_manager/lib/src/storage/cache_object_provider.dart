@@ -34,28 +34,38 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
       if (oldVersion <= 1) {
+        var hasKeyColumn = await _hasColumnName(db, CacheObject.columnKey);
 
         await db.transaction((txn) async {
-          await txn.execute('''
+          if (!hasKeyColumn) {
+            await txn.execute('''
             alter table $_tableCacheObject 
             add ${CacheObject.columnKey} text;
             ''');
+          }
           await txn.execute('''
             update $_tableCacheObject 
               set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
               where ${CacheObject.columnKey} is null;
             ''');
-          await txn.execute('''
-            create unique index $_tableCacheObject${CacheObject.columnKey} 
+          if (!hasKeyColumn) {
+            await txn.execute('''
+            create index $_tableCacheObject${CacheObject.columnKey} 
               on $_tableCacheObject (${CacheObject.columnKey});
             ''');
+          }
         });
       }
       if (oldVersion <= 2) {
-        await db.execute('''
+        var hasLengthColumn =
+            await _hasColumnName(db, CacheObject.columnLength);
+
+        if (!hasLengthColumn) {
+          await db.execute('''
         alter table $_tableCacheObject 
         add ${CacheObject.columnLength} integer;
         ''');
+        }
       }
     });
   }
@@ -138,4 +148,12 @@ class CacheObjectProvider implements CacheInfoRepository {
 
   @override
   Future close() => db.close();
+
+  Future<bool> _hasColumnName(Database db, String columnName) async {
+    var query = await db.rawQuery('''
+          SELECT COUNT(*) AS CNTREC FROM pragma_table_info('$_tableCacheObject') WHERE 
+          name='$columnName';
+          ''');
+    return query.first.cast<String, int>()['CNTREC'] > 0;
+  }
 }
