@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
@@ -21,10 +22,11 @@ const statusCodesFileNotChanged = [HttpStatus.notModified];
 class WebHelper {
   WebHelper(this._store, FileService fileFetcher)
       : _memCache = {},
-        _fileFetcher = fileFetcher ?? HttpFileService();
+        fileFetcher = fileFetcher ?? HttpFileService();
 
   final CacheStore _store;
-  final FileService _fileFetcher;
+  @visibleForTesting
+  final FileService fileFetcher;
   final Map<String, BehaviorSubject<FileResponse>> _memCache;
 
   ///Download the file from the url
@@ -76,7 +78,7 @@ class WebHelper {
       headers[HttpHeaders.ifNoneMatchHeader] = cacheObject.eTag;
     }
 
-    return _fileFetcher.get(cacheObject.url, headers: headers);
+    return fileFetcher.get(cacheObject.url, headers: headers);
   }
 
   Stream<FileResponse> _manageResponse(
@@ -109,7 +111,9 @@ class WebHelper {
       }
     }));
 
-    final file = (await _store.fileDir).childFile(newCacheObject.relativePath);
+    final file = await _store.fileSystem.createFile(
+      newCacheObject.relativePath,
+    );
     yield FileInfo(
       file,
       FileSource.Online,
@@ -153,13 +157,9 @@ class WebHelper {
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
       FileServiceResponse response) async {
-    final basePath = await _store.fileDir;
+    final file = await _store.fileSystem.createFile(cacheObject.relativePath);
+    await file.createParent();
 
-    final file = basePath.childFile(cacheObject.relativePath);
-    final folder = file.parent;
-    if (!(await folder.exists())) {
-      folder.createSync(recursive: true);
-    }
     try {
       var receivedBytes = 0;
       final sink = file.openWrite();
@@ -176,7 +176,7 @@ class WebHelper {
 
   Future<void> _removeOldFile(String relativePath) async {
     if (relativePath == null) return;
-    final file = (await _store.fileDir).childFile(relativePath);
+    final file = await _store.fileSystem.createFile(relativePath);
     if (await file.exists()) {
       await file.delete();
     }

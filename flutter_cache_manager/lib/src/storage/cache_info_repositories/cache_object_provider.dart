@@ -1,17 +1,27 @@
-import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
+import 'dart:io';
+
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import '../cache_object.dart';
+import 'cache_info_repository.dart';
 
 const _tableCacheObject = 'cacheObject';
 
 class CacheObjectProvider implements CacheInfoRepository {
   Database db;
   String path;
+  String databaseName;
 
-  CacheObjectProvider(this.path);
+  CacheObjectProvider({this.path, this.databaseName});
 
   @override
   Future open() async {
+    path ??= await getDatabasesPath();
+    await Directory(path).create(recursive: true);
+    if (!path.endsWith('.db')) {
+      path = join(path, '$databaseName.db');
+    }
+
     db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''
@@ -34,28 +44,38 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
       if (oldVersion <= 1) {
-
-        await db.transaction((txn) async {
-          await txn.execute('''
+        var alreadyHasKeyColumn = false;
+        try {
+          await db.execute('''
             alter table $_tableCacheObject 
             add ${CacheObject.columnKey} text;
             ''');
-          await txn.execute('''
-            update $_tableCacheObject 
-              set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
-              where ${CacheObject.columnKey} is null;
-            ''');
-          await txn.execute('''
-            create unique index $_tableCacheObject${CacheObject.columnKey} 
+        } on DatabaseException catch (e) {
+          if (!e.isDuplicateColumnError(CacheObject.columnKey)) rethrow;
+          alreadyHasKeyColumn = true;
+        }
+        await db.execute('''
+          update $_tableCacheObject 
+            set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
+            where ${CacheObject.columnKey} is null;
+          ''');
+
+        if (!alreadyHasKeyColumn) {
+          await db.execute('''
+            create index $_tableCacheObject${CacheObject.columnKey} 
               on $_tableCacheObject (${CacheObject.columnKey});
             ''');
-        });
+        }
       }
       if (oldVersion <= 2) {
-        await db.execute('''
+        try {
+          await db.execute('''
         alter table $_tableCacheObject 
         add ${CacheObject.columnLength} integer;
         ''');
+        } on DatabaseException catch (e) {
+          if (!e.isDuplicateColumnError(CacheObject.columnLength)) rethrow;
+        }
       }
     });
   }

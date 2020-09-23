@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
-import 'web_helper_test.dart';
+import 'helpers/config_extensions.dart';
+import 'helpers/mock_file_fetcher_response.dart';
+import 'helpers/mock_file_service.dart';
+import 'helpers/test_configuration.dart';
 
 void main() {
   group('Tests for getSingleFile', () {
@@ -19,19 +22,14 @@ void main() {
       var fileUrl = 'baseflow.com/test';
       var validTill = DateTime.now().add(const Duration(days: 1));
 
-      var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-      var file = (await store.fileDir).childFile(fileName);
-      var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
+      var config = createTestConfig();
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill);
 
-      var webHelper = MockWebHelper();
-      var cacheManager = TestCacheManager(store, webHelper);
-
+      var cacheManager = TestCacheManager(config);
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verifyNever(webHelper.downloadFile(any));
+      config.verifyNoDownloadCall();
     });
 
     test('Outdated cacheFile should call to web', () async {
@@ -39,131 +37,82 @@ void main() {
       var fileUrl = 'baseflow.com/test';
       var validTill = DateTime.now().subtract(const Duration(days: 1));
 
-      var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-      var file = (await store.fileDir).childFile(fileName);
-      var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
+      var config = createTestConfig();
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill);
 
-      var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(argThat(anything), key: anyNamed('key')))
-          .thenAnswer((i) => Stream.value(FileInfo(
-                null,
-                FileSource.Online,
-                DateTime.now().add(const Duration(days: 7)),
-                i.positionalArguments.first as String,
-              )));
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(config);
 
       var result = await cacheManager.getSingleFile(fileUrl);
       expect(result, isNotNull);
-      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
+      await config.waitForDownload();
+      config.verifyDownloadCall();
+    });
+
+    test('Non-existing cacheFile should call to web', () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var config = createTestConfig();
+      config.returnsNoCacheObject(fileUrl);
+
+      var cacheManager = TestCacheManager(config);
+
+      var result = await cacheManager.getSingleFile(fileUrl);
+      expect(result, isNotNull);
+      config.verifyDownloadCall();
+    });
+  });
+
+  group('Explicit key', () {
+    test('Valid cacheFile should not call to web', () async {
+      var config = createTestConfig();
+
+      var fileName = 'test.jpg';
+      var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
+      var validTill = DateTime.now().add(const Duration(days: 1));
+
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+      var cacheManager = TestCacheManager(config);
+
+      var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+      expect(result, isNotNull);
+      config.verifyNoDownloadCall();
+    });
+
+    test('Outdated cacheFile should call to web', () async {
+      var fileName = 'test.jpg';
+      var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
+      var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+      await config.returnsFile(fileName);
+
+      var cacheManager = TestCacheManager(config);
+
+      var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+      await config.waitForDownload();
+      expect(result, isNotNull);
+      config.verifyDownloadCall();
     });
 
     test('Non-existing cacheFile should call to web', () async {
       var fileName = 'test.jpg';
       var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
       var validTill = DateTime.now().subtract(const Duration(days: 1));
 
-      var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-      var file = (await store.fileDir).childFile(fileName);
-      var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
 
-      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
+      var cacheManager = TestCacheManager(config);
 
-      var webHelper = MockWebHelper();
-      when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
-          .thenAnswer((_) => Stream.value(fileInfo));
-
-      var cacheManager = TestCacheManager(store, webHelper);
-
-      var result = await cacheManager.getSingleFile(fileUrl);
+      var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
       expect(result, isNotNull);
-      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
-    });
-    group('Explicit key', () {
-      test('Valid cacheFile should not call to web', () async {
-        var fileName = 'test.jpg';
-        var fileUrl = 'baseflow.com/test';
-        var fileKey = 'test1234';
-        var validTill = DateTime.now().add(const Duration(days: 1));
-
-        var store = MockStore();
-        when(store.fileDir).thenAnswer((_) => Future.value(
-            MemoryFileSystem().systemTempDirectory.createTemp('test')));
-        var file = (await store.fileDir).childFile(fileName);
-        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(fileInfo));
-
-        var webHelper = MockWebHelper();
-        var cacheManager = TestCacheManager(store, webHelper);
-
-        var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
-        expect(result, isNotNull);
-        verifyNever(webHelper.downloadFile(any));
-      });
-
-      test('Outdated cacheFile should call to web', () async {
-        var fileName = 'test.jpg';
-        var fileUrl = 'baseflow.com/test';
-        var fileKey = 'test1234';
-        var validTill = DateTime.now().subtract(const Duration(days: 1));
-
-        var store = MockStore();
-        when(store.fileDir).thenAnswer((_) => Future.value(
-            MemoryFileSystem().systemTempDirectory.createTemp('test')));
-        var file = (await store.fileDir).childFile(fileName);
-        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(fileInfo));
-
-        var webHelper = MockWebHelper();
-        when(webHelper.downloadFile(argThat(anything), key: anyNamed('key')))
-            .thenAnswer((i) => Stream.value(FileInfo(
-                  null,
-                  FileSource.Online,
-                  DateTime.now().add(const Duration(days: 7)),
-                  i.positionalArguments.first as String,
-                )));
-        var cacheManager = TestCacheManager(store, webHelper);
-
-        var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
-        expect(result, isNotNull);
-        verify(webHelper.downloadFile(
-          fileUrl,
-          key: argThat(equals(fileKey), named: 'key'),
-        )).called(1);
-      });
-
-      test('Non-existing cacheFile should call to web', () async {
-        var fileName = 'test.jpg';
-        var fileUrl = 'baseflow.com/test';
-        var fileKey = 'test1234';
-        var validTill = DateTime.now().subtract(const Duration(days: 1));
-
-        var store = MockStore();
-        when(store.fileDir).thenAnswer((_) => Future.value(
-            MemoryFileSystem().systemTempDirectory.createTemp('test')));
-        var file = (await store.fileDir).childFile(fileName);
-        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-
-        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(null));
-
-        var webHelper = MockWebHelper();
-        when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
-            .thenAnswer((_) => Stream.value(fileInfo));
-
-        var cacheManager = TestCacheManager(store, webHelper);
-
-        var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
-        expect(result, isNotNull);
-        verify(webHelper.downloadFile(
-          fileUrl,
-          key: argThat(equals(fileKey), named: 'key'),
-        )).called(1);
-      });
+      config.verifyDownloadCall();
     });
   });
 
@@ -173,19 +122,20 @@ void main() {
       var fileUrl = 'baseflow.com/test';
       var validTill = DateTime.now().add(const Duration(days: 1));
 
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, fileName, validTill);
+      await config.returnsFile(fileName);
+
       var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-      var file = (await store.fileDir).childFile(fileName);
+      var file = await createTestConfig().fileSystem.createFile(fileName);
       var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
 
-      var webHelper = MockWebHelper();
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(config, store:store);
 
       var fileStream = cacheManager.getFile(fileUrl);
       expect(fileStream, emits(fileInfo));
-      verifyNever(webHelper.downloadFile(any));
+      config.verifyNoDownloadCall();
     });
 
     test('Outdated cacheFile should call to web', () async {
@@ -194,10 +144,7 @@ void main() {
       var validTill = DateTime.now().subtract(const Duration(days: 1));
 
       var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-
-      var file = (await store.fileDir).childFile(fileName);
+      var file = await createTestConfig().fileSystem.createFile(fileName);
       var cachedInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(cachedInfo));
 
@@ -207,7 +154,9 @@ void main() {
       when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
           .thenAnswer((_) => Stream.value(downloadedInfo));
 
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store,
+          webHelper: webHelper);
+
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
 
@@ -220,9 +169,7 @@ void main() {
       var validTill = DateTime.now().subtract(const Duration(days: 1));
 
       var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-      var file = (await store.fileDir).childFile(fileName);
+      var file = await createTestConfig().fileSystem.createFile(fileName);
       var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
 
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
@@ -231,7 +178,8 @@ void main() {
       when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
           .thenAnswer((_) => Stream.value(fileInfo));
 
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store,
+          webHelper: webHelper,);
 
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([fileInfo]));
@@ -250,32 +198,29 @@ void main() {
       when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
           .thenThrow(error);
 
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store,
+          webHelper: webHelper,);
 
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsError(error));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
-    group('explicit key', () {
+  });
+  group('explicit key', () {
       test('Valid cacheFile should not call to web', () async {
         var fileName = 'test.jpg';
         var fileUrl = 'baseflow.com/test';
         var fileKey = 'test1234';
         var validTill = DateTime.now().add(const Duration(days: 1));
 
-        var store = MockStore();
-        when(store.fileDir).thenAnswer((_) => Future.value(
-            MemoryFileSystem().systemTempDirectory.createTemp('test')));
-        var file = (await store.fileDir).childFile(fileName);
-        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(fileInfo));
+        var config = createTestConfig();
+        config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+        await config.returnsFile(fileName);
 
-        var webHelper = MockWebHelper();
-        var cacheManager = TestCacheManager(store, webHelper);
+        var cacheManager = TestCacheManager(config);
 
-        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
-        expect(fileStream, emits(fileInfo));
-        verifyNever(webHelper.downloadFile(any));
+        await cacheManager.getFile(fileUrl, key: fileKey).toList();
+        config.verifyNoDownloadCall();
       });
 
       test('Outdated cacheFile should call to web', () async {
@@ -284,29 +229,14 @@ void main() {
         var fileKey = 'test1234';
         var validTill = DateTime.now().subtract(const Duration(days: 1));
 
-        var store = MockStore();
-        when(store.fileDir).thenAnswer((_) => Future.value(
-            MemoryFileSystem().systemTempDirectory.createTemp('test')));
+        var config = createTestConfig();
+        config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+        await config.returnsFile(fileName);
 
-        var file = (await store.fileDir).childFile(fileName);
-        var cachedInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
-        when(store.getFile(fileKey))
-            .thenAnswer((_) => Future.value(cachedInfo));
+        var cacheManager = TestCacheManager(config);
+        await cacheManager.getFile(fileUrl, key: fileKey).toList();
 
-        var webHelper = MockWebHelper();
-        var downloadedInfo = FileInfo(file, FileSource.Online,
-            DateTime.now().add(const Duration(days: 1)), fileUrl);
-        when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
-            .thenAnswer((_) => Stream.value(downloadedInfo));
-
-        var cacheManager = TestCacheManager(store, webHelper);
-        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
-        await expectLater(
-            fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
-
-        verify(webHelper.downloadFile(any,
-                key: argThat(equals('test1234'), named: 'key')))
-            .called(1);
+        config.verifyDownloadCall(1);
       });
 
       test('Non-existing cacheFile should call to web', () async {
@@ -315,28 +245,16 @@ void main() {
         var fileKey = 'test1234';
         var validTill = DateTime.now().subtract(const Duration(days: 1));
 
-        var store = MockStore();
-        when(store.fileDir).thenAnswer((_) => Future.value(
-            MemoryFileSystem().systemTempDirectory.createTemp('test')));
-        var file = (await store.fileDir).childFile(fileName);
-        var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+        var config = createTestConfig();
+        config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+        await config.returnsFile(fileName);
 
-        when(store.getFile(fileKey)).thenAnswer((_) => Future.value(null));
+        var cacheManager = TestCacheManager(config);
 
-        var webHelper = MockWebHelper();
-        when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
-            .thenAnswer((_) => Stream.value(fileInfo));
-
-        var cacheManager = TestCacheManager(store, webHelper);
-
-        var fileStream = cacheManager.getFile(fileUrl, key: fileKey);
-        await expectLater(fileStream, emitsInOrder([fileInfo]));
-        verify(webHelper.downloadFile(any,
-                key: argThat(equals('test1234'), named: 'key')))
-            .called(1);
+        await cacheManager.getFile(fileUrl, key: fileKey).toList();
+        config.verifyDownloadCall(1);
       });
     });
-  });
 
   group('Testing putting files in cache', () {
     test('Check if file is written and info is stored', () async {
@@ -345,11 +263,7 @@ void main() {
       var extension = '.jpg';
 
       var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-
-      var webHelper = MockWebHelper();
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
       var file = await cacheManager.putFile(fileUrl, fileBytes,
           fileExtension: extension);
@@ -365,11 +279,7 @@ void main() {
       var extension = '.jpg';
 
       var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-
-      var webHelper = MockWebHelper();
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
       var file = await cacheManager.putFile(fileUrl, fileBytes,
           key: fileKey, fileExtension: extension);
@@ -390,8 +300,7 @@ void main() {
       when(store.retrieveCacheData(fileUrl))
           .thenAnswer((_) => Future.value(CacheObject(fileUrl)));
 
-      var webHelper = MockWebHelper();
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
       await cacheManager.removeFile(fileUrl);
       verify(store.removeCachedFile(any)).called(1);
@@ -403,8 +312,7 @@ void main() {
       var store = MockStore();
       when(store.retrieveCacheData(fileUrl)).thenAnswer((_) => null);
 
-      var webHelper = MockWebHelper();
-      var cacheManager = TestCacheManager(store, webHelper);
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
       await cacheManager.removeFile(fileUrl);
       verifyNever(store.removeCachedFile(any));
@@ -418,26 +326,29 @@ void main() {
     var webHelper = MockWebHelper();
     when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
         .thenAnswer((_) => Stream.value(fileInfo));
-    var cacheManager = TestCacheManager(store, webHelper);
+    var cacheManager = TestCacheManager(createTestConfig(), webHelper:
+    webHelper, store: store,);
     expect(await cacheManager.downloadFile(fileUrl), fileInfo);
   });
 
-  test('test file from memory', () {
+  test('test file from memory', () async {
     var fileUrl = 'baseflow.com/test';
     var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
 
     var store = MockStore();
-    when(store.getFileFromMemory(fileUrl)).thenAnswer((_) => fileInfo);
-
+    when(store.getFileFromMemory(fileUrl)).thenAnswer((realInvocation) async =>
+        fileInfo);
     var webHelper = MockWebHelper();
-    var cacheManager = TestCacheManager(store, webHelper);
-    expect(cacheManager.getFileFromMemory(fileUrl), fileInfo);
+    var cacheManager = TestCacheManager(createTestConfig(), store: store,
+        webHelper: webHelper);
+    var result = await cacheManager.getFileFromMemory(fileUrl);
+    expect(result, fileInfo);
   });
 
   test('Empty cache empties cache in store', () async {
     var store = MockStore();
     var webHelper = MockWebHelper();
-    var cacheManager = TestCacheManager(store, webHelper);
+    var cacheManager = TestCacheManager(createTestConfig(), store: store);
     await cacheManager.emptyCache();
     verify(store.emptyCache()).called(1);
   });
@@ -446,15 +357,8 @@ void main() {
     test('Test progress from download', () async {
       var fileUrl = 'baseflow.com/test';
 
-      var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
-      when(store.putFile(argThat(anything)))
-          .thenAnswer((_) => Future.value(VoidCallback));
-
-      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
-
-      var fileService = MockFileService();
+      var config = createTestConfig();
+      var fileService = config.fileService;
       var downloadStreamController = StreamController<List<int>>();
       when(fileService.get(fileUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
@@ -467,8 +371,7 @@ void main() {
             DateTime.now()));
       });
 
-      var cacheManager =
-          TestCacheManager(store, null, fileService: fileService);
+      var cacheManager = TestCacheManager(config);
 
       var fileStream = cacheManager.getFileStream(fileUrl, withProgress: true);
       downloadStreamController.add([0]);
@@ -490,19 +393,18 @@ void main() {
     });
 
     test("Don't get progress when not asked", () async {
+      var config = createTestConfig();
+
       var fileUrl = 'baseflow.com/test';
 
       var store = MockStore();
-      when(store.fileDir).thenAnswer((_) => Future.value(
-          MemoryFileSystem().systemTempDirectory.createTemp('test')));
       when(store.putFile(argThat(anything)))
           .thenAnswer((_) => Future.value(VoidCallback));
 
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
-      var fileService = MockFileService();
       var downloadStreamController = StreamController<List<int>>();
-      when(fileService.get(fileUrl, headers: anyNamed('headers')))
+      when(config.fileService.get(fileUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
             downloadStreamController.stream,
@@ -513,8 +415,7 @@ void main() {
             DateTime.now()));
       });
 
-      var cacheManager =
-          TestCacheManager(store, null, fileService: fileService);
+      var cacheManager = TestCacheManager(config);
 
       var fileStream = cacheManager.getFileStream(fileUrl);
       downloadStreamController.add([0]);
@@ -535,16 +436,12 @@ void main() {
 }
 
 class TestCacheManager extends BaseCacheManager {
-  TestCacheManager(CacheStore store, WebHelper webHelper,
-      {FileService fileService})
-      : super('test',
-            cacheStore: store, webHelper: webHelper, fileService: fileService);
-
-  @override
-  Future<String> getFilePath() {
-    //Not needed because we supply our own store
-    throw UnimplementedError();
-  }
+  TestCacheManager(
+    Config config, {
+    CacheStore store,
+    WebHelper webHelper,
+  }) : super.custom(config ?? createTestConfig(),
+            cacheStore: store, webHelper: webHelper);
 }
 
 class MockStore extends Mock implements CacheStore {}
