@@ -44,28 +44,38 @@ class CacheObjectProvider implements CacheInfoRepository {
       // Creates a unique index for the column
       // Migrates over any existing URLs to keys
       if (oldVersion <= 1) {
-
-        await db.transaction((txn) async {
-          await txn.execute('''
+        var alreadyHasKeyColumn = false;
+        try {
+          await db.execute('''
             alter table $_tableCacheObject 
             add ${CacheObject.columnKey} text;
             ''');
-          await txn.execute('''
-            update $_tableCacheObject 
-              set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
-              where ${CacheObject.columnKey} is null;
-            ''');
-          await txn.execute('''
-            create unique index $_tableCacheObject${CacheObject.columnKey} 
+        } on DatabaseException catch (e) {
+          if (!e.isDuplicateColumnError(CacheObject.columnKey)) rethrow;
+          alreadyHasKeyColumn = true;
+        }
+        await db.execute('''
+          update $_tableCacheObject 
+            set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
+            where ${CacheObject.columnKey} is null;
+          ''');
+
+        if (!alreadyHasKeyColumn) {
+          await db.execute('''
+            create index $_tableCacheObject${CacheObject.columnKey} 
               on $_tableCacheObject (${CacheObject.columnKey});
             ''');
-        });
+        }
       }
       if (oldVersion <= 2) {
-        await db.execute('''
+        try {
+          await db.execute('''
         alter table $_tableCacheObject 
         add ${CacheObject.columnLength} integer;
         ''');
+        } on DatabaseException catch (e) {
+          if (!e.isDuplicateColumnError(CacheObject.columnLength)) rethrow;
+        }
       }
     });
   }
