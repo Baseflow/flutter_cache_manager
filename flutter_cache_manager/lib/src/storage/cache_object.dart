@@ -23,6 +23,7 @@ class CacheObject {
     this.eTag,
     this.id,
     this.length,
+    this.touched,
   }) : key = key ?? url;
 
   CacheObject.fromMap(Map<String, dynamic> map)
@@ -33,7 +34,9 @@ class CacheObject {
         validTill =
             DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
         eTag = map[columnETag] as String,
-        length = map[columnLength] as int;
+        length = map[columnLength] as int,
+        touched =
+            DateTime.fromMillisecondsSinceEpoch(map[columnTouched] as int);
 
   /// Internal ID used to represent this cache object
   final int id;
@@ -57,6 +60,9 @@ class CacheObject {
 
   /// The length of the cached file
   final int length;
+
+  /// When the file is last used
+  final DateTime touched;
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
@@ -94,6 +100,7 @@ class CacheObject {
       validTill: validTill ?? this.validTill,
       eTag: eTag ?? this.eTag,
       length: length ?? this.length,
+      touched: touched,
     );
   }
 }
