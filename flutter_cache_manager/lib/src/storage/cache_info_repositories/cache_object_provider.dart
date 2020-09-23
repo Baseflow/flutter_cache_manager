@@ -1,17 +1,27 @@
-import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
+import 'dart:io';
+
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import '../cache_object.dart';
+import 'cache_info_repository.dart';
 
 const _tableCacheObject = 'cacheObject';
 
 class CacheObjectProvider implements CacheInfoRepository {
   Database db;
   String path;
+  String databaseName;
 
-  CacheObjectProvider(this.path);
+  CacheObjectProvider({this.path, this.databaseName});
 
   @override
   Future open() async {
+    path ??= await getDatabasesPath();
+    await Directory(path).create(recursive: true);
+    if (!path.endsWith('.db')) {
+      path = join(path, '$databaseName.db');
+    }
+
     db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''

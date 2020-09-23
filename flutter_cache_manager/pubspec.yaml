@@ -4,17 +4,17 @@ version: 1.4.2
 homepage: https://github.com/Baseflow/flutter_cache_manager
 
 environment:
-  sdk: ">=2.6.0 <3.0.0"
+  sdk: '>=2.6.0 <3.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  path_provider: "^1.4.0"
-  uuid:  "^2.0.2"
-  http: "^0.12.0+2"
-  path: "^1.6.4"
-  sqflite: "^1.1.7+2"
-  pedantic: "^1.8.0+1"
+  path_provider: '>=1.4.0 <1.6.10'
+  uuid:  ^2.0.2
+  http: ^0.12.0+2
+  path: ^1.6.4
+  sqflite: ^1.1.7+2
+  pedantic: ^1.8.0+1
   clock: ^1.0.1
   file: ">=5.1.0 <7.0.0"
   rxdart: '>=0.23.1 <0.25.0'

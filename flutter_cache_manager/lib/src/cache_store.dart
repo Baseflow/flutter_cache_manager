@@ -1,52 +1,37 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:file/file.dart' as f;
-import 'package:flutter_cache_manager/src/result/file_info.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repository.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object_provider.dart';
-import 'package:path/path.dart' as p;
+import 'package:flutter_cache_manager/src/config/config.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:pedantic/pedantic.dart';
-import 'package:sqflite/sqflite.dart';
+
+import 'result/file_info.dart';
+import 'storage/cache_info_repositories/cache_info_repository.dart';
+import 'storage/cache_object.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
 class CacheStore {
-  Duration cleanupRunMinInterval;
+  Duration cleanupRunMinInterval = const Duration(seconds: 10);
 
   final _futureCache = <String, Future<CacheObject>>{};
   final _memCache = <String, CacheObject>{};
 
-  Future<f.Directory> fileDir;
-  f.Directory _fileDir;
+  FileSystem fileSystem;
 
-  final String storeKey;
+  final Config _config;
+  String get storeKey => _config.cacheKey;
   Future<CacheInfoRepository> _cacheInfoRepository;
-  final int _capacity;
-  final Duration _maxAge;
+  int get _capacity => _config.maxNrOfCacheObjects;
+  Duration get _maxAge => _config.maxAgeCacheObject;
 
   DateTime lastCleanupRun = DateTime.now();
   Timer _scheduledCleanup;
 
-  CacheStore(
-      Future<f.Directory> basedir, this.storeKey, this._capacity, this._maxAge,
-      {Future<CacheInfoRepository> cacheRepoProvider,
-      this.cleanupRunMinInterval = const Duration(seconds: 10)}) {
-    fileDir = basedir.then((dir) => _fileDir = dir);
-    _cacheInfoRepository = cacheRepoProvider ?? _getObjectProvider();
-  }
-
-  Future<CacheInfoRepository> _getObjectProvider() async {
-    final databasesPath = await getDatabasesPath();
-    try {
-      await Directory(databasesPath).create(recursive: true);
-    } catch (_) {}
-    final provider = CacheObjectProvider(p.join(databasesPath, '$storeKey.db'));
-    await provider.open();
-    return provider;
+  CacheStore(Config config) : _config = config {
+    fileSystem = config.fileSystem;
+    _cacheInfoRepository = config.repo.open().then((value) => config.repo);
   }
 
   Future<FileInfo> getFile(String key, {bool ignoreMemCache = false}) async {
@@ -55,7 +40,7 @@ class CacheStore {
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
-    final file = (await fileDir).childFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     return FileInfo(
       file,
       FileSource.Cache,
@@ -78,8 +63,11 @@ class CacheStore {
     }
     if (!_futureCache.containsKey(key)) {
       final completer = Completer<CacheObject>();
+      print('fetching from database');
       unawaited(_getCacheDataFromDatabase(key).then((cacheObject) async {
+        print('object fetched from database, path is ${cacheObject?.relativePath}');
         if (cacheObject != null && !await _fileExists(cacheObject)) {
+          print('file does not exist');
           final provider = await _cacheInfoRepository;
           await provider.delete(cacheObject.id);
           cacheObject = null;
@@ -94,12 +82,12 @@ class CacheStore {
     return _futureCache[key];
   }
 
-  FileInfo getFileFromMemory(String key) {
-    if (_memCache[key] == null || _fileDir == null) {
+  Future<FileInfo> getFileFromMemory(String key) async {
+    if (_memCache[key] == null) {
       return null;
     }
     final cacheObject = _memCache[key];
-    final file = _fileDir.childFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     return FileInfo(
         file, FileSource.Cache, cacheObject.validTill, cacheObject.url);
   }
@@ -108,9 +96,7 @@ class CacheStore {
     if (cacheObject?.relativePath == null) {
       return false;
     }
-
-    var dirPath = await fileDir;
-    var file = dirPath.childFile(cacheObject.relativePath);
+    var file = await fileSystem.createFile(cacheObject.relativePath);
     return file.exists();
   }
 
@@ -188,7 +174,7 @@ class CacheStore {
     if (_futureCache.containsKey(cacheObject.key)) {
       unawaited(_futureCache.remove(cacheObject.key));
     }
-    final file = (await fileDir).childFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     if (await file.exists()) {
       unawaited(file.delete());
     }
