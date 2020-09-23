@@ -19,7 +19,7 @@ class Config implements def.Config {
     FileService fileService,
   })  : maxAgeCacheObject = maxAgeCacheObject ?? const Duration(days: 30),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
-        repo = repo ?? _createRepo(),
+        repo = repo ?? _createRepo(cacheKey),
         fileSystem = fileSystem ?? IOFileSystem(cacheKey),
         fileService = fileService ?? HttpFileService();
 
@@ -41,10 +41,10 @@ class Config implements def.Config {
   @override
   final FileService fileService;
 
-  static CacheInfoRepository _createRepo(){
+  static CacheInfoRepository _createRepo(String key){
     if(Platform.isAndroid || Platform.isIOS || Platform.isMacOS){
-      return CacheObjectProvider();
+      return CacheObjectProvider(databaseName: key);
     }
-    return JsonCacheInfoRepository();
+    return JsonCacheInfoRepository(databaseName: key);
   }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,28 +11,43 @@ import 'package:path_provider/path_provider.dart';
 import 'cache_info_repository.dart';
 
 class JsonCacheInfoRepository implements CacheInfoRepository {
+  Directory directory;
   String path;
   String databaseName;
 
-  JsonCacheInfoRepository({this.path, this.databaseName});
+  /// Either the path or the database name should be provided.
+  /// If the path is provider it should end with '{databaseName}.json',
+  /// for example: /data/user/0/com.example.example/databases/imageCache.json
+  JsonCacheInfoRepository({this.path, this.databaseName})
+      : assert(path == null || databaseName == null);
+
+  /// The directory and the databaseName should both the provided. The database
+  /// is stored as {databaseName}.json in the directory,
+  JsonCacheInfoRepository.inDirectory(
+      {@required this.directory, @required this.databaseName})
+      : assert(directory != null),
+        assert(databaseName != null);
 
   File _file;
   Map<String, CacheObject> _cacheObjects;
   Map<int, Map<String, dynamic>> _jsonCache;
 
+  @visibleForTesting
+  Future openWithFile(File file) async {
+    _file = file;
+    await _readFile();
+  }
+
   @override
   Future open() async {
-    Directory dir;
     if (path != null) {
-      dir = Directory(path);
+      directory = File(path).parent;
     } else {
-      dir = await getApplicationSupportDirectory();
-      path = dir.path;
+      directory ??= await getApplicationSupportDirectory();
     }
-
-    await dir.create(recursive: true);
-    if (!path.endsWith('.json')) {
-      path = join(path, '$databaseName.json');
+    await directory.create(recursive: true);
+    if (path == null || !path.endsWith('.json')) {
+      path = join(directory.path, '$databaseName.json');
     }
     _file = File(path);
     await _readFile();
@@ -123,10 +139,12 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
     _jsonCache = {};
     if (await _file.exists()) {
       var jsonString = await _file.readAsString();
-      var json = jsonDecode(jsonString) as List<Map<String, dynamic>>;
+      var json = jsonDecode(jsonString) as List<dynamic>;
       for (var element in json) {
-        var cacheObject = CacheObject.fromMap(element);
-        _jsonCache[cacheObject.id] = element;
+        if (element is! Map<String, dynamic>) continue;
+        var map = element as Map<String, dynamic>;
+        var cacheObject = CacheObject.fromMap(map);
+        _jsonCache[cacheObject.id] = map;
         _cacheObjects[cacheObject.key] = cacheObject;
       }
     }
