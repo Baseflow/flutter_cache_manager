@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,33 +22,28 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
 
   /// The directory and the databaseName should both the provided. The database
   /// is stored as {databaseName}.json in the directory,
-  JsonCacheInfoRepository.inDirectory(
-      {@required this.directory, @required this.databaseName})
-      : assert(directory != null),
-        assert(databaseName != null);
+  JsonCacheInfoRepository.withFile(File file)
+      : assert(file != null),
+        _file = file;
 
   File _file;
   Map<String, CacheObject> _cacheObjects;
   Map<int, Map<String, dynamic>> _jsonCache;
 
-  @visibleForTesting
-  Future openWithFile(File file) async {
-    _file = file;
-    await _readFile();
-  }
-
   @override
   Future open() async {
-    if (path != null) {
-      directory = File(path).parent;
-    } else {
-      directory ??= await getApplicationSupportDirectory();
+    if(_file == null) {
+      if (path != null) {
+        directory = File(path).parent;
+      } else {
+        directory ??= await getApplicationSupportDirectory();
+      }
+      await directory.create(recursive: true);
+      if (path == null || !path.endsWith('.json')) {
+        path = join(directory.path, '$databaseName.json');
+      }
+      _file = File(path);
     }
-    await directory.create(recursive: true);
-    if (path == null || !path.endsWith('.json')) {
-      path = join(directory.path, '$databaseName.json');
-    }
-    _file = File(path);
     await _readFile();
   }
 
@@ -76,12 +70,14 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
     var id = lastId + 1;
 
     cacheObject = cacheObject.copyWith(id: id);
-    _put(cacheObject);
-    return cacheObject;
+    return _put(cacheObject);
   }
 
   @override
   Future<int> update(CacheObject cacheObject) async {
+    if (cacheObject.id == null) {
+      throw ArgumentError('Updated objects should have an existing id.');
+    }
     _put(cacheObject);
     return 1;
   }
@@ -150,12 +146,12 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
     }
   }
 
-  void _put(CacheObject cacheObject) {
+  CacheObject _put(CacheObject cacheObject) {
     _jsonCache[cacheObject.id] = cacheObject.toMap();
-    _cacheObjects[cacheObject.key] = CacheObject.fromMap(
-      _jsonCache[cacheObject.id],
-    );
+    var updatedCacheObject = CacheObject.fromMap(_jsonCache[cacheObject.id]);
+    _cacheObjects[cacheObject.key] = updatedCacheObject;
     _cacheUpdated();
+    return updatedCacheObject;
   }
 
   void _remove(CacheObject cacheObject) {

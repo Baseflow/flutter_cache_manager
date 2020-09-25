@@ -64,14 +64,15 @@ class CacheObject {
   /// When the file is last used
   final DateTime touched;
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({bool setTouchedToNow = true}) {
     final map = <String, dynamic>{
       columnUrl: url,
       columnKey: key,
       columnPath: relativePath,
       columnETag: eTag,
       columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
-      columnTouched: clock.now().millisecondsSinceEpoch,
+      columnTouched:
+          (setTouchedToNow ? clock.now() : touched).millisecondsSinceEpoch,
       columnLength: length,
     };
     if (id != null) {
