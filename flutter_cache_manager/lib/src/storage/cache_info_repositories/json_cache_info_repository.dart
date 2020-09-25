@@ -119,10 +119,12 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
   }
 
   @override
-  Future deleteAll(Iterable<int> ids) async {
+  Future<int> deleteAll(Iterable<int> ids) async {
+    var deleted = 0;
     for (var id in ids) {
-      await delete(id);
+      deleted += await delete(id);
     }
+    return deleted;
   }
 
   @override

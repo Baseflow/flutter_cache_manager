@@ -14,8 +14,8 @@ class NonStoringObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future deleteAll(Iterable<int> ids) {
-    return Future.value();
+  Future<int> deleteAll(Iterable<int> ids) {
+    return Future.value(ids.length);
   }
 
   @override

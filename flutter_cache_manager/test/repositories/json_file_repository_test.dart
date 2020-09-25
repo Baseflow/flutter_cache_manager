@@ -160,7 +160,8 @@ void main() {
     test('delete removes item', () async {
       var removedId = 2;
       var repo = await Helpers.createRepository();
-      await repo.delete(removedId);
+      var deleted = await repo.delete(removedId);
+      expect(deleted, 1);
       var objects = await repo.getAllObjects();
       var removedObject = objects.where((element) => element.id == removedId);
       expect(removedObject.length, 0);
@@ -170,7 +171,8 @@ void main() {
     test('deleteAll removes all items', () async {
       var removedIds = [2, 3];
       var repo = await Helpers.createRepository();
-      await repo.deleteAll(removedIds);
+      var deleted = await repo.deleteAll(removedIds);
+      expect(deleted, 2);
       var objects = await repo.getAllObjects();
       var removedObject =
           objects.where((element) => removedIds.contains(element.id));
@@ -178,6 +180,14 @@ void main() {
       expect(
           objects.length, Helpers.startCacheObjects.length - removedIds.length);
     });
+
+    test('delete does not remove non-existing items', () async {
+      var removedId = 99;
+      var repo = await Helpers.createRepository();
+      var deleted = await repo.delete(removedId);
+      expect(deleted, 0);
+    });
+
   });
 
   group('storage', (){
