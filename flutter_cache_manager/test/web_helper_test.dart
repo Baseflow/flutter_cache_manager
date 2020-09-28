@@ -1,7 +1,5 @@
 import 'dart:ui';
 
-import 'package:file/file.dart';
-import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/config/config.dart';
@@ -10,10 +8,10 @@ import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
+import 'helpers/config_extensions.dart';
 import 'helpers/mock_file_fetcher_response.dart';
 import 'helpers/mock_file_service.dart';
 import 'helpers/test_configuration.dart';
-import 'helpers/config_extensions.dart';
 
 void main() {
   group('Test status codes', () {

@@ -12,7 +12,6 @@ import 'package:mockito/mockito.dart';
 
 import 'helpers/config_extensions.dart';
 import 'helpers/mock_file_fetcher_response.dart';
-import 'helpers/mock_file_service.dart';
 import 'helpers/test_configuration.dart';
 
 void main() {
@@ -133,6 +132,7 @@ void main() {
 
       var cacheManager = TestCacheManager(config, store:store);
 
+      // ignore: deprecated_member_use_from_same_package
       var fileStream = cacheManager.getFile(fileUrl);
       expect(fileStream, emits(fileInfo));
       config.verifyNoDownloadCall();
@@ -157,6 +157,7 @@ void main() {
       var cacheManager = TestCacheManager(createTestConfig(), store: store,
           webHelper: webHelper);
 
+      // ignore: deprecated_member_use_from_same_package
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([cachedInfo, downloadedInfo]));
 
@@ -181,6 +182,7 @@ void main() {
       var cacheManager = TestCacheManager(createTestConfig(), store: store,
           webHelper: webHelper,);
 
+      // ignore: deprecated_member_use_from_same_package
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsInOrder([fileInfo]));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
@@ -201,6 +203,7 @@ void main() {
       var cacheManager = TestCacheManager(createTestConfig(), store: store,
           webHelper: webHelper,);
 
+      // ignore: deprecated_member_use_from_same_package
       var fileStream = cacheManager.getFile(fileUrl);
       await expectLater(fileStream, emitsError(error));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
@@ -219,6 +222,7 @@ void main() {
 
         var cacheManager = TestCacheManager(config);
 
+        // ignore: deprecated_member_use_from_same_package
         await cacheManager.getFile(fileUrl, key: fileKey).toList();
         config.verifyNoDownloadCall();
       });
@@ -234,6 +238,7 @@ void main() {
         await config.returnsFile(fileName);
 
         var cacheManager = TestCacheManager(config);
+        // ignore: deprecated_member_use_from_same_package
         await cacheManager.getFile(fileUrl, key: fileKey).toList();
 
         config.verifyDownloadCall(1);
@@ -251,6 +256,7 @@ void main() {
 
         var cacheManager = TestCacheManager(config);
 
+        // ignore: deprecated_member_use_from_same_package
         await cacheManager.getFile(fileUrl, key: fileKey).toList();
         config.verifyDownloadCall(1);
       });
@@ -347,7 +353,6 @@ void main() {
 
   test('Empty cache empties cache in store', () async {
     var store = MockStore();
-    var webHelper = MockWebHelper();
     var cacheManager = TestCacheManager(createTestConfig(), store: store);
     await cacheManager.emptyCache();
     verify(store.emptyCache()).called(1);

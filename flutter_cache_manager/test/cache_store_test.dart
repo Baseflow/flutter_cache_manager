@@ -39,8 +39,6 @@ void main() {
     test('Store should return null when file is no longer cached', () async {
       var repo = MockRepo();
 
-      var tempDir = createDir();
-
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
       var store = CacheStore(createTestConfig());
@@ -59,7 +57,6 @@ void main() {
     test('Store should return CacheInfo when file is cached', () async {
       var fileName = 'testimage.png';
       var fileUrl = 'baseflow.com/test.png';
-      var validTill = DateTime.now();
 
       var config = createTestConfig();
       await config.returnsFile(fileName);

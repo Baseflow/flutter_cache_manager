@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'file_system.dart';
 
 class IOFileSystem implements FileSystem {
-  Future<Directory> _fileDir;
+  final Future<Directory> _fileDir;
 
   IOFileSystem(String key) : _fileDir = createDirectory(key);
 
