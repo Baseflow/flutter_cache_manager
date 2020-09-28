@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  path_provider: '>=1.4.0 <1.6.10'
+  path_provider: '^1.6.18'
   uuid:  ^2.0.2
   http: ^0.12.0+2
   path: ^1.6.4
