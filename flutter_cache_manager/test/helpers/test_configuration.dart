@@ -1,5 +1,4 @@
 import 'package:file/memory.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/cache_file.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/cache_file_io'

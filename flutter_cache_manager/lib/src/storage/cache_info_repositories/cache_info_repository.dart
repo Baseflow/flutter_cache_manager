@@ -20,7 +20,7 @@ abstract class CacheInfoRepository {
   Future<int> delete(int id);
 
   /// Deletes items with [ids] from the repository
-  Future deleteAll(Iterable<int> ids);
+  Future<int> deleteAll(Iterable<int> ids);
 
   /// Updates an existing [cacheObject]
   Future<int> update(CacheObject cacheObject);

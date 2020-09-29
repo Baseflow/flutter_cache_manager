@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_object_provider.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system_io.dart';
 
@@ -16,7 +19,7 @@ class Config implements def.Config {
     FileService fileService,
   })  : maxAgeCacheObject = maxAgeCacheObject ?? const Duration(days: 30),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
-        repo = repo ?? CacheObjectProvider(),
+        repo = repo ?? _createRepo(cacheKey),
         fileSystem = fileSystem ?? IOFileSystem(cacheKey),
         fileService = fileService ?? HttpFileService();
 
@@ -37,4 +40,11 @@ class Config implements def.Config {
 
   @override
   final FileService fileService;
+
+  static CacheInfoRepository _createRepo(String key){
+    if(Platform.isAndroid || Platform.isIOS || Platform.isMacOS){
+      return CacheObjectProvider(databaseName: key);
+    }
+    return JsonCacheInfoRepository(databaseName: key);
+  }
 }

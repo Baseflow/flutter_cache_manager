@@ -12,14 +12,22 @@ class CacheObjectProvider implements CacheInfoRepository {
   String path;
   String databaseName;
 
+  /// Either the path or the database name should be provided.
+  /// If the path is provider it should end with '{databaseName}.db',
+  /// for example: /data/user/0/com.example.example/databases/imageCache.db
   CacheObjectProvider({this.path, this.databaseName});
 
   @override
   Future open() async {
-    path ??= await getDatabasesPath();
-    await Directory(path).create(recursive: true);
-    if (!path.endsWith('.db')) {
-      path = join(path, '$databaseName.db');
+    Directory directory;
+    if(path != null){
+      directory = File(path).parent;
+    }else{
+      directory = Directory(await getDatabasesPath());
+    }
+    await directory.create(recursive: true);
+    if (path == null || !path.endsWith('.db')) {
+      path = join(directory.path, '$databaseName.db');
     }
 
     db = await openDatabase(path, version: 3,
@@ -112,7 +120,7 @@ class CacheObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future deleteAll(Iterable<int> ids) {
+  Future<int> deleteAll(Iterable<int> ids) {
     return db.delete(_tableCacheObject,
         where: '${CacheObject.columnId} IN (' + ids.join(',') + ')');
   }
