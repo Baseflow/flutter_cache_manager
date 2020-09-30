@@ -24,7 +24,7 @@ class CacheStore {
   String get storeKey => _config.cacheKey;
   Future<CacheInfoRepository> _cacheInfoRepository;
   int get _capacity => _config.maxNrOfCacheObjects;
-  Duration get _maxAge => _config.maxAgeCacheObject;
+  Duration get _maxAge => _config.stalePeriod;
 
   DateTime lastCleanupRun = DateTime.now();
   Timer _scheduledCleanup;

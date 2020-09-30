@@ -440,7 +440,7 @@ void main() {
   });
 }
 
-class TestCacheManager extends BaseCacheManager {
+class TestCacheManager extends CacheManager {
   TestCacheManager(
     Config config, {
     CacheStore store,

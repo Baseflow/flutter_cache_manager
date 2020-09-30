@@ -12,12 +12,12 @@ import 'config.dart' as def;
 class Config implements def.Config {
   Config(
     this.cacheKey, {
-    Duration maxAgeCacheObject,
+    Duration stalePeriod,
     int maxNrOfCacheObjects,
     CacheInfoRepository repo,
     FileSystem fileSystem,
     FileService fileService,
-  })  : maxAgeCacheObject = maxAgeCacheObject ?? const Duration(days: 30),
+  })  : stalePeriod = stalePeriod ?? const Duration(days: 30),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
         repo = repo ?? _createRepo(cacheKey),
         fileSystem = fileSystem ?? IOFileSystem(cacheKey),
@@ -33,7 +33,7 @@ class Config implements def.Config {
   final String cacheKey;
 
   @override
-  final Duration maxAgeCacheObject;
+  final Duration stalePeriod;
 
   @override
   final int maxNrOfCacheObjects;

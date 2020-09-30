@@ -20,27 +20,27 @@ import 'config/config.dart';
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
-abstract class BaseCacheManager {
+class CacheManager {
   /// Creates a new instance of a cache manager. This can be used to retrieve
   /// files from the cache or download them online. The http headers are used
   /// for the maximum age of the files. The BaseCacheManager should only be
   /// used in singleton patterns.
   ///
   /// The [_cacheKey] is used for the sqlite database file and should be unique.
-  /// Files are removed when they haven't been used for longer than [maxAgeCacheObject]
+  /// Files are removed when they haven't been used for longer than [stalePeriod]
   /// or when this cache has grown too big. When the cache is larger than [maxNrOfCacheObjects]
   /// files the files that haven't been used longest will be removed.
   /// The [fileService] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy. You can also choose to supply
   /// a CacheStore or WebHelper directly if you want more customization.
-  BaseCacheManager(Config config) {
+  CacheManager(Config config) {
     _config = config;
     _store = CacheStore(config);
     _webHelper = WebHelper(_store, config.fileService);
   }
 
   @visibleForTesting
-  BaseCacheManager.custom(
+  CacheManager.custom(
     Config config, {
     CacheStore cacheStore,
     WebHelper webHelper,
@@ -224,4 +224,9 @@ abstract class BaseCacheManager {
 
   /// Removes all files from the cache
   Future<void> emptyCache() => _store.emptyCache();
+
+  /// Closes the cache database
+  Future<void> dispose() async {
+    await _config.repo.close();
+  }
 }
