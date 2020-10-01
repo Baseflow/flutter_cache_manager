@@ -21,6 +21,7 @@ class TestFileSystem extends FileSystem {
   @override
   Future<File> createFile(String name) async {
     var dir = await directoryFuture;
+    await dir.create(recursive: true);
     return dir.childFile(name);
   }
 }

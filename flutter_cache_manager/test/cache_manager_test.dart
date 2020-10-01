@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/config/config.dart';
@@ -266,7 +267,7 @@ void main() {
     test('Check if file is written and info is stored', () async {
       var fileUrl = 'baseflow.com/test';
       var fileBytes = Uint8List(16);
-      var extension = '.jpg';
+      var extension = 'jpg';
 
       var store = MockStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
@@ -282,7 +283,7 @@ void main() {
       var fileUrl = 'baseflow.com/test';
       var fileBytes = Uint8List(16);
       var fileKey = 'test1234';
-      var extension = '.jpg';
+      var extension = 'jpg';
 
       var store = MockStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
@@ -293,6 +294,53 @@ void main() {
       expect(await file.readAsBytes(), fileBytes);
       final arg =
           verify(store.putFile(captureAny)).captured.first as CacheObject;
+      expect(arg.key, fileKey);
+      expect(arg.url, fileUrl);
+    });
+
+    test('Check if file is written and info is stored', () async {
+      var fileUrl = 'baseflow.com/test';
+      var extension = 'jpg';
+      var memorySystem = await MemoryFileSystem()
+          .systemTempDirectory
+          .createTemp('origin');
+
+      var existingFile = memorySystem.childFile('testfile.jpg');
+      var fileBytes = Uint8List(16);
+      await existingFile.writeAsBytes(fileBytes);
+
+      var store = MockStore();
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
+
+      var file = await cacheManager.putExistFile(fileUrl, existingFile,
+          fileExtension: extension);
+      expect(await file.exists(), true);
+      expect(await file.readAsBytes(), fileBytes);
+      verify(store.putFile(any)).called(1);
+    });
+
+
+    test('Check if file is written and info is stored, explicit key', () async {
+      var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
+      var extension = 'jpg';
+      var memorySystem = await MemoryFileSystem()
+          .systemTempDirectory
+          .createTemp('origin');
+
+      var existingFile = memorySystem.childFile('testfile.jpg');
+      var fileBytes = Uint8List(16);
+      await existingFile.writeAsBytes(fileBytes);
+
+      var store = MockStore();
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
+
+      var file = await cacheManager.putExistFile(fileUrl, existingFile,
+          key: fileKey, fileExtension: extension);
+      expect(await file.exists(), true);
+      expect(await file.readAsBytes(), fileBytes);
+      final arg =
+      verify(store.putFile(captureAny)).captured.first as CacheObject;
       expect(arg.key, fileKey);
       expect(arg.url, fileUrl);
     });
