@@ -64,13 +64,38 @@ class CustomCacheManager {
   );
 }
 ```
+## Frequently Asked Questions
+- [How are the cache files stored?](#how-are-the-cache-files-stored)
+- [When are the cached files updated?](#when-are-the-cached-files-updated)
+- [When are cached files removed?](#when-are-cached-files-removed?)
 
-## How it works
+
+### How are the cache files stored?
 By default the cached files are stored in the temporary directory of the app. This means the OS can delete the files any time.
 
-Information about the files is stored in a database using sqflite. The file name of the database is the key of the cacheManager, that's why that has to be unique.
+Information about the files is stored in a database using sqflite on Android, iOS and macOs, or in a plain JSON file
+ on other platforms. The file name of the database is the key of the cacheManager, that's why that has to be unique.
 
-This cache information contains the end date till when the file is valid and the eTag to use with the http cache-control.
+### When are the cached files updated?
+A valid url response should contain a Cache-Control header. More info on the header can be found 
+[here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control), but in summary it says for how long
+the image can be expected to be up to date. It also contains an 'eTag' which can be used to check (after that time) 
+whether the file did change or if it is actually still valid.
+
+When a file is in the cache that is always directly returned when calling `getSingleFile` or `getFileStream`. 
+After that the information is check if the file is actually still valid. If the file is outdated according to the 
+Cache-Control headers the manager tries to update the file and store the new one in the cache. When you use 
+`getFileStream` this updated file will also be returned in the stream.
+
+### When are cached files removed?
+The files can be removed by the cache manager or by the operating system. By default the files are stored in a cache
+ folder, which is sometimes cleaned for example on Android with an app update.
+
+The cache manager uses 2 variables to determine when to delete a file, the `maxNrOfCacheObjects` and the `stalePeriod`.
+The cache knows when files have been used latest. When cleaning the cache (which happens continuously), the cache
+deletes files when there are too many, ordered by last use, and when files just haven't been used for longer than
+the stale period.
+
 
 ## Breaking changes in v2
 - There is no longer a need to extend on BaseCacheManager, you can directly call the constructor. The BaseCacheManager
