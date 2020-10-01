@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io' show File;
 import 'dart:typed_data';
 
+import 'package:file/file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
@@ -235,15 +235,10 @@ class CacheManager {
       eTag: eTag,
     );
 
-    final fileDir = await _fileDir;
-    File file;
-
-    if (!(await fileDir.exists())) {
-      fileDir.createSync(recursive: true);
-    }
+    var file = await _config.fileSystem.createFile(cacheObject.relativePath);
 
     // Always copy file
-    file = await source.copy(p.join(fileDir.path, cacheObject.relativePath));
+    file = await source.copy(file.path);
 
     unawaited(_store.putFile(cacheObject));
     return file;
