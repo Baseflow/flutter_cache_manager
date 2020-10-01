@@ -1,6 +1,5 @@
 import 'package:file/file.dart' hide FileSystem;
 import 'package:file/local.dart';
-import 'package:flutter_cache_manager/src/storage/file_system/cache_file_io.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -22,9 +21,8 @@ class IOFileSystem implements FileSystem {
   }
 
   @override
-  Future<CacheFile> createFile(String name) async {
+  Future<File> createFile(String name) async {
     assert(name != null);
-    var file = (await _fileDir).childFile(name);
-    return CacheFile(file);
+    return (await _fileDir).childFile(name);
   }
 }

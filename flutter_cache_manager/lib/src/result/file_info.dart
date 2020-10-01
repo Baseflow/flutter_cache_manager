@@ -1,6 +1,6 @@
 
+import 'package:file/file.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
-import 'package:flutter_cache_manager/src/storage/file_system/cache_file.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -16,7 +16,7 @@ class FileInfo extends FileResponse {
       : super(originalUrl);
 
   /// Fetched file
-  final CacheFile file;
+  final File file;
 
   /// Source from the file, can be cache or online (web).
   final FileSource source;
