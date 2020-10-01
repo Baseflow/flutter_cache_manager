@@ -8,8 +8,10 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'cache_info_repository.dart';
+import 'helper_methods.dart';
 
-class JsonCacheInfoRepository implements CacheInfoRepository {
+class JsonCacheInfoRepository extends CacheInfoRepository
+    with CacheInfoRepositoryHelperMethods {
   Directory directory;
   String path;
   String databaseName;
@@ -31,20 +33,13 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
   Map<int, Map<String, dynamic>> _jsonCache;
 
   @override
-  Future open() async {
-    if(_file == null) {
-      if (path != null) {
-        directory = File(path).parent;
-      } else {
-        directory ??= await getApplicationSupportDirectory();
-      }
-      await directory.create(recursive: true);
-      if (path == null || !path.endsWith('.json')) {
-        path = join(directory.path, '$databaseName.json');
-      }
-      _file = File(path);
+  Future<bool> open() async {
+    if (!shouldOpenOnNewConnection()) {
+      return openCompleter.future;
     }
-    await _readFile();
+    var file = await _getFile();
+    await _readFile(file);
+    return opened();
   }
 
   @override
@@ -61,7 +56,10 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
   }
 
   @override
-  Future<CacheObject> insert(CacheObject cacheObject) async {
+  Future<CacheObject> insert(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) async {
     if (cacheObject.id != null) {
       throw ArgumentError("Inserted objects shouldn't have an existing id.");
     }
@@ -70,15 +68,18 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
     var id = lastId + 1;
 
     cacheObject = cacheObject.copyWith(id: id);
-    return _put(cacheObject);
+    return _put(cacheObject, setTouchedToNow);
   }
 
   @override
-  Future<int> update(CacheObject cacheObject) async {
+  Future<int> update(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) async {
     if (cacheObject.id == null) {
       throw ArgumentError('Updated objects should have an existing id.');
     }
-    _put(cacheObject);
+    _put(cacheObject, setTouchedToNow);
     return 1;
   }
 
@@ -128,11 +129,15 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
   }
 
   @override
-  Future close() {
-    return _saveFile();
+  Future<bool> close() async {
+    if (!shouldClose()) {
+      return false;
+    }
+    await _saveFile();
+    return true;
   }
 
-  Future _readFile() async {
+  Future _readFile(File file) async {
     _cacheObjects = {};
     _jsonCache = {};
     if (await _file.exists()) {
@@ -148,8 +153,9 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
     }
   }
 
-  CacheObject _put(CacheObject cacheObject) {
-    _jsonCache[cacheObject.id] = cacheObject.toMap();
+  CacheObject _put(CacheObject cacheObject, bool setTouchedToNow) {
+    _jsonCache[cacheObject.id] =
+        cacheObject.toMap(setTouchedToNow: setTouchedToNow);
     var updatedCacheObject = CacheObject.fromMap(_jsonCache[cacheObject.id]);
     _cacheObjects[cacheObject.key] = updatedCacheObject;
     _cacheUpdated();
@@ -174,5 +180,35 @@ class JsonCacheInfoRepository implements CacheInfoRepository {
     timer?.cancel();
     timer = null;
     await _file.writeAsString(jsonEncode(_jsonCache.values.toList()));
+  }
+
+  @override
+  Future deleteDataFile() async {
+    var file = await _getFile();
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  @override
+  Future<bool> exists() async {
+    var file = await _getFile();
+    return file.exists();
+  }
+
+  Future<File> _getFile() async {
+    if (_file == null) {
+      if (path != null) {
+        directory = File(path).parent;
+      } else {
+        directory ??= await getApplicationSupportDirectory();
+      }
+      await directory.create(recursive: true);
+      if (path == null || !path.endsWith('.json')) {
+        path = join(directory.path, '$databaseName.json');
+      }
+      _file = File(path);
+    }
+    return _file;
   }
 }

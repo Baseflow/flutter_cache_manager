@@ -4,8 +4,8 @@ import 'cache_info_repository.dart';
 
 class NonStoringObjectProvider implements CacheInfoRepository {
   @override
-  Future close() {
-    return Future.value();
+  Future<bool> close() async {
+    return true;
   }
 
   @override
@@ -39,22 +39,38 @@ class NonStoringObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future<CacheObject> insert(CacheObject cacheObject) {
+  Future<CacheObject> insert(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) {
     return Future.value(cacheObject);
   }
 
   @override
-  Future open() {
-    return Future.value();
+  Future<bool> open() async {
+    return true;
   }
 
   @override
-  Future<int> update(CacheObject cacheObject) {
+  Future<int> update(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) {
     return Future.value(0);
   }
 
   @override
   Future updateOrInsert(CacheObject cacheObject) {
     return Future.value();
+  }
+
+  @override
+  Future<void> deleteDataFile() async {
+    return;
+  }
+
+  @override
+  Future<bool> exists() async {
+    return false;
   }
 }
