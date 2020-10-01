@@ -218,17 +218,20 @@ class CacheManager {
   /// for example "jpg". When cache info is available for the url that path
   /// is re-used.
   /// The returned [File] is saved on disk.
-  Future<File> putExistFile(String url,
-      File source, {
-        String key,
-        String eTag,
-        Duration maxAge = const Duration(days: 30),
-        String fileExtension = 'file',
-      }) async {
+  Future<File> putExistFile(
+    String url,
+    File source, {
+    String key,
+    String eTag,
+    Duration maxAge = const Duration(days: 30),
+    String fileExtension = 'file',
+  }) async {
     key ??= url;
     var cacheObject = await _store.retrieveCacheData(key);
-    cacheObject ??=
-        CacheObject(key, relativePath: '${Uuid().v1()}.$fileExtension');
+    cacheObject ??= CacheObject(url,
+        key: key,
+        relativePath: '${Uuid().v1()}'
+            '.$fileExtension');
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
@@ -238,7 +241,12 @@ class CacheManager {
     var file = await _config.fileSystem.createFile(cacheObject.relativePath);
 
     // Always copy file
-    file = await source.copy(file.path);
+    var sink = file.openWrite();
+    await source
+        .openRead()
+        // this map is need to map UInt8List to List<int>
+        .map((event) => event)
+        .pipe(sink);
 
     unawaited(_store.putFile(cacheObject));
     return file;
