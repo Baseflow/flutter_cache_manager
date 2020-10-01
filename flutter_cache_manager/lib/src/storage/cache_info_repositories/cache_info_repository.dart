@@ -56,13 +56,13 @@ extension MigrationExtension on CacheInfoRepository {
 
     await previousRepository.open();
     var cacheObjects = await previousRepository.getAllObjects();
-    await putAll(cacheObjects);
+    await _putAll(cacheObjects);
     var isClosed = await previousRepository.close();
     if(!isClosed) print('Deleting an open repository while migrating.');
     await previousRepository.deleteDataFile();
   }
 
-  Future<List<CacheObject>> putAll(List<CacheObject> cacheObjects) async {
+  Future<List<CacheObject>> _putAll(List<CacheObject> cacheObjects) async {
     var storedObjects = <CacheObject>[];
     for (var newObject in cacheObjects) {
       var existingObject = await get(newObject.key);
