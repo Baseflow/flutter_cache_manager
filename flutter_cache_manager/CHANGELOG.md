@@ -1,3 +1,16 @@
+## [2.0.0-beta] - 2020-10-01
+* Added option for a key different from the url.
+* Added a new CacheInfoRepository: JsonCacheInfoRepository, which is not used by default on the existing platforms, 
+but can be used on any.
+* Added support for Windows and Linux using the JsonCacheInfoRepository by default.
+* Added support for adding an existing file.
+* **BREAKING CHANGE** Creating a CacheManager now requires a Config object, see the readme for complete example.
+* **BREAKING CHANGE** Renamed `maxAgeCacheObject` to `stalePeriod`
+* **BREAKING CHANGE** Custom CacheInfoRepository need to include a key and some extra methods.
+* **BREAKING CHANGE** A CacheInfoRepository is now assumed to allow multiple connections, which means you can call
+ 'open' multiple times and the repo keeps track on the number of connections.
+
+
 ## [1.4.2] - 2020-09-10
 * Compatibility with Flutter version 1.22.
 
