@@ -1,5 +1,5 @@
-import 'package:flutter_cache_manager/src/storage/file_system/cache_file.dart';
+import 'package:file/file.dart';
 
 abstract class FileSystem {
-    Future<CacheFile> createFile(String name);
+    Future<File> createFile(String name);
 }

@@ -9,7 +9,6 @@ import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/storage/file_system/cache_file.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
@@ -69,7 +68,7 @@ class CacheManager {
   /// When a file is cached it is return directly, when it is too old the file is
   /// downloaded in the background. When a cached file is not available the
   /// newly downloaded file is returned.
-  Future<CacheFile> getSingleFile(
+  Future<File> getSingleFile(
     String url, {
     String key,
     Map<String, String> headers,
@@ -189,7 +188,7 @@ class CacheManager {
   /// for example "jpg". When cache info is available for the url that path
   /// is re-used.
   /// The returned [File] is saved on disk.
-  Future<CacheFile> putFile(
+  Future<File> putFile(
     String url,
     Uint8List fileBytes, {
     String key,
@@ -208,7 +207,6 @@ class CacheManager {
     );
 
     final file = await _config.fileSystem.createFile(cacheObject.relativePath);
-    await file.createParent();
     await file.writeAsBytes(fileBytes);
     unawaited(_store.putFile(cacheObject));
     return file;

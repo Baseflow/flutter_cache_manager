@@ -158,7 +158,6 @@ class WebHelper {
       CacheObject cacheObject,
       FileServiceResponse response) async {
     final file = await _store.fileSystem.createFile(cacheObject.relativePath);
-    await file.createParent();
 
     try {
       var receivedBytes = 0;
