@@ -1,3 +1,8 @@
+<b>BREAKING CHANGES IN V2</b>
+
+CacheManager v2 introduced some breaking changes when configuring a custom CacheManager. [See the bottom of this page
+ for the changes.](#breaking-changes-in-v2)
+
 # flutter_cache_manager
 
 [![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
@@ -10,6 +15,7 @@ It uses the cache-control http header to efficiently retrieve files.
 
 The more basic usage is explained here. See the complete docs for more info.
 
+
 ## Usage
 
 The cache manager can be used to get a file on various ways
@@ -18,7 +24,6 @@ The easiest way to get a single file is call `.getSingleFile`.
 ```
     var file = await DefaultCacheManager().getSingleFile(url);
 ```
-
 `getFileStream(url)` returns a stream with the first result being the cached file and later optionally the downloaded file.
 
 `getFileStream(url, withProgress: true)` when you set withProgress on true, this stream will also emit DownloadProgress when the file is not found in the cache.
@@ -27,106 +32,75 @@ The easiest way to get a single file is call `.getSingleFile`.
 
 `getFileFromCache` only retrieves from cache and returns no file when the file is not in the cache.
 
+
 `putFile` gives the option to put a new file into the cache without downloading it.
 
-`removeFile` removes a file from the cache.
+`removeFile` removes a file from the cache. 
 
-`emptyCache` removes all files from the cache.
+`emptyCache` removes all files from the cache. 
 
-### Custom Cache Key
+## Other implementations
+When your files are stored on Firebase Storage you can use [flutter_cache_manager_firebase](https://pub.dev/packages/flutter_cache_manager_firebase).
 
-By default the cache uses the url as the cache key. However, a custom cache key can be specified instead,
-meaning that files requested by `url` can be accessed from the cache using `key`.
-This is useful for scenarios where the URL for a resource can change, but the resource
-itself stays the same. Some examples include:
-
-1. Files stored in Firebase, where [getDownloadURL](https://pub.dev/documentation/firebase_storage/latest/firebase_storage/StorageReference/getDownloadURL.html) can return a different URL for the same file
-
-2. Using pre-signed URLs from services such as AWS S3 or CloudFront,
-   where the expiration time is embedded in the URL and causes the URLs to change over time.
-
-To specify a custom key, use the optional `key` parameter when getting the file:
-
-```dart
-final file = await cacheManager.getSingleFile(
-  'http://example.com/resource',
-  key: 'MySpecialCacheKey',
-)
-```
-
-The custom key must be used for each subsequent access to the file in order for the cached version to be used.
-
-Using a custom key would typically be used when accessing a resource by ID (eg using a record from a database)
-
-```dart
-final file = await cacheManager.getSingleFile(
-  resource.getDownloadURL(),
-  key: resource.id
-);
-```
-
-## Settings
-
-The cache manager is customizable by extending the BaseCacheManager.
+## Customize
+The cache manager is customizable by creating a new CacheManager. It is very important to not create more than 1
+ CacheManager instance with the same key as these bite each other. In the example down here the manager is created as a 
+ Singleton, but you could also use for example Provider to Provide a CacheManager on the top level of your app.
 Below is an example with other settings for the maximum age of files, maximum number of objects
-and a custom FileService. The key parameter in the constructor and the getFilePath method are mandatory.
+and a custom FileService. The key parameter in the constructor is mandatory, all other variables are optional.
 
 ```
-
-class CustomCacheManager extends BaseCacheManager {
-  static const key = "customCache";
-
-  static CustomCacheManager _instance;
-
-  factory CustomCacheManager() {
-    if (_instance == null) {
-      _instance = new CustomCacheManager._();
-    }
-    return _instance;
-  }
-
-  CustomCacheManager._() : super(key,
-      maxAgeCacheObject: Duration(days: 7),
-      maxNrOfCacheObjects: 20);
-
-  Future<String> getFilePath() async {
-    var directory = await getTemporaryDirectory();
-    return p.join(directory.path, key);
-  }
+class CustomCacheManager {
+  static const key = 'customCacheKey';
+  static CacheManager instance = CacheManager(
+    Config(
+      key,
+      stalePeriod: const Duration(days: 7),
+      maxNrOfCacheObjects: 20,
+      repo: JsonCacheInfoRepository(databaseName: key),
+      fileSystem: IOFileSystem(key),
+      fileService: HttpFileService(),
+    ),
+  );
 }
-
 ```
+## Frequently Asked Questions
+- [How are the cache files stored?](#how-are-the-cache-files-stored)
+- [When are the cached files updated?](#when-are-the-cached-files-updated)
+- [When are cached files removed?](#when-are-cached-files-removed)
 
-If the file is located on Firebase Storage it can be accessed by using the provided `FirebaseHttpFileService`.
-Wherever the url is provided now becomes a Firebase Storage path, e.g. `getFileStream(firebaseStoragePath)`.
 
-```
-
-class FirebaseCacheManager extends BaseCacheManager {
-  static const key = 'firebaseCache';
-
-  static FirebaseCacheManager _instance;
-
-  factory FirebaseCacheManager() {
-    _instance ??= FirebaseCacheManager._();
-    return _instance;
-  }
-
-  FirebaseCacheManager._() : super(key, fileService: FirebaseHttpFileService());
-
-  @override
-  Future<String> getFilePath() async {
-    var directory = await getTemporaryDirectory();
-    return p.join(directory.path, key);
-  }
-}
-
-```
-
-## How it works
-
+### How are the cache files stored?
 By default the cached files are stored in the temporary directory of the app. This means the OS can delete the files any time.
 
-Information about the files is stored in a database using sqflite. The file name of the database is the key of the cacheManager, that's why that has to be unique.
+Information about the files is stored in a database using sqflite on Android, iOS and macOs, or in a plain JSON file
+ on other platforms. The file name of the database is the key of the cacheManager, that's why that has to be unique.
 
-This cache information contains the end date till when the file is valid and the eTag to use with the http cache-control.
+### When are the cached files updated?
+A valid url response should contain a Cache-Control header. More info on the header can be found 
+[here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control), but in summary it says for how long
+the image can be expected to be up to date. It also contains an 'eTag' which can be used to check (after that time) 
+whether the file did change or if it is actually still valid.
+
+When a file is in the cache that is always directly returned when calling `getSingleFile` or `getFileStream`. 
+After that the information is check if the file is actually still valid. If the file is outdated according to the 
+Cache-Control headers the manager tries to update the file and store the new one in the cache. When you use 
+`getFileStream` this updated file will also be returned in the stream.
+
+### When are cached files removed?
+The files can be removed by the cache manager or by the operating system. By default the files are stored in a cache
+ folder, which is sometimes cleaned for example on Android with an app update.
+
+The cache manager uses 2 variables to determine when to delete a file, the `maxNrOfCacheObjects` and the `stalePeriod`.
+The cache knows when files have been used latest. When cleaning the cache (which happens continuously), the cache
+deletes files when there are too many, ordered by last use, and when files just haven't been used for longer than
+the stale period.
+
+
+## Breaking changes in v2
+- There is no longer a need to extend on BaseCacheManager, you can directly call the constructor. The BaseCacheManager
+ is therefore renamed to CacheManager as it is not really just a 'base' anymore.
+
+- The constructor now expects a Config object with some settings you were used to, but some are slightly different.
+For example the system where you want to store your files is not just a dictionary anymore, but a FileSystem. That way
+you have more freedom on where to store your files.
