@@ -67,7 +67,7 @@ class CustomCacheManager {
 ## Frequently Asked Questions
 - [How are the cache files stored?](#how-are-the-cache-files-stored)
 - [When are the cached files updated?](#when-are-the-cached-files-updated)
-- [When are cached files removed?](#when-are-cached-files-removed?)
+- [When are cached files removed?](#when-are-cached-files-removed)
 
 
 ### How are the cache files stored?
