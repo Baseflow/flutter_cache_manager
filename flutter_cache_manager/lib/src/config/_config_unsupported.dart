@@ -8,7 +8,7 @@ class Config implements def.Config {
   //ignore: avoid_unused_constructor_parameters
   Config(String cacheKey, {
     //ignore: avoid_unused_constructor_parameters
-    Duration maxAgeCacheObject,
+    Duration stalePeriod,
     //ignore: avoid_unused_constructor_parameters
     int maxNrOfCacheObjects,
     //ignore: avoid_unused_constructor_parameters
@@ -31,7 +31,7 @@ class Config implements def.Config {
   String get cacheKey => throw UnimplementedError();
 
   @override
-  Duration get maxAgeCacheObject => throw UnimplementedError();
+  Duration get stalePeriod => throw UnimplementedError();
 
   @override
   int get maxNrOfCacheObjects => throw UnimplementedError();
