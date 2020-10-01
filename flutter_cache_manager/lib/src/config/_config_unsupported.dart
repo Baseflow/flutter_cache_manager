@@ -6,7 +6,8 @@ import 'config.dart' as def;
 
 class Config implements def.Config {
   //ignore: avoid_unused_constructor_parameters
-  Config(String cacheKey, {
+  Config(
+    String cacheKey, {
     //ignore: avoid_unused_constructor_parameters
     Duration stalePeriod,
     //ignore: avoid_unused_constructor_parameters

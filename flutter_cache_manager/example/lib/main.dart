@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-
 void main() {
   runApp(BaseflowPluginExample(
     pluginName: 'Flutter Cache Manager',
@@ -19,7 +18,7 @@ const url = 'https://blurha.sh/assets/images/img1.jpg';
 
 /// Example [Widget] showing the functionalities of flutter_cache_manager
 class CacheManagerPage extends StatefulWidget {
-  static ExamplePage createPage(){
+  static ExamplePage createPage() {
     return ExamplePage(Icons.save_alt, (context) => CacheManagerPage());
   }
 

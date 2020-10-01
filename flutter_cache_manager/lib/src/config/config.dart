@@ -6,7 +6,6 @@ import '_config_unsupported.dart'
     if (dart.library.html) '_config_web.dart'
     if (dart.library.io) '_config_io.dart' as impl;
 
-
 abstract class Config {
   /// Config file for the CacheManager.
   /// [cacheKey] is used for the folder to store files and for the database

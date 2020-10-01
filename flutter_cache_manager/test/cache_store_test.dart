@@ -69,13 +69,13 @@ void main() {
 
     test('Store should return CacheInfo from memory when asked twice',
         () async {
-          var fileName = 'testimage.png';
-          var fileUrl = 'baseflow.com/test.png';
-          var validTill = DateTime.now();
-          var config = createTestConfig();
+      var fileName = 'testimage.png';
+      var fileUrl = 'baseflow.com/test.png';
+      var validTill = DateTime.now();
+      var config = createTestConfig();
 
-          await config.returnsFile(fileName);
-          config.returnsCacheObject(fileUrl, fileName, validTill);
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill);
       var store = CacheStore(config);
 
       var result = await store.retrieveCacheData(fileUrl);
@@ -87,13 +87,13 @@ void main() {
     test(
         'Store should return File from memcache only when file is retrieved before',
         () async {
-          var fileName = 'testimage.png';
-          var fileUrl = 'baseflow.com/test.png';
-          var validTill = DateTime.now();
-          var config = createTestConfig();
+      var fileName = 'testimage.png';
+      var fileUrl = 'baseflow.com/test.png';
+      var validTill = DateTime.now();
+      var config = createTestConfig();
 
-          await config.returnsFile(fileName);
-          config.returnsCacheObject(fileUrl, fileName, validTill);
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill);
 
       var store = CacheStore(config);
 
@@ -129,12 +129,11 @@ void main() {
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
 
-      var cacheObject = CacheObject(fileUrl,
-          relativePath: fileName, id: 1);
+      var cacheObject = CacheObject(fileUrl, relativePath: fileName, id: 1);
       await store.removeCachedFile(cacheObject);
 
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id)))).called
-        (1);
+      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should remove file over capacity', () async {
@@ -157,7 +156,8 @@ void main() {
       await untilCalled(config.repo.deleteAll(any));
 
       verify(config.repo.getObjectsOverCapacity(any)).called(1);
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should remove file over that are too old', () async {
@@ -181,7 +181,8 @@ void main() {
       await untilCalled(config.repo.deleteAll(any));
 
       verify(config.repo.getOldObjects(any)).called(1);
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should remove file old and over capacity', () async {
@@ -207,7 +208,8 @@ void main() {
 
       verify(config.repo.getObjectsOverCapacity(any)).called(1);
       verify(config.repo.getOldObjects(any)).called(1);
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should recheck cache info when file is removed', () async {
@@ -232,10 +234,10 @@ void main() {
 
     test('Store should not remove files that are not old or over capacity',
         () async {
-          var config = createTestConfig();
-          var store = CacheStore(config);
-          store.cleanupRunMinInterval = const Duration(milliseconds: 1);
-          await config.returnsFile('testimage.png');
+      var config = createTestConfig();
+      var store = CacheStore(config);
+      store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+      await config.returnsFile('testimage.png');
 
       var cacheObject = CacheObject('baseflow.com/test.png',
           relativePath: 'testimage.png', id: 1);
@@ -272,8 +274,8 @@ void main() {
 
       await store.emptyCache();
 
-      verify(config.repo.deleteAll(argThat(containsAll([co1.id, co2.id, co3.id]))))
-          .called(1);
+      verify(config.repo
+          .deleteAll(argThat(containsAll([co1.id, co2.id, co3.id])))).called(1);
     });
   });
 }

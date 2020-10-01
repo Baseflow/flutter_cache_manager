@@ -16,13 +16,13 @@ extension ConfigExtensions on Config {
     DateTime validTill, {
     String key,
   }) {
-    when(repo.get(key ?? fileUrl)).thenAnswer((realInvocation) async =>
-        CacheObject(
-          fileUrl,
-          relativePath: fileName,
-          validTill: validTill,
-          key: key ?? fileUrl,
-        ));
+    when(repo.get(key ?? fileUrl))
+        .thenAnswer((realInvocation) async => CacheObject(
+              fileUrl,
+              relativePath: fileName,
+              validTill: validTill,
+              key: key ?? fileUrl,
+            ));
   }
 
   void returnsNoCacheObject(String fileUrl) {

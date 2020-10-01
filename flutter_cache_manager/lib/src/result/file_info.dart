@@ -1,4 +1,3 @@
-
 import 'package:file/file.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
 

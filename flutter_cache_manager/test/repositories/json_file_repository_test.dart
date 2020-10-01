@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/json_repo_helpers.dart';
 
-
 void main() {
   group('Create repository', () {
     test('Create repository with databasename is successful', () {
@@ -64,7 +63,7 @@ void main() {
     });
   });
 
-  group('Exist and delete', (){
+  group('Exist and delete', () {
     test('New repository does not exist', () async {
       var repository = JsonCacheInfoRepository.withFile(io.File(path));
       var exists = await repository.exists();
@@ -169,7 +168,8 @@ void main() {
     test('updateOrInsert inserts new item', () async {
       var repo = await JsonRepoHelpers.createRepository();
       var objectToInsert = JsonRepoHelpers.extraCacheObject;
-      var insertedObject = await repo.updateOrInsert(JsonRepoHelpers.extraCacheObject);
+      var insertedObject =
+          await repo.updateOrInsert(JsonRepoHelpers.extraCacheObject);
       expect(insertedObject.id, JsonRepoHelpers.startCacheObjects.length + 1);
       expect(insertedObject.url, objectToInsert.url);
       expect(insertedObject.touched, isNotNull);
@@ -202,8 +202,8 @@ void main() {
       var removedObject =
           objects.where((element) => removedIds.contains(element.id));
       expect(removedObject.length, 0);
-      expect(
-          objects.length, JsonRepoHelpers.startCacheObjects.length - removedIds.length);
+      expect(objects.length,
+          JsonRepoHelpers.startCacheObjects.length - removedIds.length);
     });
 
     test('delete does not remove non-existing items', () async {
@@ -212,10 +212,9 @@ void main() {
       var deleted = await repo.delete(removedId);
       expect(deleted, 0);
     });
-
   });
 
-  group('storage', (){
+  group('storage', () {
     test('Changes should be persisted', () async {
       var repo = await JsonRepoHelpers.createRepository();
       await repo.insert(JsonRepoHelpers.extraCacheObject);
@@ -226,8 +225,8 @@ void main() {
       await repo.open();
 
       var allObjectsAfterOpen = await repo.getAllObjects();
-      expect(allObjectsAfterOpen.length, JsonRepoHelpers.startCacheObjects.length + 1);
-
+      expect(allObjectsAfterOpen.length,
+          JsonRepoHelpers.startCacheObjects.length + 1);
     });
   });
 }

@@ -58,7 +58,7 @@ extension MigrationExtension on CacheInfoRepository {
     var cacheObjects = await previousRepository.getAllObjects();
     await _putAll(cacheObjects);
     var isClosed = await previousRepository.close();
-    if(!isClosed) print('Deleting an open repository while migrating.');
+    if (!isClosed) print('Deleting an open repository while migrating.');
     await previousRepository.deleteDataFile();
   }
 

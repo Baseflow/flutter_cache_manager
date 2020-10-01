@@ -4,9 +4,9 @@ import 'package:mockito/mockito.dart';
 
 class MockFileService extends Mock implements FileService {
   MockFileService._();
-  factory MockFileService({bool includeStandardResponse = true}){
+  factory MockFileService({bool includeStandardResponse = true}) {
     var fileService = MockFileService._();
-    if(includeStandardResponse) {
+    if (includeStandardResponse) {
       when(fileService.get(any, headers: anyNamed('headers')))
           .thenAnswer((realInvocation) async {
         return TestResponse();
@@ -16,7 +16,7 @@ class MockFileService extends Mock implements FileService {
   }
 }
 
-class TestResponse extends FileServiceResponse{
+class TestResponse extends FileServiceResponse {
   @override
   Stream<List<int>> get content => const Stream.empty();
 
@@ -34,5 +34,4 @@ class TestResponse extends FileServiceResponse{
 
   @override
   DateTime get validTill => DateTime.now();
-
 }

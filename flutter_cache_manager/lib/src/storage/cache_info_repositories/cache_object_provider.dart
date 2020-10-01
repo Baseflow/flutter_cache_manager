@@ -8,7 +8,8 @@ import 'cache_info_repository.dart';
 
 const _tableCacheObject = 'cacheObject';
 
-class CacheObjectProvider extends CacheInfoRepository with CacheInfoRepositoryHelperMethods{
+class CacheObjectProvider extends CacheInfoRepository
+    with CacheInfoRepositoryHelperMethods {
   Database db;
   String _path;
   String databaseName;
@@ -20,7 +21,7 @@ class CacheObjectProvider extends CacheInfoRepository with CacheInfoRepositoryHe
 
   @override
   Future<bool> open() async {
-    if(!shouldOpenOnNewConnection()){
+    if (!shouldOpenOnNewConnection()) {
       return openCompleter.future;
     }
     var path = await _getPath();
@@ -170,7 +171,7 @@ class CacheObjectProvider extends CacheInfoRepository with CacheInfoRepositoryHe
 
   @override
   Future<bool> close() async {
-    if(!shouldClose()) return false;
+    if (!shouldClose()) return false;
     await db.close();
     return true;
   }
