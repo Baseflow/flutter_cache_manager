@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../cache_object.dart';
@@ -7,29 +8,23 @@ import 'cache_info_repository.dart';
 
 const _tableCacheObject = 'cacheObject';
 
-class CacheObjectProvider implements CacheInfoRepository {
+class CacheObjectProvider extends CacheInfoRepository with CacheInfoRepositoryHelperMethods{
   Database db;
-  String path;
+  String _path;
   String databaseName;
 
   /// Either the path or the database name should be provided.
   /// If the path is provider it should end with '{databaseName}.db',
   /// for example: /data/user/0/com.example.example/databases/imageCache.db
-  CacheObjectProvider({this.path, this.databaseName});
+  CacheObjectProvider({String path, this.databaseName}) : _path = path;
 
   @override
-  Future open() async {
-    Directory directory;
-    if(path != null){
-      directory = File(path).parent;
-    }else{
-      directory = Directory(await getDatabasesPath());
+  Future<bool> open() async {
+    if(!shouldOpenOnNewConnection()){
+      return openCompleter.future;
     }
-    await directory.create(recursive: true);
-    if (path == null || !path.endsWith('.db')) {
-      path = join(directory.path, '$databaseName.db');
-    }
-
+    var path = await _getPath();
+    await File(path).parent.create(recursive: true);
     db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''
@@ -86,6 +81,7 @@ class CacheObjectProvider implements CacheInfoRepository {
         }
       }
     });
+    return opened();
   }
 
   @override
@@ -98,8 +94,12 @@ class CacheObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future<CacheObject> insert(CacheObject cacheObject) async {
-    var id = await db.insert(_tableCacheObject, cacheObject.toMap());
+  Future<CacheObject> insert(CacheObject cacheObject,
+      {bool setTouchedToNow = true}) async {
+    var id = await db.insert(
+      _tableCacheObject,
+      cacheObject.toMap(setTouchedToNow: setTouchedToNow),
+    );
     return cacheObject.copyWith(id: id);
   }
 
@@ -126,9 +126,13 @@ class CacheObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future<int> update(CacheObject cacheObject) {
-    return db.update(_tableCacheObject, cacheObject.toMap(),
-        where: '${CacheObject.columnId} = ?', whereArgs: [cacheObject.id]);
+  Future<int> update(CacheObject cacheObject, {bool setTouchedToNow = true}) {
+    return db.update(
+      _tableCacheObject,
+      cacheObject.toMap(setTouchedToNow: setTouchedToNow),
+      where: '${CacheObject.columnId} = ?',
+      whereArgs: [cacheObject.id],
+    );
   }
 
   @override
@@ -165,5 +169,34 @@ class CacheObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future close() => db.close();
+  Future<bool> close() async {
+    if(!shouldClose()) return false;
+    await db.close();
+    return true;
+  }
+
+  @override
+  Future deleteDataFile() async {
+    await _getPath();
+  }
+
+  @override
+  Future<bool> exists() async {
+    await _getPath();
+    return File(_path).exists();
+  }
+
+  Future<String> _getPath() async {
+    Directory directory;
+    if (_path != null) {
+      directory = File(_path).parent;
+    } else {
+      directory = Directory(await getDatabasesPath());
+    }
+    await directory.create(recursive: true);
+    if (_path == null || !_path.endsWith('.db')) {
+      _path = join(directory.path, '$databaseName.db');
+    }
+    return _path;
+  }
 }
