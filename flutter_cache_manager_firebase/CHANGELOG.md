@@ -1,3 +1,6 @@
+## [1.1.0-beta] - 2020-10-02
+* Update CacheManager dependency to 2.x.x.
+
 ## [1.0.1] - Update firebase dependency
 * Added support for version 4.x.x
 
