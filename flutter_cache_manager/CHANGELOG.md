@@ -1,3 +1,7 @@
+## [2.0.0-beta.1] - 2020-10-10
+* Reintroduced BaseCacheManager interface for backwards compatibility.
+* Renamed putExistFile to putFileStream. This is equally efficient, but more clear in what it does.
+
 ## [2.0.0-beta] - 2020-10-01
 * Added option for a key different from the url.
 * Added a new CacheInfoRepository: JsonCacheInfoRepository, which is not used by default on the existing platforms, 

@@ -317,7 +317,7 @@ void main() {
       var store = MockStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
-      var file = await cacheManager.putExistFile(fileUrl, existingFile,
+      var file = await cacheManager.putFileStream(fileUrl, existingFile.openRead(),
           fileExtension: extension);
       expect(await file.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
@@ -338,7 +338,7 @@ void main() {
       var store = MockStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
-      var file = await cacheManager.putExistFile(fileUrl, existingFile,
+      var file = await cacheManager.putFileStream(fileUrl, existingFile.openRead(),
           key: fileKey, fileExtension: extension);
       expect(await file.exists(), true);
       expect(await file.readAsBytes(), fileBytes);

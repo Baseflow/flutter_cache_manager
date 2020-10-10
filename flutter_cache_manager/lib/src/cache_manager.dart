@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file/file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/cache_managers/base_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/result/download_progress.dart';
 import 'package:flutter_cache_manager/src/result/file_info.dart';
@@ -19,7 +20,9 @@ import 'config/config.dart';
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
-class CacheManager {
+/// Basic cache manager implementation, which should be used as a single
+/// instance.
+class CacheManager implements BaseCacheManager {
   /// Creates a new instance of a cache manager. This can be used to retrieve
   /// files from the cache or download them online. The http headers are used
   /// for the maximum age of the files. The BaseCacheManager should only be
@@ -68,6 +71,7 @@ class CacheManager {
   /// When a file is cached it is return directly, when it is too old the file is
   /// downloaded in the background. When a cached file is not available the
   /// newly downloaded file is returned.
+  @override
   Future<File> getSingleFile(
     String url, {
     String key,
@@ -88,6 +92,7 @@ class CacheManager {
   /// Downloaded form [url], [headers] can be used for example for authentication.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
+  @override
   @Deprecated('Prefer to use the new getFileStream method')
   Stream<FileInfo> getFile(String url,
       {String key, Map<String, String> headers}) {
@@ -109,6 +114,7 @@ class CacheManager {
   /// set on true and the file is not available in the cache. When the file is
   /// returned from the cache there will be no progress given, although the file
   /// might be outdated and a new file is being downloaded in the background.
+  @override
   Stream<FileResponse> getFileStream(String url,
       {String key, Map<String, String> headers, bool withProgress}) {
     key ??= url;
@@ -158,6 +164,7 @@ class CacheManager {
   }
 
   ///Download the file and add to cache
+  @override
   Future<FileInfo> downloadFile(String url,
       {String key, Map<String, String> authHeaders, bool force = false}) async {
     key ??= url;
@@ -174,11 +181,13 @@ class CacheManager {
 
   /// Get the file from the cache.
   /// Specify [ignoreMemCache] to force a re-read from the database
+  @override
   Future<FileInfo> getFileFromCache(String key,
           {bool ignoreMemCache = false}) =>
       _store.getFile(key, ignoreMemCache: ignoreMemCache);
 
   ///Returns the file from memory if it has already been fetched
+  @override
   Future<FileInfo> getFileFromMemory(String key) =>
       _store.getFileFromMemory(key);
 
@@ -188,6 +197,7 @@ class CacheManager {
   /// for example "jpg". When cache info is available for the url that path
   /// is re-used.
   /// The returned [File] is saved on disk.
+  @override
   Future<File> putFile(
     String url,
     Uint8List fileBytes, {
@@ -212,15 +222,17 @@ class CacheManager {
     return file;
   }
 
-  /// Put a Exist file in the cache. It is recommended to specify the [eTag] and the
+  /// Put a byte stream in the cache. When using an existing file you can use
+  /// file.openRead(). It is recommended to specify  the [eTag] and the
   /// [maxAge]. When [maxAge] is passed and the eTag is not set the file will
   /// always be downloaded again. The [fileExtension] should be without a dot,
   /// for example "jpg". When cache info is available for the url that path
   /// is re-used.
   /// The returned [File] is saved on disk.
-  Future<File> putExistFile(
+  @override
+  Future<File> putFileStream(
     String url,
-    File source, {
+    Stream<List<int>> source, {
     String key,
     String eTag,
     Duration maxAge = const Duration(days: 30),
@@ -243,7 +255,6 @@ class CacheManager {
     // Always copy file
     var sink = file.openWrite();
     await source
-        .openRead()
         // this map is need to map UInt8List to List<int>
         .map((event) => event)
         .pipe(sink);
@@ -253,6 +264,7 @@ class CacheManager {
   }
 
   /// Remove a file from the cache
+  @override
   Future<void> removeFile(String key) async {
     final cacheObject = await _store.retrieveCacheData(key);
     if (cacheObject != null) {
@@ -261,9 +273,11 @@ class CacheManager {
   }
 
   /// Removes all files from the cache
+  @override
   Future<void> emptyCache() => _store.emptyCache();
 
   /// Closes the cache database
+  @override
   Future<void> dispose() async {
     await _config.repo.close();
   }

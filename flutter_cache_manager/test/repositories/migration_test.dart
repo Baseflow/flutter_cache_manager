@@ -71,6 +71,7 @@ class CacheObjectMatcher extends Matcher {
   @override
   Description describe(Description description) {
     description.add('Matches cacheObject $value');
+    return description;
   }
 
   @override
