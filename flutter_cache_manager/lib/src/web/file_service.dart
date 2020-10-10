@@ -13,12 +13,13 @@ import 'mime_converter.dart';
 /// also make something more specialized. For example you could fetch files
 /// from other apps or from local storage.
 abstract class FileService {
+  int concurrentFetches = 10;
   Future<FileServiceResponse> get(String url, {Map<String, String> headers});
 }
 
 /// [HttpFileService] is the most common file service and the default for
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
-class HttpFileService implements FileService {
+class HttpFileService extends FileService {
   http.Client _httpClient;
   HttpFileService({http.Client httpClient}) {
     _httpClient = httpClient ?? http.Client();
