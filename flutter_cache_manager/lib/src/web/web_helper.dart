@@ -53,7 +53,7 @@ class WebHelper {
     Map<String, String> authHeaders,
   ) async {
     //Add to queue if there are too many calls.
-    if(concurrentCalls >= fileFetcher.concurrentFetches){
+    if (concurrentCalls >= fileFetcher.concurrentFetches) {
       _queue.add(QueueItem(url, key, authHeaders));
       return;
     }
@@ -75,8 +75,8 @@ class WebHelper {
     }
   }
 
-  void _checkQueue(){
-    if(_queue.isEmpty) return;
+  void _checkQueue() {
+    if (_queue.isEmpty) return;
     var next = _queue.removeFirst();
     _downloadOrAddToQueue(next.url, next.key, next.headers);
   }
