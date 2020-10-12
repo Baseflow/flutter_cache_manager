@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../cache_object.dart';
 import 'cache_info_repository.dart';
@@ -192,12 +193,25 @@ class CacheObjectProvider extends CacheInfoRepository
     if (_path != null) {
       directory = File(_path).parent;
     } else {
-      directory = Directory(await getDatabasesPath());
+      directory = await getApplicationSupportDirectory();
     }
     await directory.create(recursive: true);
     if (_path == null || !_path.endsWith('.db')) {
       _path = join(directory.path, '$databaseName.db');
     }
+    await _migrateOldDbPath(_path);
     return _path;
+  }
+
+  // Migration for pre-V2 path on iOS and macOS
+  Future _migrateOldDbPath(String newDbPath) async {
+    final oldDbPath = join(await getDatabasesPath(), '$databaseName.db');
+    if (oldDbPath != newDbPath && await File(oldDbPath).exists()) {
+      try {
+        await File(oldDbPath).rename(newDbPath);
+      } on FileSystemException {
+        // If we can not read the old db, a new one will be created.
+      }
+    }
   }
 }
