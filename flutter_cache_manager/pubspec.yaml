@@ -18,6 +18,7 @@ dependencies:
   clock: ^1.0.1
   file: ">=5.1.0 <7.0.0"
   rxdart: '>=0.23.1 <0.25.0'
+  image: ^2.1.18
   
 dev_dependencies:
   flutter_test:
