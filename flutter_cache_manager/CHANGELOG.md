@@ -1,3 +1,18 @@
+## [2.0.0] - 2020-10-16
+* Restructured the configuration of the CacheManager. Look at the ReadMe for more information.
+* Added queueing mechanism for downloading new files. By default, the cache manager downloads a maximum of 10 files
+ at the same time.
+* Moved SQFlite database file from sqflite database path to application support directory.
+* Add putFileStream to add an external file to the cache.
+* Add option to use a key to get files from the cache which can be different from the url.
+* Added JsonCacheInfoRepository for Windows and Linux.
+* **BREAKING CHANGE** Creating a CacheManager now requires a Config object, see the readme for complete example.
+* **BREAKING CHANGE** Renamed `maxAgeCacheObject` to `stalePeriod`
+* **BREAKING CHANGE** Custom CacheInfoRepository need to include a key and some extra methods.
+* **BREAKING CHANGE** A CacheInfoRepository is now assumed to allow multiple connections, which means you can call
+ 'open' multiple times and the repo keeps track on the number of connections.
+
+
 ## [2.0.0-beta.1] - 2020-10-10
 * Reintroduced BaseCacheManager interface for backwards compatibility.
 * Renamed putExistFile to putFileStream. This is equally efficient, but more clear in what it does.
