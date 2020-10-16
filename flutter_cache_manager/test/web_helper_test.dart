@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -153,6 +154,45 @@ void main() {
       await Future.wait([call1, call2]);
 
       verify(store.retrieveCacheData(any)).called(2);
+    });
+
+    test('No more concurrent calls than defined in fileService', () async {
+      const url1 = 'baseflow.com/testimage1';
+      const url2 = 'baseflow.com/testimage2';
+      const url3 = 'baseflow.com/testimage3';
+
+
+      var config = createTestConfig();
+      var store = _createStore(config);
+      final fileService = MockFileService();
+
+      var completer1 = Completer<FileServiceResponse>();
+      var completer2 = Completer<FileServiceResponse>();
+      var completer3 = Completer<FileServiceResponse>();
+
+      when(fileService.get(url1, headers: anyNamed('headers')))
+          .thenAnswer((realInvocation) => completer1.future);
+      when(fileService.get(url2, headers: anyNamed('headers')))
+          .thenAnswer((realInvocation) => completer2.future);
+      when(fileService.get(url3, headers: anyNamed('headers')))
+          .thenAnswer((realInvocation) => completer3.future);
+
+      var webHelper = WebHelper(store, fileService);
+      webHelper.downloadFile(url1);
+      webHelper.downloadFile(url2);
+      webHelper.downloadFile(url3);
+
+      await Future.delayed(const Duration(microseconds: 1));
+
+      verify(fileService.get(url1, headers: anyNamed('headers'))).called(1);
+      verify(fileService.get(url2, headers: anyNamed('headers'))).called(1);
+      verifyNever(fileService.get(url3, headers: anyNamed('headers')));
+
+      completer1.complete(MockFileFetcherResponse.basic());
+
+      await Future.delayed(const Duration(microseconds: 1));
+      verify(fileService.get(url3, headers: anyNamed('headers'))).called(1);
+
     });
   });
 

@@ -6,7 +6,7 @@ import 'package:flutter_cache_manager/src/compat/file_fetcher.dart';
 import '../../flutter_cache_manager.dart';
 import '../web/mime_converter.dart';
 
-class FileServiceCompat implements FileService {
+class FileServiceCompat extends FileService {
   final FileFetcher fileFetcher;
   FileServiceCompat(this.fileFetcher);
 
