@@ -10,10 +10,16 @@ class FirebaseHttpFileService extends HttpFileService {
   Future<FileServiceResponse> get(String url,
       {Map<String, String> headers = const {}}) async {
     final ref = await FirebaseStorage.instance.getReferenceFromUrl(url);
-    final streamedResponse = http.StreamedResponse(
-        ref.getData(0x12FFFFFF).asStream(), 200,
-        headers: headers);
+    final metaData = await ref.getMetadata();
+    final response = http.StreamedResponse(
+      ref.getData(metaData.sizeBytes).asStream(),
+      200,
+      headers: {
+        'content-type': metaData.contentType,
+        'charset': metaData.contentEncoding,
+      },
+    );
 
-    return HttpGetResponse(streamedResponse);
+    return HttpGetResponse(response);
   }
 }
