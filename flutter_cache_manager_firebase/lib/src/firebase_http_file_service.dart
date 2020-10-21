@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
@@ -15,8 +17,11 @@ class FirebaseHttpFileService extends HttpFileService {
       ref.getData(metaData.sizeBytes).asStream(),
       200,
       headers: {
-        'content-type': metaData.contentType,
-        'charset': metaData.contentEncoding,
+        HttpHeaders.contentTypeHeader: metaData.contentType,
+        HttpHeaders.cacheControlHeader: metaData.cacheControl,
+        HttpHeaders.contentLanguageHeader: metaData.contentLanguage,
+        HttpHeaders.dateHeader: metaData.creationTimeMillis.toString(),
+        HttpHeaders.contentLocationHeader: metaData.path,
       },
     );
 
