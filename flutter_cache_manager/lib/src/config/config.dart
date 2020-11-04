@@ -30,7 +30,7 @@ abstract class CacheConfig {
     CacheInfoRepository repo,
     FileSystem fileSystem,
     FileService fileService,
-  }) = impl.Config;
+  }) = impl.CacheConfig;
 
   String get cacheKey;
   Duration get stalePeriod;
