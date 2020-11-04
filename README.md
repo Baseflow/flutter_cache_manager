@@ -53,7 +53,7 @@ and a custom FileService. The key parameter in the constructor is mandatory, all
 class CustomCacheManager {
   static const key = 'customCacheKey';
   static CacheManager instance = CacheManager(
-    Config(
+    CacheConfig(
       key,
       stalePeriod: const Duration(days: 7),
       maxNrOfCacheObjects: 20,
@@ -104,3 +104,7 @@ the stale period.
 - The constructor now expects a Config object with some settings you were used to, but some are slightly different.
 For example the system where you want to store your files is not just a dictionary anymore, but a FileSystem. That way
 you have more freedom on where to store your files.
+
+
+## Breaking changes in v3
+- `Config` has been renamed to `CacheConfig` to avoid the need of library prefixes.

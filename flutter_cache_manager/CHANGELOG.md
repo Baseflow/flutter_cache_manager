@@ -1,3 +1,6 @@
+## [3.0.0] - 2020-11-04
+- `Config` has been renamed to `CacheConfig` to avoid the need of library prefixes.
+
 ## [2.0.0] - 2020-10-16
 * Restructured the configuration of the CacheManager. Look at the ReadMe for more information.
 * Added queueing mechanism for downloading new files. By default, the cache manager downloads a maximum of 10 files

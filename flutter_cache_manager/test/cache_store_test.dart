@@ -15,7 +15,7 @@ void main() {
     test('Store should return null when file not cached', () async {
       var repo = MockRepo();
       when(repo.get(any)).thenAnswer((_) => Future.value(null));
-      var store = CacheStore(createTestConfig());
+      var store = CacheStore(createTestCacheConfig());
 
       expect(await store.getFile('This is a test'), null);
     });
@@ -24,7 +24,7 @@ void main() {
       var fileName = 'testimage.png';
       var fileUrl = 'baseflow.com/test.png';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now());
 
@@ -41,7 +41,7 @@ void main() {
 
       when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
           CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
-      var store = CacheStore(createTestConfig());
+      var store = CacheStore(createTestCacheConfig());
 
       expect(await store.getFile('baseflow.com/test.png'), null);
     });
@@ -49,7 +49,7 @@ void main() {
     test('Store should return no CacheInfo when file not cached', () async {
       var repo = MockRepo();
       when(repo.get(any)).thenAnswer((_) => Future.value(null));
-      var store = CacheStore(createTestConfig());
+      var store = CacheStore(createTestCacheConfig());
 
       expect(await store.retrieveCacheData('This is a test'), null);
     });
@@ -58,7 +58,7 @@ void main() {
       var fileName = 'testimage.png';
       var fileUrl = 'baseflow.com/test.png';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now());
 
@@ -72,7 +72,7 @@ void main() {
       var fileName = 'testimage.png';
       var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
 
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, validTill);
@@ -90,7 +90,7 @@ void main() {
       var fileName = 'testimage.png';
       var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
 
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, validTill);
@@ -105,7 +105,7 @@ void main() {
 
   group('Storing files in store', () {
     test('Store should store fileinfo in repo', () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
 
       var cacheObject =
@@ -121,7 +121,7 @@ void main() {
       var fileName = 'testimage.png';
       var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
 
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, validTill);
@@ -137,7 +137,7 @@ void main() {
     });
 
     test('Store should remove file over capacity', () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
 
@@ -161,7 +161,7 @@ void main() {
     });
 
     test('Store should remove file over that are too old', () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
@@ -186,7 +186,7 @@ void main() {
     });
 
     test('Store should remove file old and over capacity', () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
@@ -213,7 +213,7 @@ void main() {
     });
 
     test('Store should recheck cache info when file is removed', () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       var file = await config.returnsFile('testimage.png');
@@ -234,7 +234,7 @@ void main() {
 
     test('Store should not remove files that are not old or over capacity',
         () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
@@ -257,7 +257,7 @@ void main() {
     });
 
     test('Store should remove all files when emptying cache', () async {
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');

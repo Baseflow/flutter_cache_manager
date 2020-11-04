@@ -19,7 +19,7 @@ void main() {
     test('200 is OK', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
 
       final fileService = MockFileService();
@@ -43,7 +43,7 @@ void main() {
 
     test('200 needs content', () async {
       const imageUrl = 'baseflow.com/testimage';
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
 
       final fileService = MockFileService();
@@ -61,7 +61,7 @@ void main() {
     test('404 throws', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
 
       final fileService = MockFileService();
@@ -82,7 +82,7 @@ void main() {
     test('304 ignores content', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
 
       final fileService = MockFileService();
@@ -104,7 +104,7 @@ void main() {
     test('Calling webhelper twice excecutes once', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = _createStore(config);
 
       final fileService = MockFileService();
@@ -132,7 +132,7 @@ void main() {
         () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = _createStore(config);
 
       final fileService = MockFileService();
@@ -162,7 +162,7 @@ void main() {
       const url3 = 'baseflow.com/testimage3';
 
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = _createStore(config);
       final fileService = MockFileService();
 
@@ -202,7 +202,7 @@ void main() {
       const fileName = 'testv1.jpg';
       final validTill = DateTime.now();
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = _createStore(config);
       config.returnsCacheObject(imageUrl, fileName, validTill);
 
@@ -230,7 +230,7 @@ void main() {
       const imageUrl = 'baseflow.com/testimage';
       var imageName = 'image.png';
 
-      var config = createTestConfig();
+      var config = createTestCacheConfig();
       var store = CacheStore(config);
       var file = await config.returnsFile(imageName);
       config.returnsCacheObject(imageUrl, imageName, DateTime.now());

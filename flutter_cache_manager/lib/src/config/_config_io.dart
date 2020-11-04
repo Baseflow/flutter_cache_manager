@@ -9,8 +9,8 @@ import 'package:flutter_cache_manager/src/storage/file_system/file_system_io.dar
 
 import 'config.dart' as def;
 
-class Config implements def.CacheConfig {
-  Config(
+class CacheConfig implements def.CacheConfig {
+  CacheConfig(
     this.cacheKey, {
     Duration stalePeriod,
     int maxNrOfCacheObjects,
