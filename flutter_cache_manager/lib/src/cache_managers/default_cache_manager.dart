@@ -13,5 +13,5 @@ class DefaultCacheManager extends CacheManager {
     return _instance;
   }
 
-  DefaultCacheManager._() : super(Config(key));
+  DefaultCacheManager._() : super(CacheConfig(key));
 }

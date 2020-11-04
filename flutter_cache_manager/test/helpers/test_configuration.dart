@@ -6,8 +6,8 @@ import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'mock_cache_info_repository.dart';
 import 'mock_file_service.dart';
 
-Config createTestConfig() {
-  return Config(
+CacheConfig createTestConfig() {
+  return CacheConfig(
     'test',
     fileSystem: TestFileSystem(),
     repo: MockCacheInfoRepository(),

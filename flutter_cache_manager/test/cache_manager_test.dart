@@ -496,7 +496,7 @@ void main() {
 
 class TestCacheManager extends CacheManager {
   TestCacheManager(
-    Config config, {
+    CacheConfig config, {
     CacheStore store,
     WebHelper webHelper,
   }) : super.custom(config ?? createTestConfig(),

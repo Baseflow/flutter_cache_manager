@@ -3,7 +3,7 @@ import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:mockito/mockito.dart';
 
-extension ConfigExtensions on Config {
+extension ConfigExtensions on CacheConfig {
   Future<File> returnsFile(String fileName) async {
     var file = await fileSystem.createFile(fileName);
     await (file.openWrite()..add([1, 3])).close();

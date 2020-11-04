@@ -247,7 +247,7 @@ void main() {
   });
 }
 
-MockStore _createStore(Config config) {
+MockStore _createStore(CacheConfig config) {
   final store = MockStore();
   when(store.putFile(argThat(anything)))
       .thenAnswer((_) => Future.value(VoidCallback));

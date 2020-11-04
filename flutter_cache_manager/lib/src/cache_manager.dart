@@ -35,7 +35,7 @@ class CacheManager implements BaseCacheManager {
   /// The [fileService] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy. You can also choose to supply
   /// a CacheStore or WebHelper directly if you want more customization.
-  CacheManager(Config config) {
+  CacheManager(CacheConfig config) {
     _config = config;
     _store = CacheStore(config);
     _webHelper = WebHelper(_store, config.fileService);
@@ -43,7 +43,7 @@ class CacheManager implements BaseCacheManager {
 
   @visibleForTesting
   CacheManager.custom(
-    Config config, {
+    CacheConfig config, {
     CacheStore cacheStore,
     WebHelper webHelper,
   }) {
@@ -52,7 +52,7 @@ class CacheManager implements BaseCacheManager {
     _webHelper = webHelper ?? WebHelper(_store, config.fileService);
   }
 
-  Config _config;
+  CacheConfig _config;
 
   /// Store helper for cached files
   CacheStore _store;

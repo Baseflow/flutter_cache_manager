@@ -20,7 +20,7 @@ class CacheStore {
 
   FileSystem fileSystem;
 
-  final Config _config;
+  final CacheConfig _config;
   String get storeKey => _config.cacheKey;
   Future<CacheInfoRepository> _cacheInfoRepository;
   int get _capacity => _config.maxNrOfCacheObjects;
@@ -29,7 +29,7 @@ class CacheStore {
   DateTime lastCleanupRun = DateTime.now();
   Timer _scheduledCleanup;
 
-  CacheStore(Config config) : _config = config {
+  CacheStore(CacheConfig config) : _config = config {
     fileSystem = config.fileSystem;
     _cacheInfoRepository = config.repo.open().then((value) => config.repo);
   }

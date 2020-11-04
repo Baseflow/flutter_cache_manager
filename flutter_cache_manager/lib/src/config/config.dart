@@ -6,7 +6,7 @@ import '_config_unsupported.dart'
     if (dart.library.html) '_config_web.dart'
     if (dart.library.io) '_config_io.dart' as impl;
 
-abstract class Config {
+abstract class CacheConfig {
   /// Config file for the CacheManager.
   /// [cacheKey] is used for the folder to store files and for the database
   /// file name.
@@ -23,7 +23,7 @@ abstract class Config {
   /// [JsonCacheInfoRepository].
   /// The [fileSystem] defines where the cached files are stored and the
   /// [fileService] defines where files are fetched, for example online.
-  factory Config(
+  factory CacheConfig(
     String cacheKey, {
     Duration stalePeriod,
     int maxNrOfCacheObjects,

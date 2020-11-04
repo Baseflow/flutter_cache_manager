@@ -4,7 +4,7 @@ import 'package:flutter_cache_manager/src/web/file_service.dart';
 
 import 'config.dart' as def;
 
-class Config implements def.Config {
+class Config implements def.CacheConfig {
   //ignore: avoid_unused_constructor_parameters
   Config(
     //ignore: avoid_unused_constructor_parameters
