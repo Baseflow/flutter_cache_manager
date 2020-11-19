@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:mockito/mockito.dart';
@@ -19,7 +21,10 @@ class MockFileService extends Mock implements FileService {
 
 class TestResponse extends FileServiceResponse {
   @override
-  Stream<List<int>> get content => const Stream.empty();
+  Stream<List<int>> get content async* {
+    var bytes = await File('test/images/image-120.png').readAsBytes();
+    yield bytes;
+  } 
 
   @override
   int get contentLength => 0;

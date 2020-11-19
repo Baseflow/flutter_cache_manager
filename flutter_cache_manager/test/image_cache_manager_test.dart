@@ -11,6 +11,7 @@ import 'helpers/test_configuration.dart';
 
 const fileName = 'test.jpg';
 const fileUrl = 'baseflow.com/test';
+final validTill = DateTime.now().add(const Duration(days: 1));
 void main() {
   group('Test image resizing', () {
     test('Test original image size', () async {
@@ -60,14 +61,57 @@ void main() {
       await verifySize(image, 80, 80);
     });
   });
+  group('Test resized image caching', () {
+    test('Resized image should be fetched from cache', () async {
+      var config = await setupConfig(cacheKey: 'resized_w100_h80_$fileUrl');
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager
+          .getImageFile(fileUrl, maxWidth: 100, maxHeight: 80)
+          .last as FileInfo;
+
+      expect(result, isNotNull);
+      config.verifyNoDownloadCall();
+    });
+
+    test('Unsized image should be fetched from cache', () async {
+      var config = await setupConfig();
+      config.returnsCacheObject(
+        fileUrl,
+        fileName,
+        validTill,
+      );
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager
+          .getImageFile(fileUrl, maxWidth: 100, maxHeight: 80)
+          .last as FileInfo;
+
+      expect(result, isNotNull);
+      config.verifyNoDownloadCall();
+    });
+
+    test('Wrongly sized image should not be fetched from cache', () async {
+      var config = await setupConfig(cacheKey: 'resized_w100_h150_$fileUrl');
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager
+          .getImageFile(fileUrl, maxWidth: 100, maxHeight: 80)
+          .last as FileInfo;
+
+      expect(result, isNotNull);
+      config.verifyDownloadCall();
+    });
+  });
 }
 
 Future<TestCacheManager> setupCacheManager() async {
+  return TestCacheManager(await setupConfig());
+}
+
+Future<Config> setupConfig({String cacheKey}) async {
   var validTill = DateTime.now().add(const Duration(days: 1));
   var config = createTestConfig();
   await config.returnsFile(fileName, data: await getExampleImage());
-  config.returnsCacheObject(fileUrl, fileName, validTill);
-  return TestCacheManager(config);
+  config.returnsCacheObject(fileUrl, fileName, validTill, key: cacheKey);
+  return config;
 }
 
 Future verifySize(
