@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -98,6 +99,22 @@ void main() {
 
       expect(result, isNotNull);
       config.verifyDownloadCall();
+    });
+
+    test('Downloads should give progress', () async {
+      var config = await setupConfig(cacheKey: 'resized_w100_h150_$fileUrl');
+      var cacheManager = TestCacheManager(config);
+      var results = await cacheManager
+          .getImageFile(
+            fileUrl,
+            maxWidth: 100,
+            maxHeight: 80,
+            withProgress: true,
+          )
+          .toList();
+      var progress = results.whereType<DownloadProgress>().toList();
+      config.verifyDownloadCall();
+      expect(progress, isNotEmpty);
     });
   });
 }
