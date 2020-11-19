@@ -7,6 +7,7 @@ class MockFileService extends Mock implements FileService {
   factory MockFileService({bool includeStandardResponse = true}) {
     var fileService = MockFileService._();
     if (includeStandardResponse) {
+      when(fileService.concurrentFetches).thenReturn(2);
       when(fileService.get(any, headers: anyNamed('headers')))
           .thenAnswer((realInvocation) async {
         return TestResponse();

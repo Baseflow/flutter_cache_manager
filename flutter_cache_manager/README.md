@@ -99,8 +99,10 @@ the stale period.
 
 ## Breaking changes in v2
 - There is no longer a need to extend on BaseCacheManager, you can directly call the constructor. The BaseCacheManager
- is therefore renamed to CacheManager as it is not really just a 'base' anymore.
+ is now only an interface. CacheManager is the implementation you can use directly. 
 
 - The constructor now expects a Config object with some settings you were used to, but some are slightly different.
 For example the system where you want to store your files is not just a dictionary anymore, but a FileSystem. That way
 you have more freedom on where to store your files.
+
+-  See the example in [Customize](#customize).
