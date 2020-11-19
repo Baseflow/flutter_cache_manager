@@ -4,9 +4,9 @@ import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:mockito/mockito.dart';
 
 extension ConfigExtensions on Config {
-  Future<File> returnsFile(String fileName) async {
+  Future<File> returnsFile(String fileName, {List<int> data}) async {
     var file = await fileSystem.createFile(fileName);
-    await (file.openWrite()..add([1, 3])).close();
+    await (file.openWrite()..add(data ?? [1, 3])).close();
     return file;
   }
 

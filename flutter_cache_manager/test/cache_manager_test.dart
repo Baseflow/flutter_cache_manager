@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/cache_managers/image_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
@@ -494,7 +495,7 @@ void main() {
   });
 }
 
-class TestCacheManager extends CacheManager {
+class TestCacheManager extends CacheManager with ImageCacheManager {
   TestCacheManager(
     Config config, {
     CacheStore store,
