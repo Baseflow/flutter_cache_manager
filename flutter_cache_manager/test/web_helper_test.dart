@@ -161,7 +161,6 @@ void main() {
       const url2 = 'baseflow.com/testimage2';
       const url3 = 'baseflow.com/testimage3';
 
-
       var config = createTestConfig();
       var store = _createStore(config);
       final fileService = MockFileService();
@@ -192,7 +191,6 @@ void main() {
 
       await Future.delayed(const Duration(microseconds: 1));
       verify(fileService.get(url3, headers: anyNamed('headers'))).called(1);
-
     });
   });
 

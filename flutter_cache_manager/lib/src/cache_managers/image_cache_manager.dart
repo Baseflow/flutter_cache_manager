@@ -6,7 +6,6 @@ import 'package:image/image.dart';
 
 const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'gif', 'cur', 'ico'];
 mixin ImageCacheManager on BaseCacheManager {
-
   /// Returns a resized image file to fit within maxHeight and maxWidth. It
   /// tries to keep the aspect ratio. It stores the resized image by adding
   /// the size to the key or url. For example when resizing
@@ -60,21 +59,21 @@ mixin ImageCacheManager on BaseCacheManager {
 
   final Map<String, Stream<FileResponse>> _runningResizes = {};
   Future<FileInfo> _resizeImageFile(
-      FileInfo originalFile,
-      String key,
-      int maxWidth,
-      int maxHeight,
-      ) async {
+    FileInfo originalFile,
+    String key,
+    int maxWidth,
+    int maxHeight,
+  ) async {
     var originalFileName = originalFile.file.path;
     var fileExtension = originalFileName.split('.').last;
-    if(!supportedFileNames.contains(fileExtension)){
+    if (!supportedFileNames.contains(fileExtension)) {
       return originalFile;
     }
 
     var image = decodeImage(await originalFile.file.readAsBytes());
     if (maxWidth != null && maxHeight != null) {
-      var resizeFactorWidth = image.width/maxWidth;
-      var resizeFactorHeight = image.height/maxHeight;
+      var resizeFactorWidth = image.width / maxWidth;
+      var resizeFactorHeight = image.height / maxHeight;
       var resizeFactor = max(resizeFactorHeight, resizeFactorWidth);
 
       maxWidth = (image.width / resizeFactor).round();
@@ -102,14 +101,14 @@ mixin ImageCacheManager on BaseCacheManager {
   }
 
   Stream<FileResponse> _fetchedResizedFile(
-      String url,
-      String originalKey,
-      String resizedKey,
-      Map<String, String> headers,
-      bool withProgress, {
-        int maxWidth,
-        int maxHeight,
-      }) async* {
+    String url,
+    String originalKey,
+    String resizedKey,
+    Map<String, String> headers,
+    bool withProgress, {
+    int maxWidth,
+    int maxHeight,
+  }) async* {
     await for (var response in getFileStream(
       url,
       key: originalKey,
@@ -129,5 +128,4 @@ mixin ImageCacheManager on BaseCacheManager {
       }
     }
   }
-
 }

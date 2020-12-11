@@ -24,10 +24,10 @@ class TestResponse extends FileServiceResponse {
   Stream<List<int>> get content async* {
     var bytes = await File('test/images/image-120.png').readAsBytes();
     var length = bytes.length;
-    var firstPart = (length/2).floor();
+    var firstPart = (length / 2).floor();
     yield bytes.sublist(0, firstPart);
     yield bytes.sublist(firstPart);
-  } 
+  }
 
   @override
   int get contentLength => 0;
