@@ -1,3 +1,7 @@
+## [2.1.0] - 2020-12-21
+* Added ImageCacheManager with support for image resizing.
+* Upgrade dependencies.
+
 ## [2.0.0] - 2020-10-16
 * Restructured the configuration of the CacheManager. Look at the ReadMe for more information.
 * Added queueing mechanism for downloading new files. By default, the cache manager downloads a maximum of 10 files

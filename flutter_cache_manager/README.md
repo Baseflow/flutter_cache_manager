@@ -39,6 +39,23 @@ The easiest way to get a single file is call `.getSingleFile`.
 
 `emptyCache` removes all files from the cache. 
 
+### ImageCacheManager
+If you use the ImageCacheManager mixin on the CacheManager (which is already done on the DefaultCacheManager) you 
+get the following `getImageFile` method for free:
+
+```
+Stream<FileResponse> getImageFile(String url, {
+    String key,
+    Map<String, String> headers,
+    bool withProgress,
+    int maxHeight,  // This is extra
+    int maxWidth,   // This is extra as well
+})
+```
+The image from the url is resized within the specifications, and the resized images is stored in the cache. It 
+always tries to keep the existing aspect ratios. The original image is also cached and used to resize the image if 
+you call this method with other height/width parameters.
+
 ## Other implementations
 When your files are stored on Firebase Storage you can use [flutter_cache_manager_firebase](https://pub.dev/packages/flutter_cache_manager_firebase).
 
