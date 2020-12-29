@@ -11,19 +11,20 @@ class FirebaseHttpFileService extends HttpFileService {
   @override
   Future<FileServiceResponse> get(String url,
       {Map<String, String> headers = const {}}) async {
-    final ref = await FirebaseStorage.instance.getReferenceFromUrl(url);
+    final ref = FirebaseStorage.instance.refFromURL(url);
     final metaData = await ref.getMetadata();
     final headers = {
       HttpHeaders.contentTypeHeader: metaData.contentType,
       HttpHeaders.contentLanguageHeader: metaData.contentLanguage,
-      HttpHeaders.dateHeader: metaData.creationTimeMillis.toString(),
-      HttpHeaders.contentLocationHeader: metaData.path,
+      HttpHeaders.dateHeader:
+          metaData.timeCreated.millisecondsSinceEpoch.toString(),
+      HttpHeaders.contentLocationHeader: metaData.fullPath,
     };
     if (metaData.cacheControl != null) {
       headers[HttpHeaders.cacheControlHeader] = metaData.cacheControl;
     }
     final response = http.StreamedResponse(
-      ref.getData(metaData.sizeBytes).asStream(),
+      ref.getData(metaData.size).asStream(),
       200,
       headers: headers,
     );
