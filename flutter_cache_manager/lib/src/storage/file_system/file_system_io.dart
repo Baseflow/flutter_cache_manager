@@ -7,8 +7,9 @@ import 'file_system.dart';
 
 class IOFileSystem implements FileSystem {
   final Future<Directory> _fileDir;
+  final String _cacheKey;
 
-  IOFileSystem(String key) : _fileDir = createDirectory(key);
+  IOFileSystem(this._cacheKey) : _fileDir = createDirectory(_cacheKey);
 
   static Future<Directory> createDirectory(String key) async {
     var baseDir = await getTemporaryDirectory();
@@ -23,6 +24,10 @@ class IOFileSystem implements FileSystem {
   @override
   Future<File> createFile(String name) async {
     assert(name != null);
-    return (await _fileDir).childFile(name);
+    var directory = (await _fileDir);
+    if (!(await directory.exists())) {
+      await createDirectory(_cacheKey);
+    }
+    return directory.childFile(name);
   }
 }
