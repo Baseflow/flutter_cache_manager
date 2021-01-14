@@ -1,3 +1,7 @@
+## [2.1.1] - 2021-01-14
+* Update minimal dependency sqflite
+* Small fix for non-existing directory (PR [#264](https://github.com/Baseflow/flutter_cache_manager/pull/264))
+
 ## [2.1.0] - 2020-12-21
 * Added ImageCacheManager with support for image resizing.
 * Upgrade dependencies.
