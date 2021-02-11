@@ -4,7 +4,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 mixin CacheInfoRepositoryHelperMethods on CacheInfoRepository {
   var openConnections = 0;
-  Completer<bool> openCompleter;
+  Completer<bool>? openCompleter;
 
   bool shouldOpenOnNewConnection() {
     openConnections++;
@@ -13,7 +13,7 @@ mixin CacheInfoRepositoryHelperMethods on CacheInfoRepository {
   }
 
   bool opened() {
-    openCompleter.complete(true);
+    openCompleter!.complete(true);
     return true;
   }
 

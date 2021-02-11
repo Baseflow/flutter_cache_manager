@@ -11,36 +11,36 @@ const _tableCacheObject = 'cacheObject';
 
 class CacheObjectProvider extends CacheInfoRepository
     with CacheInfoRepositoryHelperMethods {
-  Database db;
-  String _path;
-  String databaseName;
+  Database? db;
+  String? _path;
+  String? databaseName;
 
   /// Either the path or the database name should be provided.
   /// If the path is provider it should end with '{databaseName}.db',
   /// for example: /data/user/0/com.example.example/databases/imageCache.db
-  CacheObjectProvider({String path, this.databaseName}) : _path = path;
+  CacheObjectProvider({String? path, this.databaseName}) : _path = path;
 
   @override
   Future<bool> open() async {
     if (!shouldOpenOnNewConnection()) {
-      return openCompleter.future;
+      return openCompleter!.future;
     }
     var path = await _getPath();
     await File(path).parent.create(recursive: true);
     db = await openDatabase(path, version: 3,
         onCreate: (Database db, int version) async {
       await db.execute('''
-      create table $_tableCacheObject ( 
-        ${CacheObject.columnId} integer primary key, 
-        ${CacheObject.columnUrl} text, 
-        ${CacheObject.columnKey} text, 
+      create table $_tableCacheObject (
+        ${CacheObject.columnId} integer primary key,
+        ${CacheObject.columnUrl} text,
+        ${CacheObject.columnKey} text,
         ${CacheObject.columnPath} text,
         ${CacheObject.columnETag} text,
         ${CacheObject.columnValidTill} integer,
         ${CacheObject.columnTouched} integer,
         ${CacheObject.columnLength} integer
         );
-        create unique index $_tableCacheObject${CacheObject.columnKey} 
+        create unique index $_tableCacheObject${CacheObject.columnKey}
         ON $_tableCacheObject (${CacheObject.columnKey});
       ''');
     }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
@@ -52,7 +52,7 @@ class CacheObjectProvider extends CacheInfoRepository
         var alreadyHasKeyColumn = false;
         try {
           await db.execute('''
-            alter table $_tableCacheObject 
+            alter table $_tableCacheObject
             add ${CacheObject.columnKey} text;
             ''');
         } on DatabaseException catch (e) {
@@ -60,14 +60,14 @@ class CacheObjectProvider extends CacheInfoRepository
           alreadyHasKeyColumn = true;
         }
         await db.execute('''
-          update $_tableCacheObject 
+          update $_tableCacheObject
             set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
             where ${CacheObject.columnKey} is null;
           ''');
 
         if (!alreadyHasKeyColumn) {
           await db.execute('''
-            create index $_tableCacheObject${CacheObject.columnKey} 
+            create index $_tableCacheObject${CacheObject.columnKey}
               on $_tableCacheObject (${CacheObject.columnKey});
             ''');
         }
@@ -75,7 +75,7 @@ class CacheObjectProvider extends CacheInfoRepository
       if (oldVersion <= 2) {
         try {
           await db.execute('''
-        alter table $_tableCacheObject 
+        alter table $_tableCacheObject
         add ${CacheObject.columnLength} integer;
         ''');
         } on DatabaseException catch (e) {
@@ -98,7 +98,7 @@ class CacheObjectProvider extends CacheInfoRepository
   @override
   Future<CacheObject> insert(CacheObject cacheObject,
       {bool setTouchedToNow = true}) async {
-    var id = await db.insert(
+    var id = await db!.insert(
       _tableCacheObject,
       cacheObject.toMap(setTouchedToNow: setTouchedToNow),
     );
@@ -106,8 +106,8 @@ class CacheObjectProvider extends CacheInfoRepository
   }
 
   @override
-  Future<CacheObject> get(String key) async {
-    List<Map> maps = await db.query(_tableCacheObject,
+  Future<CacheObject?> get(String key) async {
+    List<Map> maps = await db!.query(_tableCacheObject,
         columns: null, where: '${CacheObject.columnKey} = ?', whereArgs: [key]);
     if (maps.isNotEmpty) {
       return CacheObject.fromMap(maps.first.cast<String, dynamic>());
@@ -117,19 +117,19 @@ class CacheObjectProvider extends CacheInfoRepository
 
   @override
   Future<int> delete(int id) {
-    return db.delete(_tableCacheObject,
+    return db!.delete(_tableCacheObject,
         where: '${CacheObject.columnId} = ?', whereArgs: [id]);
   }
 
   @override
   Future<int> deleteAll(Iterable<int> ids) {
-    return db.delete(_tableCacheObject,
+    return db!.delete(_tableCacheObject,
         where: '${CacheObject.columnId} IN (' + ids.join(',') + ')');
   }
 
   @override
   Future<int> update(CacheObject cacheObject, {bool setTouchedToNow = true}) {
-    return db.update(
+    return db!.update(
       _tableCacheObject,
       cacheObject.toMap(setTouchedToNow: setTouchedToNow),
       where: '${CacheObject.columnId} = ?',
@@ -140,13 +140,13 @@ class CacheObjectProvider extends CacheInfoRepository
   @override
   Future<List<CacheObject>> getAllObjects() async {
     return CacheObject.fromMapList(
-      await db.query(_tableCacheObject, columns: null),
+      await db!.query(_tableCacheObject, columns: null),
     );
   }
 
   @override
   Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
-    return CacheObject.fromMapList(await db.query(
+    return CacheObject.fromMapList(await db!.query(
       _tableCacheObject,
       columns: null,
       orderBy: '${CacheObject.columnTouched} DESC',
@@ -161,7 +161,7 @@ class CacheObjectProvider extends CacheInfoRepository
 
   @override
   Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
-    return CacheObject.fromMapList(await db.query(
+    return CacheObject.fromMapList(await db!.query(
       _tableCacheObject,
       where: '${CacheObject.columnTouched} < ?',
       columns: null,
@@ -173,7 +173,7 @@ class CacheObjectProvider extends CacheInfoRepository
   @override
   Future<bool> close() async {
     if (!shouldClose()) return false;
-    await db.close();
+    await db!.close();
     return true;
   }
 
@@ -184,28 +184,28 @@ class CacheObjectProvider extends CacheInfoRepository
 
   @override
   Future<bool> exists() async {
-    await _getPath();
-    return File(_path).exists();
+    final path = await _getPath();
+    return File(path).exists();
   }
 
   Future<String> _getPath() async {
     Directory directory;
     if (_path != null) {
-      directory = File(_path).parent;
+      directory = File(_path!).parent;
     } else {
-      directory = await getApplicationSupportDirectory();
+      directory = (await getApplicationSupportDirectory())!;
     }
     await directory.create(recursive: true);
-    if (_path == null || !_path.endsWith('.db')) {
+    if (_path == null || !_path!.endsWith('.db')) {
       _path = join(directory.path, '$databaseName.db');
     }
-    await _migrateOldDbPath(_path);
-    return _path;
+    await _migrateOldDbPath(_path!);
+    return _path!;
   }
 
   // Migration for pre-V2 path on iOS and macOS
   Future _migrateOldDbPath(String newDbPath) async {
-    final oldDbPath = join(await getDatabasesPath(), '$databaseName.db');
+    final oldDbPath = join((await getDatabasesPath())!, '$databaseName.db');
     if (oldDbPath != newDbPath && await File(oldDbPath).exists()) {
       try {
         await File(oldDbPath).rename(newDbPath);

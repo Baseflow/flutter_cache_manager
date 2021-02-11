@@ -27,7 +27,7 @@ class TestResponse extends FileServiceResponse {
     var firstPart = (length/2).floor();
     yield bytes.sublist(0, firstPart);
     yield bytes.sublist(firstPart);
-  } 
+  }
 
   @override
   int get contentLength => 0;

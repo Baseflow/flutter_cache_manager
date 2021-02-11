@@ -22,25 +22,25 @@ class CacheStore {
 
   final Config _config;
   String get storeKey => _config.cacheKey;
-  Future<CacheInfoRepository> _cacheInfoRepository;
+  final Future<CacheInfoRepository> _cacheInfoRepository;
   int get _capacity => _config.maxNrOfCacheObjects;
   Duration get _maxAge => _config.stalePeriod;
 
   DateTime lastCleanupRun = DateTime.now();
-  Timer _scheduledCleanup;
+  Timer? _scheduledCleanup;
 
-  CacheStore(Config config) : _config = config {
-    fileSystem = config.fileSystem;
-    _cacheInfoRepository = config.repo.open().then((value) => config.repo);
-  }
+  CacheStore(Config config)
+      : _config = config,
+        fileSystem = config.fileSystem,
+        _cacheInfoRepository = config.repo.open().then((value) => config.repo);
 
-  Future<FileInfo> getFile(String key, {bool ignoreMemCache = false}) async {
+  Future<FileInfo?> getFile(String key, {bool ignoreMemCache = false}) async {
     final cacheObject =
         await retrieveCacheData(key, ignoreMemCache: ignoreMemCache);
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath!);
     return FileInfo(
       file,
       FileSource.Cache,
@@ -54,7 +54,7 @@ class CacheStore {
     await _updateCacheDataInDatabase(cacheObject);
   }
 
-  Future<CacheObject> retrieveCacheData(String key,
+  Future<CacheObject?> retrieveCacheData(String key,
       {bool ignoreMemCache = false}) async {
     if (!ignoreMemCache && _memCache.containsKey(key)) {
       if (await _fileExists(_memCache[key])) {
@@ -66,11 +66,15 @@ class CacheStore {
       unawaited(_getCacheDataFromDatabase(key).then((cacheObject) async {
         if (cacheObject != null && !await _fileExists(cacheObject)) {
           final provider = await _cacheInfoRepository;
-          await provider.delete(cacheObject.id);
+          await provider.delete(cacheObject.id!);
           cacheObject = null;
         }
 
-        _memCache[key] = cacheObject;
+        if (cacheObject == null) {
+          _memCache.remove(key);
+        } else {
+          _memCache[key] = cacheObject;
+        }
         completer.complete(cacheObject);
         unawaited(_futureCache.remove(key));
       }));
@@ -79,29 +83,29 @@ class CacheStore {
     return _futureCache[key];
   }
 
-  Future<FileInfo> getFileFromMemory(String key) async {
-    if (_memCache[key] == null) {
+  Future<FileInfo?> getFileFromMemory(String key) async {
+    final cacheObject = _memCache[key];
+    if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
-    final cacheObject = _memCache[key];
-    final file = await fileSystem.createFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath!);
     return FileInfo(
         file, FileSource.Cache, cacheObject.validTill, cacheObject.url);
   }
 
-  Future<bool> _fileExists(CacheObject cacheObject) async {
-    if (cacheObject?.relativePath == null) {
+  Future<bool> _fileExists(CacheObject? cacheObject) async {
+    if (cacheObject == null || cacheObject.relativePath == null) {
       return false;
     }
-    var file = await fileSystem.createFile(cacheObject.relativePath);
+    var file = await fileSystem.createFile(cacheObject.relativePath!);
     return file.exists();
   }
 
-  Future<CacheObject> _getCacheDataFromDatabase(String key) async {
+  Future<CacheObject?> _getCacheDataFromDatabase(String key) async {
     final provider = await _cacheInfoRepository;
     final data = await provider.get(key);
     if (await _fileExists(data)) {
-      unawaited(_updateCacheDataInDatabase(data));
+      unawaited(_updateCacheDataInDatabase(data!));
     }
     _scheduleCleanup();
     return data;
@@ -164,14 +168,14 @@ class CacheStore {
       CacheObject cacheObject, List<int> toRemove) async {
     if (toRemove.contains(cacheObject.id)) return;
 
-    toRemove.add(cacheObject.id);
+    toRemove.add(cacheObject.id!);
     if (_memCache.containsKey(cacheObject.key)) {
       _memCache.remove(cacheObject.key);
     }
     if (_futureCache.containsKey(cacheObject.key)) {
       unawaited(_futureCache.remove(cacheObject.key));
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath!);
     if (await file.exists()) {
       unawaited(file.delete());
     }

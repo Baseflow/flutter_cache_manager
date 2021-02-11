@@ -18,7 +18,7 @@ abstract class CacheInfoRepository {
       {bool setTouchedToNow = true});
 
   /// Gets a [CacheObject] by [key]
-  Future<CacheObject> get(String key);
+  Future<CacheObject?> get(String key);
 
   /// Deletes a cache object by [id]
   Future<int> delete(int id);
@@ -66,14 +66,14 @@ extension MigrationExtension on CacheInfoRepository {
     var storedObjects = <CacheObject>[];
     for (var newObject in cacheObjects) {
       var existingObject = await get(newObject.key);
-      CacheObject storedObject;
+      final CacheObject storedObject;
       if (existingObject == null) {
         storedObject = await insert(
           newObject.copyWith(id: null),
           setTouchedToNow: false,
         );
       } else {
-        var storedObject = newObject.copyWith(id: existingObject.id);
+        storedObject = newObject.copyWith(id: existingObject.id);
         await update(storedObject, setTouchedToNow: false);
       }
       storedObjects.add(storedObject);
