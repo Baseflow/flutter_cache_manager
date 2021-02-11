@@ -13,8 +13,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 import 'helpers/config_extensions.dart';
+import 'helpers/mock_cache_store.dart';
 import 'helpers/mock_file_fetcher_response.dart';
 import 'helpers/test_configuration.dart';
+import 'mock.mocks.dart';
 
 void main() {
   group('Tests for getSingleFile', () {
@@ -127,7 +129,7 @@ void main() {
       config.returnsCacheObject(fileUrl, fileName, validTill);
       await config.returnsFile(fileName);
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var file = await createTestConfig().fileSystem.createFile(fileName);
       var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
@@ -145,7 +147,7 @@ void main() {
       var fileUrl = 'baseflow.com/test';
       var validTill = DateTime.now().subtract(const Duration(days: 1));
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var file = await createTestConfig().fileSystem.createFile(fileName);
       var cachedInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(cachedInfo));
@@ -171,7 +173,7 @@ void main() {
       var fileUrl = 'baseflow.com/test';
       var validTill = DateTime.now().subtract(const Duration(days: 1));
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var file = await createTestConfig().fileSystem.createFile(fileName);
       var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
 
@@ -196,7 +198,7 @@ void main() {
     test('Errors should be passed to the stream', () async {
       var fileUrl = 'baseflow.com/test';
 
-      var store = MockStore();
+      var store = MockCacheStore();
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
       var webHelper = MockWebHelper();
@@ -276,7 +278,7 @@ void main() {
       var fileBytes = Uint8List(16);
       var extension = 'jpg';
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
       var file = await cacheManager.putFile(fileUrl, fileBytes,
@@ -292,7 +294,7 @@ void main() {
       var fileKey = 'test1234';
       var extension = 'jpg';
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
       var file = await cacheManager.putFile(fileUrl, fileBytes,
@@ -315,10 +317,11 @@ void main() {
       var fileBytes = Uint8List(16);
       await existingFile.writeAsBytes(fileBytes);
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
-      var file = await cacheManager.putFileStream(fileUrl, existingFile.openRead(),
+      var file = await cacheManager.putFileStream(
+          fileUrl, existingFile.openRead(),
           fileExtension: extension);
       expect(await file.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
@@ -336,10 +339,11 @@ void main() {
       var fileBytes = Uint8List(16);
       await existingFile.writeAsBytes(fileBytes);
 
-      var store = MockStore();
+      var store = MockCacheStore();
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
-      var file = await cacheManager.putFileStream(fileUrl, existingFile.openRead(),
+      var file = await cacheManager.putFileStream(
+          fileUrl, existingFile.openRead(),
           key: fileKey, fileExtension: extension);
       expect(await file.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
@@ -354,7 +358,7 @@ void main() {
     test('Remove existing file from cache', () async {
       var fileUrl = 'baseflow.com/test';
 
-      var store = MockStore();
+      var store = MockCacheStore();
       when(store.retrieveCacheData(fileUrl))
           .thenAnswer((_) => Future.value(CacheObject(fileUrl)));
 
@@ -367,8 +371,9 @@ void main() {
     test("Don't remove files not in cache", () async {
       var fileUrl = 'baseflow.com/test';
 
-      var store = MockStore();
-      when(store.retrieveCacheData(fileUrl)).thenAnswer((_) => null);
+      var store = MockCacheStore();
+      when(store.retrieveCacheData(fileUrl))
+          .thenAnswer((_) => Future.value(null));
 
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 
@@ -379,8 +384,9 @@ void main() {
 
   test('Download file just downloads file', () async {
     var fileUrl = 'baseflow.com/test';
-    var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
-    var store = MockStore();
+    var fileInfo = FileInfo(MemoryFileSystem.test().file('f'), FileSource.Cache,
+        DateTime.now(), fileUrl);
+    var store = MockCacheStore();
     var webHelper = MockWebHelper();
     when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
         .thenAnswer((_) => Stream.value(fileInfo));
@@ -394,9 +400,10 @@ void main() {
 
   test('test file from memory', () async {
     var fileUrl = 'baseflow.com/test';
-    var fileInfo = FileInfo(null, FileSource.Cache, DateTime.now(), fileUrl);
+    var fileInfo = FileInfo(MemoryFileSystem.test().file('f'), FileSource.Cache,
+        DateTime.now(), fileUrl);
 
-    var store = MockStore();
+    var store = MockCacheStore();
     when(store.getFileFromMemory(fileUrl))
         .thenAnswer((realInvocation) async => fileInfo);
     var webHelper = MockWebHelper();
@@ -407,7 +414,7 @@ void main() {
   });
 
   test('Empty cache empties cache in store', () async {
-    var store = MockStore();
+    var store = MockCacheStore();
     var cacheManager = TestCacheManager(createTestConfig(), store: store);
     await cacheManager.emptyCache();
     verify(store.emptyCache()).called(1);
@@ -457,7 +464,7 @@ void main() {
 
       var fileUrl = 'baseflow.com/test';
 
-      var store = MockStore();
+      var store = MockCacheStore();
       when(store.putFile(argThat(anything)))
           .thenAnswer((_) => Future.value(VoidCallback));
 
@@ -497,13 +504,9 @@ void main() {
 
 class TestCacheManager extends CacheManager with ImageCacheManager {
   TestCacheManager(
-    Config config, {
-    CacheStore store,
-    WebHelper webHelper,
+    Config? config, {
+    CacheStore? store,
+    WebHelper? webHelper,
   }) : super.custom(config ?? createTestConfig(),
             cacheStore: store, webHelper: webHelper);
 }
-
-class MockStore extends Mock implements CacheStore {}
-
-class MockWebHelper extends Mock implements WebHelper {}

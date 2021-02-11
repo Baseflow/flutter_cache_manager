@@ -39,6 +39,5 @@ class Config implements def.Config {
   int get maxNrOfCacheObjects => throw UnimplementedError();
 
   @override
-  // TODO: implement fileService
   FileService get fileService => throw UnimplementedError();
 }

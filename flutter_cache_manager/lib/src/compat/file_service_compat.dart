@@ -24,10 +24,6 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
 
   CompatFileServiceGetResponse(this.legacyResponse);
 
-  bool _hasHeader(String name) {
-    return legacyResponse.hasHeader(name);
-  }
-
   String? _header(String name) {
     return legacyResponse.header(name);
   }

@@ -99,7 +99,7 @@ class CacheManager implements BaseCacheManager {
       url,
       key: key,
       withProgress: false,
-    ).map((r) => r as FileInfo);
+    ).where((r) => r is FileInfo).cast<FileInfo>();
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
@@ -115,16 +115,16 @@ class CacheManager implements BaseCacheManager {
   /// might be outdated and a new file is being downloaded in the background.
   @override
   Stream<FileResponse> getFileStream(String url,
-      {String? key, Map<String, String>? headers, bool? withProgress}) {
+      {String? key, Map<String, String>? headers, bool withProgress = false}) {
     key ??= url;
     final streamController = StreamController<FileResponse>();
     _pushFileToStream(
-        streamController, url, key, headers, withProgress ?? false);
+        streamController, url, key, headers, withProgress);
     return streamController.stream;
   }
 
   Future<void> _pushFileToStream(StreamController streamController, String url,
-      String? key, Map<String, String>? headers, bool? withProgress) async {
+      String? key, Map<String, String>? headers, bool withProgress) async {
     key ??= url;
     FileInfo? cacheFile;
     try {
@@ -141,7 +141,7 @@ class CacheManager implements BaseCacheManager {
       try {
         await for (var response
             in _webHelper.downloadFile(url, key: key, authHeaders: headers)) {
-          if (response is DownloadProgress && withProgress != null) {
+          if (response is DownloadProgress && withProgress) {
             streamController.add(response);
           }
           if (response is FileInfo) {

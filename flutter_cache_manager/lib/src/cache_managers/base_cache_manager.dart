@@ -39,7 +39,7 @@ abstract class BaseCacheManager {
   /// returned from the cache there will be no progress given, although the file
   /// might be outdated and a new file is being downloaded in the background.
   Stream<FileResponse> getFileStream(String url,
-      {String? key, Map<String, String>? headers, bool? withProgress});
+      {String? key, Map<String, String>? headers, bool withProgress});
 
   ///Download the file and add to cache
   Future<FileInfo> downloadFile(String url,

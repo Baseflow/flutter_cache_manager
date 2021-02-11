@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -123,7 +122,7 @@ Future<TestCacheManager> setupCacheManager() async {
   return TestCacheManager(await setupConfig());
 }
 
-Future<Config> setupConfig({String cacheKey}) async {
+Future<Config> setupConfig({String? cacheKey}) async {
   var validTill = DateTime.now().add(const Duration(days: 1));
   var config = createTestConfig();
   await config.returnsFile(fileName, data: await getExampleImage());

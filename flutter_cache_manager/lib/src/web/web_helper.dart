@@ -23,7 +23,7 @@ const statusCodesFileNotChanged = [HttpStatus.notModified];
 
 class WebHelper {
   WebHelper(this._store, FileService? fileFetcher)
-      : _memCache = const {},
+      : _memCache = {},
         fileFetcher = fileFetcher ?? HttpFileService();
 
   final CacheStore _store;

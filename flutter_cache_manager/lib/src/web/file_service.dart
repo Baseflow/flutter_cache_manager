@@ -14,7 +14,7 @@ import 'mime_converter.dart';
 /// from other apps or from local storage.
 abstract class FileService {
   int concurrentFetches = 10;
-  Future<FileServiceResponse> get(String url, {Map<String, String> headers});
+  Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
 }
 
 /// [HttpFileService] is the most common file service and the default for
@@ -27,9 +27,11 @@ class HttpFileService extends FileService {
 
   @override
   Future<FileServiceResponse> get(String url,
-      {Map<String, String> headers = const {}}) async {
+      {Map<String, String>? headers}) async {
     final req = http.Request('GET', Uri.parse(url));
-    req.headers.addAll(headers);
+    if (headers != null) {
+      req.headers.addAll(headers);
+    }
     final httpResponse = await _httpClient.send(req);
 
     return HttpGetResponse(httpResponse);

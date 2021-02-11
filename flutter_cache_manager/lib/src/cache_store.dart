@@ -15,7 +15,7 @@ import 'storage/cache_object.dart';
 class CacheStore {
   Duration cleanupRunMinInterval = const Duration(seconds: 10);
 
-  final _futureCache = <String, Future<CacheObject>>{};
+  final _futureCache = <String, Future<CacheObject?>>{};
   final _memCache = <String, CacheObject>{};
 
   FileSystem fileSystem;
@@ -62,11 +62,11 @@ class CacheStore {
       }
     }
     if (!_futureCache.containsKey(key)) {
-      final completer = Completer<CacheObject>();
+      final completer = Completer<CacheObject?>();
       unawaited(_getCacheDataFromDatabase(key).then((cacheObject) async {
-        if (cacheObject != null && !await _fileExists(cacheObject)) {
+        if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
           final provider = await _cacheInfoRepository;
-          await provider.delete(cacheObject.id!);
+          await provider.delete(cacheObject!.id!);
           cacheObject = null;
         }
 

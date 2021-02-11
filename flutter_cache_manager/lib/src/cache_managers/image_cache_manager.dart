@@ -19,7 +19,7 @@ mixin ImageCacheManager on BaseCacheManager {
     String url, {
     String? key,
     Map<String, String>? headers,
-    bool? withProgress,
+    bool withProgress = false,
     int? maxHeight,
     int? maxWidth,
   }) async* {
@@ -107,7 +107,7 @@ mixin ImageCacheManager on BaseCacheManager {
     String originalKey,
     String resizedKey,
     Map<String, String>? headers,
-    bool? withProgress, {
+    bool withProgress, {
     int? maxWidth,
     int? maxHeight,
   }) async* {
