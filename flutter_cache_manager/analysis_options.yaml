@@ -2,7 +2,7 @@ include: package:pedantic/analysis_options.1.8.0.yaml
 
 analyzer:
   strong-mode:
-    implicit-casts: true
+    implicit-casts: false
     # implicit-dynamic: false
   errors:
     unused_import: warning
