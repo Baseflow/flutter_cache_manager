@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -140,14 +141,25 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     _cacheObjects.clear();
     _jsonCache.clear();
     if (await file.exists()) {
-      var jsonString = await file.readAsString();
-      var json = jsonDecode(jsonString) as List<dynamic>;
-      for (var element in json) {
-        if (element is! Map<String, dynamic>) continue;
-        var map = element;
-        var cacheObject = CacheObject.fromMap(map);
-        _jsonCache[cacheObject.id!] = map;
-        _cacheObjects[cacheObject.key] = cacheObject;
+      try {
+        var jsonString = await file.readAsString();
+        var json = jsonDecode(jsonString) as List<dynamic>;
+        for (var element in json) {
+          if (element is! Map<String, dynamic>) continue;
+          var map = element;
+          var cacheObject = CacheObject.fromMap(map);
+          _jsonCache[cacheObject.id!] = map;
+          _cacheObjects[cacheObject.key] = cacheObject;
+        }
+      }catch(e, stacktrace){
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: stacktrace,
+          library: 'flutter cache manager',
+          context: ErrorDescription('Thrown when reading the file containing '
+              'cache info. The cached files cannot be used by the cache manager'
+              'anymore.'),
+        ));
       }
     }
   }
