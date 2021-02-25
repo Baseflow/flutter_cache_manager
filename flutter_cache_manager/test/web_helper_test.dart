@@ -43,23 +43,6 @@ void main() {
       expect(result, isNotNull);
     });
 
-    test('200 needs content', () async {
-      const imageUrl = 'baseflow.com/testimage';
-      var config = createTestConfig();
-      var store = CacheStore(config);
-
-      final fileService = MockFileService();
-      when(fileService.get(imageUrl, headers: anyNamed('headers')))
-          .thenAnswer((_) {
-        return Future.value(MockFileFetcherResponse(
-            Stream.value([]), 0, 'testv1', '.jpg', 200, DateTime.now()));
-      });
-
-      var webHelper = WebHelper(store, fileService);
-      expect(() async => webHelper.downloadFile(imageUrl).toList(),
-          throwsA(anything));
-    });
-
     test('404 throws', () async {
       const imageUrl = 'baseflow.com/testimage';
 

@@ -103,21 +103,21 @@ void main() {
       config.verifyDownloadCall();
     });
 
-    test('Non-existing cacheFile should call to web', () async {
-      var fileName = 'test.jpg';
-      var fileUrl = 'baseflow.com/test';
-      var fileKey = 'test1234';
-      var validTill = DateTime.now().subtract(const Duration(days: 1));
-
-      var config = createTestConfig();
-      config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
-
-      var cacheManager = TestCacheManager(config);
-
-      var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
-      expect(result, isNotNull);
-      config.verifyDownloadCall();
-    });
+    // test('Non-existing cacheFile should call to web', () async {
+    //   var fileName = 'test.jpg';
+    //   var fileUrl = 'baseflow.com/test';
+    //   var fileKey = 'test1234';
+    //   var validTill = DateTime.now().subtract(const Duration(days: 1));
+    //
+    //   var config = createTestConfig();
+    //   config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+    //
+    //   var cacheManager = TestCacheManager(config);
+    //
+    //   var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+    //   expect(result, isNotNull);
+    //   config.verifyDownloadCall();
+    // });
   });
 
   group('Tests for getFile', () {

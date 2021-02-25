@@ -20,6 +20,10 @@ class MockCacheInfoRepository extends MockCacheInfoRepositoryBase {
         .thenAnswer((realInvocation) => Future.value(0));
     when(provider.updateOrInsert(any)).thenAnswer((realInvocation) async =>
         Future.value(realInvocation.positionalArguments.first));
+    when(provider.getObjectsOverCapacity(any)).thenAnswer((realInvocation) async =>
+        Future.value([]));
+    when(provider.getOldObjects(any)).thenAnswer((realInvocation) async =>
+        Future.value([]));
     return provider;
   }
 }
