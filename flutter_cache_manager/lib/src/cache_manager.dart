@@ -79,7 +79,7 @@ class CacheManager implements BaseCacheManager {
     key ??= url;
     final cacheFile = await getFileFromCache(key);
     if (cacheFile != null) {
-      if (cacheFile.validTill!.isBefore(DateTime.now())) {
+      if (cacheFile.validTill.isBefore(DateTime.now())) {
         unawaited(downloadFile(url, key: key, authHeaders: headers));
       }
       return cacheFile.file;
@@ -136,7 +136,7 @@ class CacheManager implements BaseCacheManager {
       print(
           'CacheManager: Failed to load cached file for $url with error:\n$e');
     }
-    if (cacheFile == null || cacheFile.validTill!.isBefore(DateTime.now())) {
+    if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
         await for (var response
             in _webHelper.downloadFile(url, key: key, authHeaders: headers)) {

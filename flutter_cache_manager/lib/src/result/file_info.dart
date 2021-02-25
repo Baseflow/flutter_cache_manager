@@ -22,5 +22,5 @@ class FileInfo extends FileResponse {
 
   /// Validity date of the file. After this date the validity is not guaranteed
   /// and the CacheManager will try to update the file.
-  final DateTime? validTill;
+  final DateTime validTill;
 }

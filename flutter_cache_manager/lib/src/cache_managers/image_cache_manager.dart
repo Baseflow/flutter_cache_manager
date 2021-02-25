@@ -37,7 +37,7 @@ mixin ImageCacheManager on BaseCacheManager {
     var fromCache = await getFileFromCache(resizedKey);
     if (fromCache != null) {
       yield fromCache;
-      if (fromCache.validTill!.isAfter(DateTime.now())) {
+      if (fromCache.validTill.isAfter(DateTime.now())) {
         return;
       }
       withProgress = false;
