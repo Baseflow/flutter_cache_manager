@@ -37,7 +37,7 @@ class CacheStore {
   Future<FileInfo?> getFile(String key, {bool ignoreMemCache = false}) async {
     final cacheObject =
         await retrieveCacheData(key, ignoreMemCache: ignoreMemCache);
-    if (cacheObject == null || cacheObject.relativePath == null) {
+    if (cacheObject == null) {
       return null;
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
@@ -85,7 +85,7 @@ class CacheStore {
 
   Future<FileInfo?> getFileFromMemory(String key) async {
     final cacheObject = _memCache[key];
-    if (cacheObject == null || cacheObject.relativePath == null) {
+    if (cacheObject == null) {
       return null;
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
@@ -94,7 +94,7 @@ class CacheStore {
   }
 
   Future<bool> _fileExists(CacheObject? cacheObject) async {
-    if (cacheObject == null || cacheObject.relativePath == null) {
+    if (cacheObject == null) {
       return false;
     }
     var file = await fileSystem.createFile(cacheObject.relativePath);

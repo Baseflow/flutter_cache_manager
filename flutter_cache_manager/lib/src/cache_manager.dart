@@ -210,7 +210,7 @@ class CacheManager implements BaseCacheManager {
     key ??= url;
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject ??= CacheObject(url,
-        key: key, relativePath: '${Uuid().v1()}.$fileExtension',
+        key: key, relativePath: '${const Uuid().v1()}.$fileExtension',
       validTill: DateTime.now().add(maxAge),);
 
     cacheObject = cacheObject.copyWith(
@@ -244,7 +244,7 @@ class CacheManager implements BaseCacheManager {
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject ??= CacheObject(url,
         key: key,
-        relativePath: '${Uuid().v1()}'
+        relativePath: '${const Uuid().v1()}'
             '.$fileExtension',
         validTill: DateTime.now().add(maxAge));
 

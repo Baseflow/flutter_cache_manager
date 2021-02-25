@@ -27,8 +27,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   /// The directory and the databaseName should both the provided. The database
   /// is stored as {databaseName}.json in the directory,
   JsonCacheInfoRepository.withFile(File file)
-      : assert(file != null),
-        _file = file;
+      : _file = file;
 
   File? _file;
   final Map<String, CacheObject> _cacheObjects = {};

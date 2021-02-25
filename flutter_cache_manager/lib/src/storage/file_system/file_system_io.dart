@@ -23,7 +23,6 @@ class IOFileSystem implements FileSystem {
 
   @override
   Future<File> createFile(String name) async {
-    assert(name != null);
     var directory = (await _fileDir);
     if (!(await directory.exists())) {
       await createDirectory(_cacheKey);
