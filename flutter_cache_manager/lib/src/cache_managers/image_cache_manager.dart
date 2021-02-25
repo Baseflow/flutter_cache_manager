@@ -84,7 +84,7 @@ mixin ImageCacheManager on BaseCacheManager {
 
     var resized = copyResize(image, width: maxWidth, height: maxHeight);
     var resizedFile = encodeNamedImage(resized, originalFileName)!;
-    var maxAge = originalFile.validTill!.difference(DateTime.now());
+    var maxAge = originalFile.validTill.difference(DateTime.now());
 
     var file = await putFile(
       originalFile.originalUrl,
