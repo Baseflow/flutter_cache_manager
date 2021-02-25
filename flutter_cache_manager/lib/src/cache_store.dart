@@ -40,7 +40,7 @@ class CacheStore {
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath!);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     return FileInfo(
       file,
       FileSource.Cache,
@@ -88,7 +88,7 @@ class CacheStore {
     if (cacheObject == null || cacheObject.relativePath == null) {
       return null;
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath!);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     return FileInfo(
         file, FileSource.Cache, cacheObject.validTill, cacheObject.url);
   }
@@ -97,7 +97,7 @@ class CacheStore {
     if (cacheObject == null || cacheObject.relativePath == null) {
       return false;
     }
-    var file = await fileSystem.createFile(cacheObject.relativePath!);
+    var file = await fileSystem.createFile(cacheObject.relativePath);
     return file.exists();
   }
 
@@ -175,7 +175,7 @@ class CacheStore {
     if (_futureCache.containsKey(cacheObject.key)) {
       unawaited(_futureCache.remove(cacheObject.key));
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath!);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     if (await file.exists()) {
       unawaited(file.delete());
     }

@@ -18,8 +18,8 @@ class CacheObject {
   CacheObject(
     this.url, {
     String? key,
-    this.relativePath,
-    this.validTill,
+    required this.relativePath,
+    required this.validTill,
     this.eTag,
     this.id,
     this.length,
@@ -30,7 +30,7 @@ class CacheObject {
       : id = map[columnId] as int,
         url = map[columnUrl] as String,
         key = map[columnKey] as String? ?? map[columnUrl] as String,
-        relativePath = map[columnPath] as String?,
+        relativePath = map[columnPath] as String,
         validTill =
             DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
         eTag = map[columnETag] as String?,
@@ -50,10 +50,10 @@ class CacheObject {
   final String key;
 
   /// Where the cached file is stored
-  final String? relativePath;
+  final String relativePath;
 
   /// When this cached item becomes invalid
-  final DateTime? validTill;
+  final DateTime validTill;
 
   /// eTag provided by the server for cache expiry
   final String? eTag;
@@ -70,7 +70,7 @@ class CacheObject {
       columnKey: key,
       columnPath: relativePath,
       columnETag: eTag,
-      columnValidTill: validTill?.millisecondsSinceEpoch ?? 0,
+      columnValidTill: validTill.millisecondsSinceEpoch,
       columnTouched:
           (setTouchedToNow ? clock.now() : touched)?.millisecondsSinceEpoch ??
               0,

@@ -210,14 +210,15 @@ class CacheManager implements BaseCacheManager {
     key ??= url;
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject ??= CacheObject(url,
-        key: key, relativePath: '${Uuid().v1()}.$fileExtension');
+        key: key, relativePath: '${Uuid().v1()}.$fileExtension',
+      validTill: DateTime.now().add(maxAge),);
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
       eTag: eTag,
     );
 
-    final file = await _config.fileSystem.createFile(cacheObject.relativePath!);
+    final file = await _config.fileSystem.createFile(cacheObject.relativePath);
     await file.writeAsBytes(fileBytes);
     unawaited(_store.putFile(cacheObject));
     return file;
@@ -244,14 +245,15 @@ class CacheManager implements BaseCacheManager {
     cacheObject ??= CacheObject(url,
         key: key,
         relativePath: '${Uuid().v1()}'
-            '.$fileExtension');
+            '.$fileExtension',
+        validTill: DateTime.now().add(maxAge));
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
       eTag: eTag,
     );
 
-    var file = await _config.fileSystem.createFile(cacheObject.relativePath!);
+    var file = await _config.fileSystem.createFile(cacheObject.relativePath);
 
     // Always copy file
     var sink = file.openWrite();

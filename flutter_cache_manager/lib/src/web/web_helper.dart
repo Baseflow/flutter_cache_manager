@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/result/file_response.dart';
@@ -87,7 +88,8 @@ class WebHelper {
       {Map<String, String>? authHeaders}) async* {
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject = cacheObject == null
-        ? CacheObject(url, key: key)
+        ? CacheObject(url, key: key, validTill: clock.now(),
+      relativePath: '${Uuid().v1()}.file',)
         : cacheObject.copyWith(url: url);
     final response = await _download(cacheObject, authHeaders);
     yield* _manageResponse(cacheObject, response);
@@ -139,7 +141,7 @@ class WebHelper {
     }));
 
     final file = await _store.fileSystem.createFile(
-      newCacheObject.relativePath!,
+      newCacheObject.relativePath,
     );
     yield FileInfo(
       file,
@@ -154,17 +156,16 @@ class WebHelper {
     final fileExtension = response.fileExtension;
     var filePath = cacheObject.relativePath;
 
-    if (filePath != null &&
-        !statusCodesFileNotChanged.contains(response.statusCode)) {
+    if (!statusCodesFileNotChanged.contains(response.statusCode)) {
       if (!filePath.endsWith(fileExtension)) {
         //Delete old file directly when file extension changed
         unawaited(_removeOldFile(filePath));
       }
       // Store new file on different path
-      filePath = null;
+      filePath = '${Uuid().v1()}$fileExtension';
     }
     return cacheObject.copyWith(
-      relativePath: filePath ?? '${Uuid().v1()}$fileExtension',
+      relativePath: filePath,
       validTill: response.validTill,
       eTag: response.eTag,
     );
@@ -184,7 +185,7 @@ class WebHelper {
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
       FileServiceResponse response) async {
-    final file = await _store.fileSystem.createFile(cacheObject.relativePath!);
+    final file = await _store.fileSystem.createFile(cacheObject.relativePath);
 
     try {
       var receivedBytes = 0;
