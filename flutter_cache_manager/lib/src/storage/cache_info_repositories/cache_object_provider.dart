@@ -193,7 +193,7 @@ class CacheObjectProvider extends CacheInfoRepository
     if (_path != null) {
       directory = File(_path!).parent;
     } else {
-      directory = (await getApplicationSupportDirectory())!;
+      directory = (await getApplicationSupportDirectory());
     }
     await directory.create(recursive: true);
     if (_path == null || !_path!.endsWith('.db')) {

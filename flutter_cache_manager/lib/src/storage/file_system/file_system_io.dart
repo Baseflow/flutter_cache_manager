@@ -13,7 +13,7 @@ class IOFileSystem implements FileSystem {
 
   static Future<Directory> createDirectory(String key) async {
     var baseDir = await getTemporaryDirectory();
-    var path = p.join(baseDir!.path, key);
+    var path = p.join(baseDir.path, key);
 
     var fs = const LocalFileSystem();
     var directory = fs.directory((path));
