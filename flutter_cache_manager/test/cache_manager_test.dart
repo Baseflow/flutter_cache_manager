@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:clock/clock.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_managers/image_cache_manager.dart';
@@ -360,7 +361,8 @@ void main() {
 
       var store = MockCacheStore();
       when(store.retrieveCacheData(fileUrl))
-          .thenAnswer((_) => Future.value(CacheObject(fileUrl)));
+          .thenAnswer((_) => Future.value(CacheObject(fileUrl, relativePath:
+      'test.png',validTill: clock.now(),)));
 
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 

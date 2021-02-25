@@ -44,6 +44,8 @@ class JsonRepoHelpers {
         .toList();
   }
 
+  static final defaultValidTill = clock.now().add(const Duration(days: 7));
+  static final defaultRelativePath = 'test.png';
   static final List<CacheObject> startCacheObjects = [
     // Old object
     CacheObject(
@@ -51,6 +53,8 @@ class JsonRepoHelpers {
       key: testurl,
       id: 1,
       touched: clock.now().subtract(const Duration(days: 8)),
+      validTill: defaultValidTill,
+      relativePath: defaultRelativePath,
     ),
     // New object
     CacheObject(
@@ -58,6 +62,8 @@ class JsonRepoHelpers {
       key: testurl2,
       id: 2,
       touched: clock.now(),
+      validTill: defaultValidTill,
+      relativePath: defaultRelativePath,
     ),
     // A less new object
     CacheObject(
@@ -65,10 +71,14 @@ class JsonRepoHelpers {
       key: testurl3,
       id: 3,
       touched: clock.now().subtract(const Duration(minutes: 1)),
+      validTill: defaultValidTill,
+      relativePath: defaultRelativePath,
     ),
   ];
   static final CacheObject extraCacheObject = CacheObject(
     testurl4,
     key: testurl4,
+    validTill: defaultValidTill,
+    relativePath: defaultRelativePath,
   );
 }
