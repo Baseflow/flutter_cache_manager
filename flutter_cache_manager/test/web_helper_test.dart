@@ -234,11 +234,12 @@ MockCacheStore _createStore(Config config) {
   final store = MockCacheStore();
   when(store.putFile(argThat(anything)))
       .thenAnswer((_) => Future.value(VoidCallback));
-  when(store.retrieveCacheData(argThat(anything))).thenAnswer((invocation) =>
-      Future.value(
-          CacheObject(invocation.positionalArguments.first as String,
-              relativePath: 'test.png', validTill: clock.now().add(const
-            Duration(days: 7)),)));
+  when(store.retrieveCacheData(argThat(anything)))
+      .thenAnswer((invocation) => Future.value(CacheObject(
+            invocation.positionalArguments.first as String,
+            relativePath: 'test.png',
+            validTill: clock.now().add(const Duration(days: 7)),
+          )));
   when(store.fileSystem).thenReturn(config.fileSystem);
   return store;
 }

@@ -361,8 +361,11 @@ void main() {
 
       var store = MockCacheStore();
       when(store.retrieveCacheData(fileUrl))
-          .thenAnswer((_) => Future.value(CacheObject(fileUrl, relativePath:
-      'test.png',validTill: clock.now(),)));
+          .thenAnswer((_) => Future.value(CacheObject(
+                fileUrl,
+                relativePath: 'test.png',
+                validTill: clock.now(),
+              )));
 
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
 

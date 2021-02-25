@@ -26,8 +26,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
 
   /// The directory and the databaseName should both the provided. The database
   /// is stored as {databaseName}.json in the directory,
-  JsonCacheInfoRepository.withFile(File file)
-      : _file = file;
+  JsonCacheInfoRepository.withFile(File file) : _file = file;
 
   File? _file;
   final Map<String, CacheObject> _cacheObjects = {};
@@ -150,7 +149,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
           _jsonCache[cacheObject.id!] = map;
           _cacheObjects[cacheObject.key] = cacheObject;
         }
-      }catch(e, stacktrace){
+      } catch (e, stacktrace) {
         FlutterError.reportError(FlutterErrorDetails(
           exception: e,
           stack: stacktrace,

@@ -39,10 +39,12 @@ void main() {
     test('Store should return null when file is no longer cached', () async {
       var repo = MockCacheInfoRepository();
 
-      when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
-          CacheObject('baseflow.com/test.png', relativePath: 'testimage.png',
-              validTill: clock.now().add(const Duration(days: 7)),
-          )));
+      when(repo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(CacheObject(
+                'baseflow.com/test.png',
+                relativePath: 'testimage.png',
+                validTill: clock.now().add(const Duration(days: 7)),
+              )));
       var store = CacheStore(createTestConfig());
 
       expect(await store.getFile('baseflow.com/test.png'), null);
@@ -110,8 +112,11 @@ void main() {
       var config = createTestConfig();
       var store = CacheStore(config);
 
-      var cacheObject =
-          CacheObject('baseflow.com/test.png', relativePath: 'testimage.png', validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
       await store.putFile(cacheObject);
 
       verify(config.repo.updateOrInsert(cacheObject)).called(1);
@@ -131,7 +136,12 @@ void main() {
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
 
-      var cacheObject = CacheObject(fileUrl, relativePath: fileName, id: 1, validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        fileUrl,
+        relativePath: fileName,
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
       await store.removeCachedFile(cacheObject);
 
       verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
@@ -143,8 +153,12 @@ void main() {
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1, validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
       await config.returnsFile('testimage.png');
 
       when(config.mockRepo.getObjectsOverCapacity(any))
@@ -169,8 +183,12 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1, validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
       when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
@@ -194,8 +212,12 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1, validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
       when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([cacheObject]));
@@ -221,8 +243,12 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       var file = await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1, validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
       when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
@@ -243,8 +269,12 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1, validTill: clock.now().add(const Duration(days: 7)),);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
       when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
@@ -267,12 +297,24 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var co1 = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage1.png', id: 1, validTill: clock.now().add(const Duration(days: 7)),);
-      var co2 = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage2.png', id: 2, validTill: clock.now().add(const Duration(days: 7)),);
-      var co3 = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage3.png', id: 3, validTill: clock.now().add(const Duration(days: 7)),);
+      var co1 = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage1.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      var co2 = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage2.png',
+        id: 2,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      var co3 = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage3.png',
+        id: 3,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
       when(config.mockRepo.getAllObjects())
           .thenAnswer((_) => Future.value([co1, co2, co3]));

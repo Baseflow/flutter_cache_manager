@@ -118,8 +118,7 @@ class CacheManager implements BaseCacheManager {
       {String? key, Map<String, String>? headers, bool withProgress = false}) {
     key ??= url;
     final streamController = StreamController<FileResponse>();
-    _pushFileToStream(
-        streamController, url, key, headers, withProgress);
+    _pushFileToStream(streamController, url, key, headers, withProgress);
     return streamController.stream;
   }
 
@@ -209,9 +208,12 @@ class CacheManager implements BaseCacheManager {
   }) async {
     key ??= url;
     var cacheObject = await _store.retrieveCacheData(key);
-    cacheObject ??= CacheObject(url,
-        key: key, relativePath: '${const Uuid().v1()}.$fileExtension',
-      validTill: DateTime.now().add(maxAge),);
+    cacheObject ??= CacheObject(
+      url,
+      key: key,
+      relativePath: '${const Uuid().v1()}.$fileExtension',
+      validTill: DateTime.now().add(maxAge),
+    );
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
