@@ -1,3 +1,7 @@
+## [3.0.0-nullsafety.0] - 2021-02-25
+* Migration to nullsafety.
+* Bug fix for JsonCacheInfoRepository when file is corrupted.
+
 ## [2.1.1] - 2021-01-14
 * Update minimal dependency sqflite
 * Small fix for non-existing directory (PR [#264](https://github.com/Baseflow/flutter_cache_manager/pull/264))
