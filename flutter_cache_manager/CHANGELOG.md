@@ -1,4 +1,7 @@
-## [3.0.0] - 2021-02-25
+## [3.0.0-nullsafety.1] - 2021-03-02
+* Bug fix for NonStoringObjectProvider.
+
+## [3.0.0-nullsafety.0] - 2021-02-25
 * Migration to nullsafety.
 * Bug fix for JsonCacheInfoRepository when file is corrupted.
 
