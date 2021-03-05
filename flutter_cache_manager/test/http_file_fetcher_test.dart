@@ -17,8 +17,11 @@ void main() {
       var maxAge = const Duration(hours: 2);
 
       var client = MockClient((request) async {
-        return Response.bytes(Uint8List(contentLength), 200,
-            headers: {'etag': 'test', 'content-type': contentType, 'cache-control': 'max-age=${maxAge.inSeconds}'});
+        return Response.bytes(Uint8List(contentLength), 200, headers: {
+          'etag': 'test',
+          'content-type': contentType,
+          'cache-control': 'max-age=${maxAge.inSeconds}'
+        });
       });
 
       await withClock(Clock.fixed(DateTime.now()), () async {
@@ -39,7 +42,8 @@ void main() {
       var contentType = 'unknown/$fileExtension';
 
       var client = MockClient((request) async {
-        return Response.bytes(Uint8List(16), 200, headers: {'content-type': contentType});
+        return Response.bytes(Uint8List(16), 200,
+            headers: {'content-type': contentType});
       });
 
       var httpFileFetcher = HttpFileService(httpClient: client);
@@ -53,7 +57,8 @@ void main() {
       var contentType = 'audio/mpeg;chartset=UTF-8';
 
       var client = MockClient((request) async {
-        return Response.bytes(Uint8List(16), 200, headers: {'content-type': contentType});
+        return Response.bytes(Uint8List(16), 200,
+            headers: {'content-type': contentType});
       });
 
       var httpFileFetcher = HttpFileService(httpClient: client);
@@ -70,11 +75,15 @@ void main() {
       var maxAge = const Duration(hours: 2);
 
       var client = MockClient((request) async {
-        return Response.bytes(Uint8List(contentLength), 200,
-            headers: {'etag': 'test', 'content-type': contentType, 'cache-control': 'max-age=${maxAge.inSeconds}'});
+        return Response.bytes(Uint8List(contentLength), 200, headers: {
+          'etag': 'test',
+          'content-type': contentType,
+          'cache-control': 'max-age=${maxAge.inSeconds}'
+        });
       });
 
-      Future<FileFetcherResponse> _defaultHttpGetter(String url, {Map<String, String> headers}) async {
+      Future<FileFetcherResponse> _defaultHttpGetter(String url,
+          {Map<String, String> headers}) async {
         var httpResponse = await client.get(Uri.parse(url), headers: headers);
         return HttpFileFetcherResponse(httpResponse);
       }
