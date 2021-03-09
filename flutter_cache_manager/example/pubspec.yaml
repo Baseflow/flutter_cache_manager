@@ -12,7 +12,7 @@ dependencies:
 
   flutter_cache_manager:
     path: ../
-  cupertino_icons: ^0.1.2
+  cupertino_icons: ^1.0.2
   url_launcher: ^5.4.11
   baseflow_plugin_template:
     git:
