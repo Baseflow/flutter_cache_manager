@@ -205,7 +205,7 @@ class CacheObjectProvider extends CacheInfoRepository
 
   // Migration for pre-V2 path on iOS and macOS
   Future _migrateOldDbPath(String newDbPath) async {
-    final oldDbPath = join((await getDatabasesPath())!, '$databaseName.db');
+    final oldDbPath = join((await getDatabasesPath()), '$databaseName.db');
     if (oldDbPath != newDbPath && await File(oldDbPath).exists()) {
       try {
         await File(oldDbPath).rename(newDbPath);
