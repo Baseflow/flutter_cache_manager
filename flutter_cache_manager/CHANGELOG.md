@@ -1,3 +1,6 @@
+## [3.0.0-nullsafety.2] - 2021-03-22
+* Fix sqflite warning
+
 ## [3.0.0-nullsafety.1] - 2021-03-02
 * Bug fix for NonStoringObjectProvider.
 
