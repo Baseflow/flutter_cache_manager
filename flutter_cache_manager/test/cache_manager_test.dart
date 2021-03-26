@@ -365,6 +365,7 @@ void main() {
                 fileUrl,
                 relativePath: 'test.png',
                 validTill: clock.now(),
+                id: 123,
               )));
 
       var cacheManager = TestCacheManager(createTestConfig(), store: store);
