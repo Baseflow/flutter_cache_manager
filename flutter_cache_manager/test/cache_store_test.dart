@@ -64,11 +64,12 @@ void main() {
 
       var config = createTestConfig();
       await config.returnsFile(fileName);
-      config.returnsCacheObject(fileUrl, fileName, DateTime.now());
+      config.returnsCacheObject(fileUrl, fileName, DateTime.now(), id: 1);
 
       var store = CacheStore(config);
-
-      expect(await store.retrieveCacheData(fileUrl), isNotNull);
+      final cacheObject = await store.retrieveCacheData(fileUrl);
+      expect(cacheObject, isNotNull);
+      expect(cacheObject!.id, isNotNull);
     });
 
     test('Store should return CacheInfo from memory when asked twice',
@@ -79,12 +80,16 @@ void main() {
       var config = createTestConfig();
 
       await config.returnsFile(fileName);
-      config.returnsCacheObject(fileUrl, fileName, validTill);
+      config.returnsCacheObject(fileUrl, fileName, validTill, id: 1);
       var store = CacheStore(config);
 
       var result = await store.retrieveCacheData(fileUrl);
       expect(result, isNotNull);
-      var _ = await store.retrieveCacheData(fileUrl);
+      expect(result!.id, isNotNull);
+
+      var otherResult = await store.retrieveCacheData(fileUrl);
+      expect(otherResult!.id, isNotNull);
+
       verify(config.mockRepo.get(any)).called(1);
     });
 
@@ -120,6 +125,31 @@ void main() {
       await store.putFile(cacheObject);
 
       verify(config.repo.updateOrInsert(cacheObject)).called(1);
+    });
+
+    test(
+        'Store should store fileinfo in repo and id should be available afterwards',
+        () async {
+      var config = createTestConfig();
+
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+
+      await config.returnsFile(cacheObject.relativePath);
+      when(config.mockRepo.updateOrInsert(cacheObject)).thenAnswer(
+        (realInvocation) async => cacheObject.copyWith(id: 1),
+      );
+
+      var store = CacheStore(config);
+      await store.putFile(cacheObject);
+
+      verify(config.repo.updateOrInsert(cacheObject)).called(1);
+
+      final result = await store.retrieveCacheData(cacheObject.key);
+      expect(result!.id, isNotNull);
     });
   });
 

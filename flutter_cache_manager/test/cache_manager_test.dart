@@ -386,6 +386,25 @@ void main() {
       await cacheManager.removeFile(fileUrl);
       verifyNever(store.removeCachedFile(any));
     });
+
+    test("Don't crash if the cached object doesn't have an id", () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockCacheStore();
+      when(store.retrieveCacheData(fileUrl))
+          .thenAnswer((_) => Future.value(CacheObject(
+                fileUrl,
+                relativePath: 'test.png',
+                validTill: clock.now(),
+                id: null,
+              )));
+
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
+
+      await cacheManager.removeFile(fileUrl);
+      // Don't call remove cache if the id is null
+      verifyNever(store.removeCachedFile(any));
+    });
   });
 
   test('Download file just downloads file', () async {
