@@ -1,3 +1,6 @@
+## [3.0.0-nullsafety.3] - 2021-03-26
+* Add null-check on id in removeFile
+
 ## [3.0.0-nullsafety.2] - 2021-03-22
 * Fix sqflite warning
 
