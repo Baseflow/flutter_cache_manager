@@ -21,6 +21,7 @@ extension ConfigExtensions on Config {
     String fileName,
     DateTime validTill, {
     String? key,
+    int? id,
   }) {
     when(repo.get(key ?? fileUrl))
         .thenAnswer((realInvocation) async => CacheObject(
@@ -28,6 +29,7 @@ extension ConfigExtensions on Config {
               relativePath: fileName,
               validTill: validTill,
               key: key ?? fileUrl,
+              id: id,
             ));
   }
 

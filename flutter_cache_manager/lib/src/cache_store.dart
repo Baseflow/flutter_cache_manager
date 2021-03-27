@@ -51,7 +51,12 @@ class CacheStore {
 
   Future<void> putFile(CacheObject cacheObject) async {
     _memCache[cacheObject.key] = cacheObject;
-    await _updateCacheDataInDatabase(cacheObject);
+    final dynamic out = await _updateCacheDataInDatabase(cacheObject);
+
+    // We update the cache object with the id if returned by the repository
+    if (out is CacheObject && out.id != null) {
+      _memCache[cacheObject.key] = cacheObject.copyWith(id: out.id);
+    }
   }
 
   Future<CacheObject?> retrieveCacheData(String key,
