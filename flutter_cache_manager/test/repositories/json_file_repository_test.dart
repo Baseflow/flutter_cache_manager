@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 
+import 'package:collection/collection.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,13 +32,6 @@ void main() {
     test('Create repository with directory is successful', () {
       var repository = JsonCacheInfoRepository.withFile(io.File(path));
       expect(repository, isNotNull);
-    });
-
-    test('Create repository without file throws assertion error', () {
-      expect(
-          // ignore: missing_required_param
-          () => JsonCacheInfoRepository.withFile(null),
-          throwsAssertionError);
     });
   });
 
@@ -146,7 +140,7 @@ void main() {
       var updatedObject = objectToInsert.copyWith(url: newUrl);
       await repo.update(updatedObject);
       var retrievedObject = await repo.get(objectToInsert.key);
-      expect(retrievedObject.url, newUrl);
+      expect(retrievedObject!.url, newUrl);
     });
 
     test('update throws when adding new object', () async {
@@ -162,7 +156,7 @@ void main() {
       var updatedObject = objectToInsert.copyWith(url: newUrl);
       await repo.updateOrInsert(updatedObject);
       var retrievedObject = await repo.get(objectToInsert.key);
-      expect(retrievedObject.url, newUrl);
+      expect(retrievedObject!.url, newUrl);
     });
 
     test('updateOrInsert inserts new item', () async {
@@ -232,7 +226,6 @@ void main() {
 }
 
 void expectIdInList(List<CacheObject> cacheObjects, int id) {
-  var object = cacheObjects.singleWhere((element) => element.id == id,
-      orElse: () => null);
+  var object = cacheObjects.singleWhereOrNull((element) => element.id == id);
   expect(object, isNotNull);
 }

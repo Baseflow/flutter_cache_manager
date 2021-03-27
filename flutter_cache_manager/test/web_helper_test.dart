@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/config/config.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 import 'helpers/config_extensions.dart';
+import 'helpers/mock_cache_store.dart';
 import 'helpers/mock_file_fetcher_response.dart';
 import 'helpers/mock_file_service.dart';
 import 'helpers/test_configuration.dart';
@@ -41,23 +43,6 @@ void main() {
       expect(result, isNotNull);
     });
 
-    test('200 needs content', () async {
-      const imageUrl = 'baseflow.com/testimage';
-      var config = createTestConfig();
-      var store = CacheStore(config);
-
-      final fileService = MockFileService();
-      when(fileService.get(imageUrl, headers: anyNamed('headers')))
-          .thenAnswer((_) {
-        return Future.value(MockFileFetcherResponse(
-            null, 0, 'testv1', '.jpg', 200, DateTime.now()));
-      });
-
-      var webHelper = WebHelper(store, fileService);
-      expect(() async => webHelper.downloadFile(imageUrl).toList(),
-          throwsA(anything));
-    });
-
     test('404 throws', () async {
       const imageUrl = 'baseflow.com/testimage';
 
@@ -67,8 +52,8 @@ void main() {
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
-        return Future.value(
-            MockFileFetcherResponse(null, 0, null, '', 404, DateTime.now()));
+        return Future.value(MockFileFetcherResponse(
+            Stream.value([]), 0, null, '', 404, DateTime.now()));
       });
 
       var webHelper = WebHelper(store, fileService);
@@ -89,7 +74,7 @@ void main() {
       when(fileService.get(imageUrl, headers: anyNamed('headers')))
           .thenAnswer((_) {
         return Future.value(MockFileFetcherResponse(
-            null, 0, 'testv1', '.jpg', 304, DateTime.now()));
+            Stream.value([]), 0, 'testv1', '.jpg', 304, DateTime.now()));
       });
 
       var webHelper = WebHelper(store, fileService);
@@ -161,7 +146,6 @@ void main() {
       const url2 = 'baseflow.com/testimage2';
       const url3 = 'baseflow.com/testimage3';
 
-
       var config = createTestConfig();
       var store = _createStore(config);
       final fileService = MockFileService();
@@ -192,7 +176,6 @@ void main() {
 
       await Future.delayed(const Duration(microseconds: 1));
       verify(fileService.get(url3, headers: anyNamed('headers'))).called(1);
-
     });
   });
 
@@ -247,13 +230,16 @@ void main() {
   });
 }
 
-MockStore _createStore(Config config) {
-  final store = MockStore();
+MockCacheStore _createStore(Config config) {
+  final store = MockCacheStore();
   when(store.putFile(argThat(anything)))
       .thenAnswer((_) => Future.value(VoidCallback));
-  when(store.retrieveCacheData(argThat(anything))).thenAnswer((invocation) =>
-      Future.value(
-          CacheObject(invocation.positionalArguments.first as String)));
+  when(store.retrieveCacheData(argThat(anything)))
+      .thenAnswer((invocation) => Future.value(CacheObject(
+            invocation.positionalArguments.first as String,
+            relativePath: 'test.png',
+            validTill: clock.now().add(const Duration(days: 7)),
+          )));
   when(store.fileSystem).thenReturn(config.fileSystem);
   return store;
 }

@@ -12,11 +12,11 @@ import 'config.dart' as def;
 class Config implements def.Config {
   Config(
     this.cacheKey, {
-    Duration stalePeriod,
-    int maxNrOfCacheObjects,
-    CacheInfoRepository repo,
-    FileSystem fileSystem,
-    FileService fileService,
+    Duration? stalePeriod,
+    int? maxNrOfCacheObjects,
+    CacheInfoRepository? repo,
+    FileSystem? fileSystem,
+    FileService? fileService,
   })  : stalePeriod = stalePeriod ?? const Duration(days: 30),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
         repo = repo ?? _createRepo(cacheKey),

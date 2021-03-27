@@ -1,19 +1,19 @@
+import 'package:clock/clock.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories'
-    '/cache_info_repository.dart';
 import 'helpers/config_extensions.dart';
 
+import 'helpers/mock_cache_info_repository.dart';
 import 'helpers/test_configuration.dart';
 
 void main() {
   group('Retrieving files from store', () {
     test('Store should return null when file not cached', () async {
-      var repo = MockRepo();
+      var repo = MockCacheInfoRepository();
       when(repo.get(any)).thenAnswer((_) => Future.value(null));
       var store = CacheStore(createTestConfig());
 
@@ -37,17 +37,21 @@ void main() {
     });
 
     test('Store should return null when file is no longer cached', () async {
-      var repo = MockRepo();
+      var repo = MockCacheInfoRepository();
 
-      when(repo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(
-          CacheObject('baseflow.com/test.png', relativePath: 'testimage.png')));
+      when(repo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(CacheObject(
+                'baseflow.com/test.png',
+                relativePath: 'testimage.png',
+                validTill: clock.now().add(const Duration(days: 7)),
+              )));
       var store = CacheStore(createTestConfig());
 
       expect(await store.getFile('baseflow.com/test.png'), null);
     });
 
     test('Store should return no CacheInfo when file not cached', () async {
-      var repo = MockRepo();
+      var repo = MockCacheInfoRepository();
       when(repo.get(any)).thenAnswer((_) => Future.value(null));
       var store = CacheStore(createTestConfig());
 
@@ -81,7 +85,7 @@ void main() {
       var result = await store.retrieveCacheData(fileUrl);
       expect(result, isNotNull);
       var _ = await store.retrieveCacheData(fileUrl);
-      verify(config.repo.get(any)).called(1);
+      verify(config.mockRepo.get(any)).called(1);
     });
 
     test(
@@ -108,8 +112,11 @@ void main() {
       var config = createTestConfig();
       var store = CacheStore(config);
 
-      var cacheObject =
-          CacheObject('baseflow.com/test.png', relativePath: 'testimage.png');
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
       await store.putFile(cacheObject);
 
       verify(config.repo.updateOrInsert(cacheObject)).called(1);
@@ -129,10 +136,15 @@ void main() {
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
 
-      var cacheObject = CacheObject(fileUrl, relativePath: fileName, id: 1);
+      var cacheObject = CacheObject(
+        fileUrl,
+        relativePath: fileName,
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
       await store.removeCachedFile(cacheObject);
 
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
           .called(1);
     });
 
@@ -141,22 +153,27 @@ void main() {
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
       await config.returnsFile('testimage.png');
 
-      when(config.repo.getObjectsOverCapacity(any))
+      when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([cacheObject]));
-      when(config.repo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
-      when(config.repo.get('baseflow.com/test.png'))
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
-      await untilCalled(config.repo.deleteAll(any));
+      await untilCalled(config.mockRepo.deleteAll(any));
 
-      verify(config.repo.getObjectsOverCapacity(any)).called(1);
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+      verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
           .called(1);
     });
 
@@ -166,22 +183,26 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
-      when(config.repo.getObjectsOverCapacity(any))
+      when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
-      when(config.repo.getOldObjects(any))
+      when(config.mockRepo.getOldObjects(any))
           .thenAnswer((_) => Future.value([cacheObject]));
-      when(config.repo.get('baseflow.com/test.png'))
+      when(config.mockRepo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
-      await untilCalled(config.repo.deleteAll(any));
+      await untilCalled(config.mockRepo.deleteAll(any));
 
-      verify(config.repo.getOldObjects(any)).called(1);
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+      verify(config.mockRepo.getOldObjects(any)).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
           .called(1);
     });
 
@@ -191,24 +212,28 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
-      when(config.repo.getObjectsOverCapacity(any))
+      when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([cacheObject]));
-      when(config.repo.getOldObjects(any))
+      when(config.mockRepo.getOldObjects(any))
           .thenAnswer((_) => Future.value([cacheObject]));
-      when(config.repo.get('baseflow.com/test.png'))
+      when(config.mockRepo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
-      await untilCalled(config.repo.deleteAll(any));
+      await untilCalled(config.mockRepo.deleteAll(any));
       await Future.delayed(const Duration(milliseconds: 5));
 
-      verify(config.repo.getObjectsOverCapacity(any)).called(1);
-      verify(config.repo.getOldObjects(any)).called(1);
-      verify(config.repo.deleteAll(argThat(contains(cacheObject.id))))
+      verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
+      verify(config.mockRepo.getOldObjects(any)).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
           .called(1);
     });
 
@@ -218,13 +243,18 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       var file = await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
-      when(config.repo.getObjectsOverCapacity(any))
+      when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
-      when(config.repo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
-      when(config.repo.get('baseflow.com/test.png'))
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
@@ -239,21 +269,26 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var cacheObject = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage.png', id: 1);
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
-      when(config.repo.getObjectsOverCapacity(any))
+      when(config.mockRepo.getObjectsOverCapacity(any))
           .thenAnswer((_) => Future.value([]));
-      when(config.repo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
-      when(config.repo.get('baseflow.com/test.png'))
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
           .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
-      await untilCalled(config.repo.deleteAll(any));
+      await untilCalled(config.mockRepo.deleteAll(any));
 
-      verify(config.repo.getOldObjects(any)).called(1);
-      verifyNever(config.repo.deleteAll(argThat(contains(cacheObject.id))));
+      verify(config.mockRepo.getOldObjects(any)).called(1);
+      verifyNever(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))));
     });
 
     test('Store should remove all files when emptying cache', () async {
@@ -262,19 +297,31 @@ void main() {
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
       await config.returnsFile('testimage.png');
 
-      var co1 = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage1.png', id: 1);
-      var co2 = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage2.png', id: 2);
-      var co3 = CacheObject('baseflow.com/test.png',
-          relativePath: 'testimage3.png', id: 3);
+      var co1 = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage1.png',
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      var co2 = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage2.png',
+        id: 2,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      var co3 = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage3.png',
+        id: 3,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
 
-      when(config.repo.getAllObjects())
+      when(config.mockRepo.getAllObjects())
           .thenAnswer((_) => Future.value([co1, co2, co3]));
 
       await store.emptyCache();
 
-      verify(config.repo
+      verify(config.mockRepo
           .deleteAll(argThat(containsAll([co1.id, co2.id, co3.id])))).called(1);
     });
   });
@@ -284,5 +331,3 @@ Future<Directory> createDir() async {
   final fileSystem = MemoryFileSystem();
   return fileSystem.systemTempDirectory.createTemp('test');
 }
-
-class MockRepo extends Mock implements CacheInfoRepository {}

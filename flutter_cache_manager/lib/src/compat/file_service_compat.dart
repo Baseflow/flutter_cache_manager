@@ -12,7 +12,7 @@ class FileServiceCompat extends FileService {
 
   @override
   Future<FileServiceResponse> get(String url,
-      {Map<String, String> headers}) async {
+      {Map<String, String>? headers}) async {
     var legacyResponse = await fileFetcher(url, headers: headers);
     return CompatFileServiceGetResponse(legacyResponse);
   }
@@ -24,11 +24,7 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
 
   CompatFileServiceGetResponse(this.legacyResponse);
 
-  bool _hasHeader(String name) {
-    return legacyResponse.hasHeader(name);
-  }
-
-  String _header(String name) {
+  String? _header(String name) {
     return legacyResponse.header(name);
   }
 
@@ -42,9 +38,9 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
   DateTime get validTill {
     // Without a cache-control header we keep the file for a week
     var ageDuration = const Duration(days: 7);
-    if (_hasHeader(HttpHeaders.cacheControlHeader)) {
-      final controlSettings =
-          _header(HttpHeaders.cacheControlHeader).split(',');
+    final cacheControl = _header(HttpHeaders.cacheControlHeader);
+    if (cacheControl != null) {
+      final controlSettings = cacheControl.split(',');
       for (final setting in controlSettings) {
         final sanitizedSetting = setting.trim().toLowerCase();
         if (sanitizedSetting == 'no-cache') {
@@ -63,17 +59,15 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
   }
 
   @override
-  String get eTag => _hasHeader(HttpHeaders.etagHeader)
-      ? _header(HttpHeaders.etagHeader)
-      : null;
+  String? get eTag => _header(HttpHeaders.etagHeader);
 
   @override
   String get fileExtension {
     var fileExtension = '';
-    if (_hasHeader(HttpHeaders.contentTypeHeader)) {
-      var contentType =
-          ContentType.parse(_header(HttpHeaders.contentTypeHeader));
-      fileExtension = contentType.fileExtension ?? '';
+    final contentTypeHeader = _header(HttpHeaders.contentTypeHeader);
+    if (contentTypeHeader != null) {
+      var contentType = ContentType.parse(contentTypeHeader);
+      fileExtension = contentType.fileExtension;
     }
     return fileExtension;
   }

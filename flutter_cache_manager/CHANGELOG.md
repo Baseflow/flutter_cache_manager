@@ -1,3 +1,15 @@
+## [3.0.0-nullsafety.3] - 2021-03-26
+* Add null-check on id in removeFile
+
+## [3.0.0-nullsafety.2] - 2021-03-22
+* Fix sqflite warning
+
+## [3.0.0-nullsafety.1] - 2021-03-02
+* Bug fix for NonStoringObjectProvider.
+
+## [3.0.0-nullsafety.0] - 2021-02-25
+* Migration to nullsafety.
+
 ## [2.1.2] - 2021-03-09
 * Update dependencies
 * Bug fix for JsonCacheInfoRepository when file is corrupted.

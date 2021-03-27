@@ -35,33 +35,32 @@ class CacheManager implements BaseCacheManager {
   /// The [fileService] can be used to customize how files are downloaded. For example
   /// to edit the urls, add headers or use a proxy. You can also choose to supply
   /// a CacheStore or WebHelper directly if you want more customization.
-  CacheManager(Config config) {
-    _config = config;
-    _store = CacheStore(config);
+  CacheManager(Config config)
+      : _config = config,
+        _store = CacheStore(config) {
     _webHelper = WebHelper(_store, config.fileService);
   }
 
   @visibleForTesting
   CacheManager.custom(
     Config config, {
-    CacheStore cacheStore,
-    WebHelper webHelper,
-  }) {
-    _config = config;
-    _store = cacheStore ?? CacheStore(config);
+    CacheStore? cacheStore,
+    WebHelper? webHelper,
+  })  : _config = config,
+        _store = cacheStore ?? CacheStore(config) {
     _webHelper = webHelper ?? WebHelper(_store, config.fileService);
   }
 
-  Config _config;
+  final Config _config;
 
   /// Store helper for cached files
-  CacheStore _store;
+  final CacheStore _store;
 
   /// Get the underlying store helper
   CacheStore get store => _store;
 
   /// WebHelper to download and store files
-  WebHelper _webHelper;
+  late final WebHelper _webHelper;
 
   /// Get the underlying web helper
   WebHelper get webHelper => _webHelper;
@@ -74,8 +73,8 @@ class CacheManager implements BaseCacheManager {
   @override
   Future<File> getSingleFile(
     String url, {
-    String key,
-    Map<String, String> headers,
+    String? key,
+    Map<String, String>? headers,
   }) async {
     key ??= url;
     final cacheFile = await getFileFromCache(key);
@@ -95,12 +94,12 @@ class CacheManager implements BaseCacheManager {
   @override
   @Deprecated('Prefer to use the new getFileStream method')
   Stream<FileInfo> getFile(String url,
-      {String key, Map<String, String> headers}) {
+      {String? key, Map<String, String>? headers}) {
     return getFileStream(
       url,
       key: key,
       withProgress: false,
-    ).map((r) => r as FileInfo);
+    ).where((r) => r is FileInfo).cast<FileInfo>();
   }
 
   /// Get the file from the cache and/or online, depending on availability and age.
@@ -116,18 +115,17 @@ class CacheManager implements BaseCacheManager {
   /// might be outdated and a new file is being downloaded in the background.
   @override
   Stream<FileResponse> getFileStream(String url,
-      {String key, Map<String, String> headers, bool withProgress}) {
+      {String? key, Map<String, String>? headers, bool withProgress = false}) {
     key ??= url;
     final streamController = StreamController<FileResponse>();
-    _pushFileToStream(
-        streamController, url, key, headers, withProgress ?? false);
+    _pushFileToStream(streamController, url, key, headers, withProgress);
     return streamController.stream;
   }
 
   Future<void> _pushFileToStream(StreamController streamController, String url,
-      String key, Map<String, String> headers, bool withProgress) async {
+      String? key, Map<String, String>? headers, bool withProgress) async {
     key ??= url;
-    FileInfo cacheFile;
+    FileInfo? cacheFile;
     try {
       cacheFile = await getFileFromCache(key);
       if (cacheFile != null) {
@@ -166,7 +164,9 @@ class CacheManager implements BaseCacheManager {
   ///Download the file and add to cache
   @override
   Future<FileInfo> downloadFile(String url,
-      {String key, Map<String, String> authHeaders, bool force = false}) async {
+      {String? key,
+      Map<String, String>? authHeaders,
+      bool force = false}) async {
     key ??= url;
     var fileResponse = await _webHelper
         .downloadFile(
@@ -182,13 +182,13 @@ class CacheManager implements BaseCacheManager {
   /// Get the file from the cache.
   /// Specify [ignoreMemCache] to force a re-read from the database
   @override
-  Future<FileInfo> getFileFromCache(String key,
+  Future<FileInfo?> getFileFromCache(String key,
           {bool ignoreMemCache = false}) =>
       _store.getFile(key, ignoreMemCache: ignoreMemCache);
 
   ///Returns the file from memory if it has already been fetched
   @override
-  Future<FileInfo> getFileFromMemory(String key) =>
+  Future<FileInfo?> getFileFromMemory(String key) =>
       _store.getFileFromMemory(key);
 
   /// Put a file in the cache. It is recommended to specify the [eTag] and the
@@ -201,15 +201,19 @@ class CacheManager implements BaseCacheManager {
   Future<File> putFile(
     String url,
     Uint8List fileBytes, {
-    String key,
-    String eTag,
+    String? key,
+    String? eTag,
     Duration maxAge = const Duration(days: 30),
     String fileExtension = 'file',
   }) async {
     key ??= url;
     var cacheObject = await _store.retrieveCacheData(key);
-    cacheObject ??= CacheObject(url,
-        key: key, relativePath: '${Uuid().v1()}.$fileExtension');
+    cacheObject ??= CacheObject(
+      url,
+      key: key,
+      relativePath: '${const Uuid().v1()}.$fileExtension',
+      validTill: DateTime.now().add(maxAge),
+    );
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
@@ -233,8 +237,8 @@ class CacheManager implements BaseCacheManager {
   Future<File> putFileStream(
     String url,
     Stream<List<int>> source, {
-    String key,
-    String eTag,
+    String? key,
+    String? eTag,
     Duration maxAge = const Duration(days: 30),
     String fileExtension = 'file',
   }) async {
@@ -242,8 +246,9 @@ class CacheManager implements BaseCacheManager {
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject ??= CacheObject(url,
         key: key,
-        relativePath: '${Uuid().v1()}'
-            '.$fileExtension');
+        relativePath: '${const Uuid().v1()}'
+            '.$fileExtension',
+        validTill: DateTime.now().add(maxAge));
 
     cacheObject = cacheObject.copyWith(
       validTill: DateTime.now().add(maxAge),
@@ -267,8 +272,8 @@ class CacheManager implements BaseCacheManager {
   @override
   Future<void> removeFile(String key) async {
     final cacheObject = await _store.retrieveCacheData(key);
-    if (cacheObject != null) {
-      await _store.removeCachedFile(cacheObject);
+    if (cacheObject?.id != null) {
+      await _store.removeCachedFile(cacheObject!);
     }
   }
 

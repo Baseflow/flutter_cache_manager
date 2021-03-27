@@ -14,22 +14,24 @@ import 'mime_converter.dart';
 /// from other apps or from local storage.
 abstract class FileService {
   int concurrentFetches = 10;
-  Future<FileServiceResponse> get(String url, {Map<String, String> headers});
+  Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
 }
 
 /// [HttpFileService] is the most common file service and the default for
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
 class HttpFileService extends FileService {
-  http.Client _httpClient;
-  HttpFileService({http.Client httpClient}) {
-    _httpClient = httpClient ?? http.Client();
-  }
+  final http.Client _httpClient;
+
+  HttpFileService({http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client();
 
   @override
   Future<FileServiceResponse> get(String url,
-      {Map<String, String> headers = const {}}) async {
+      {Map<String, String>? headers}) async {
     final req = http.Request('GET', Uri.parse(url));
-    req.headers.addAll(headers);
+    if (headers != null) {
+      req.headers.addAll(headers);
+    }
     final httpResponse = await _httpClient.send(req);
 
     return HttpGetResponse(httpResponse);
@@ -43,7 +45,7 @@ abstract class FileServiceResponse {
 
   /// [contentLength] is the total size of the content.
   /// If the size is not known beforehand contentLength is null.
-  int get contentLength;
+  int? get contentLength;
 
   /// [statusCode] is expected to conform to an http status code.
   int get statusCode;
@@ -52,7 +54,7 @@ abstract class FileServiceResponse {
   DateTime get validTill;
 
   /// [eTag] is used when asking to update the cache
-  String get eTag;
+  String? get eTag;
 
   /// Used to save the file on the storage, includes a dot. For example '.jpeg'
   String get fileExtension;
@@ -69,11 +71,7 @@ class HttpGetResponse implements FileServiceResponse {
   @override
   int get statusCode => _response.statusCode;
 
-  bool _hasHeader(String name) {
-    return _response.headers.containsKey(name);
-  }
-
-  String _header(String name) {
+  String? _header(String name) {
     return _response.headers[name];
   }
 
@@ -81,15 +79,15 @@ class HttpGetResponse implements FileServiceResponse {
   Stream<List<int>> get content => _response.stream;
 
   @override
-  int get contentLength => _response.contentLength;
+  int? get contentLength => _response.contentLength;
 
   @override
   DateTime get validTill {
     // Without a cache-control header we keep the file for a week
     var ageDuration = const Duration(days: 7);
-    if (_hasHeader(HttpHeaders.cacheControlHeader)) {
-      final controlSettings =
-          _header(HttpHeaders.cacheControlHeader).split(',');
+    final controlHeader = _header(HttpHeaders.cacheControlHeader);
+    if (controlHeader != null) {
+      final controlSettings = controlHeader.split(',');
       for (final setting in controlSettings) {
         final sanitizedSetting = setting.trim().toLowerCase();
         if (sanitizedSetting == 'no-cache') {
@@ -108,17 +106,15 @@ class HttpGetResponse implements FileServiceResponse {
   }
 
   @override
-  String get eTag => _hasHeader(HttpHeaders.etagHeader)
-      ? _header(HttpHeaders.etagHeader)
-      : null;
+  String? get eTag => _header(HttpHeaders.etagHeader);
 
   @override
   String get fileExtension {
     var fileExtension = '';
-    if (_hasHeader(HttpHeaders.contentTypeHeader)) {
-      var contentType =
-          ContentType.parse(_header(HttpHeaders.contentTypeHeader));
-      fileExtension = contentType.fileExtension ?? '';
+    final contentTypeHeader = _header(HttpHeaders.contentTypeHeader);
+    if (contentTypeHeader != null) {
+      final contentType = ContentType.parse(contentTypeHeader);
+      fileExtension = contentType.fileExtension;
     }
     return fileExtension;
   }

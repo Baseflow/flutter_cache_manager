@@ -10,15 +10,15 @@ class Config implements def.Config {
     //ignore: avoid_unused_constructor_parameters
     String cacheKey, {
     //ignore: avoid_unused_constructor_parameters
-    Duration stalePeriod,
+    Duration? stalePeriod,
     //ignore: avoid_unused_constructor_parameters
-    int maxNrOfCacheObjects,
+    int? maxNrOfCacheObjects,
     //ignore: avoid_unused_constructor_parameters
-    CacheInfoRepository repo,
+    CacheInfoRepository? repo,
     //ignore: avoid_unused_constructor_parameters
-    FileSystem fileSystem,
+    FileSystem? fileSystem,
     //ignore: avoid_unused_constructor_parameters
-    FileService fileService,
+    FileService? fileService,
   }) {
     throw UnsupportedError('Platform is not supported');
   }
@@ -39,6 +39,5 @@ class Config implements def.Config {
   int get maxNrOfCacheObjects => throw UnimplementedError();
 
   @override
-  // TODO: implement fileService
   FileService get fileService => throw UnimplementedError();
 }

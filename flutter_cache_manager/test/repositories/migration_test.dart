@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,11 +50,10 @@ void main() {
 MockCacheInfoRepository setupMockRepo(bool returnObjects) {
   var mockRepo = MockCacheInfoRepository();
   when(mockRepo.get(any)).thenAnswer((realInvocation) {
-    if (!returnObjects) return null;
+    if (!returnObjects) return Future.value(null);
     var key = realInvocation.positionalArguments.first as String;
-    var cacheObject = JsonRepoHelpers.startCacheObjects.firstWhere(
+    var cacheObject = JsonRepoHelpers.startCacheObjects.firstWhereOrNull(
       (element) => element.key == key,
-      orElse: () => null,
     );
     return Future.value(cacheObject);
   });
@@ -82,8 +82,8 @@ class CacheObjectMatcher extends Matcher {
           item.url == value.url &&
           item.relativePath == value.relativePath &&
           item.length == value.length &&
-          item.touched.millisecondsSinceEpoch ==
-              value.touched.millisecondsSinceEpoch &&
+          item.touched!.millisecondsSinceEpoch ==
+              value.touched!.millisecondsSinceEpoch &&
           item.eTag == value.eTag;
     }
     if (!isMatch) matchState[_mismatchedValueKey] = item;
