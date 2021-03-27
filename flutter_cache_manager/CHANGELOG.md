@@ -1,3 +1,7 @@
+## [3.0.0] - 2021-03-27
+* Bug fix on removing a relatively new file from cache
+* Migration to nullsafety.
+
 ## [3.0.0-nullsafety.3] - 2021-03-26
 * Add null-check on id in removeFile
 
