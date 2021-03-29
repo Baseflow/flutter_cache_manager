@@ -1,3 +1,6 @@
+## [3.0.1] - 2021-03-29
+* Include file 6.0.0 as possible dependency
+
 ## [3.0.0] - 2021-03-27
 * Bug fix on removing a relatively new file from cache
 * Migration to nullsafety.
