@@ -106,11 +106,6 @@ class WebHelper {
       headers.addAll(authHeaders);
     }
 
-    final etag = cacheObject.eTag;
-    if (etag != null) {
-      headers[HttpHeaders.ifNoneMatchHeader] = etag;
-    }
-
     return fileFetcher.get(cacheObject.url, headers: headers);
   }
 
