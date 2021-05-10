@@ -1,3 +1,6 @@
+## [3.0.2] - 2021-05-10
+* Include rxdart 0.27 as possible dependency
+
 ## [3.0.1] - 2021-03-29
 * Include file 6.0.0 as possible dependency
 
