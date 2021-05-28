@@ -51,11 +51,23 @@ class _CacheManagerPageState extends State<CacheManagerPage> {
       fileStream: fileStream,
       downloadFile: _downloadFile,
       clearCache: _clearCache,
+      removeFile: _removeFile,
     );
   }
 
   void _clearCache() {
     DefaultCacheManager().emptyCache();
+    setState(() {
+      fileStream = null;
+    });
+  }
+
+  void _removeFile() {
+    DefaultCacheManager().removeFile(url).then((value) {
+      print('File removed');
+    }).onError((error, stackTrace) {
+      print(error);
+    });
     setState(() {
       fileStream = null;
     });

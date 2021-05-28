@@ -10,10 +10,15 @@ class DownloadPage extends StatelessWidget {
   final Stream<FileResponse> fileStream;
   final VoidCallback downloadFile;
   final VoidCallback clearCache;
+  final VoidCallback removeFile;
 
-  const DownloadPage(
-      {Key key, this.fileStream, this.downloadFile, this.clearCache})
-      : super(key: key);
+  const DownloadPage({
+    Key key,
+    this.fileStream,
+    this.downloadFile,
+    this.clearCache,
+    this.removeFile,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +41,7 @@ class DownloadPage extends StatelessWidget {
           body = FileInfoWidget(
             fileInfo: snapshot.data as FileInfo,
             clearCache: clearCache,
+            removeFile: removeFile,
           );
         }
 
