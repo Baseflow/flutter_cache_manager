@@ -110,7 +110,7 @@ class WebHelper {
     final etag = cacheObject.eTag;
 
     // Adding `if-none-match` header on web causes a CORS error.
-    if (etag != null && !kIsWeb) { 
+    if (etag != null && !kIsWeb) {
       headers[HttpHeaders.ifNoneMatchHeader] = etag;
     }
 
