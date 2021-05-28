@@ -52,7 +52,7 @@ mixin ImageCacheManager on BaseCacheManager {
         withProgress,
         maxWidth: maxWidth,
         maxHeight: maxHeight,
-      );
+      ).asBroadcastStream();
       _runningResizes[resizedKey] = runningResize;
     }
     yield* runningResize;
