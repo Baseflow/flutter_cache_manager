@@ -1,3 +1,8 @@
+## [3.1.0] - 2021-05-28
+* Export File from package file ([#302](https://github.com/Baseflow/flutter_cache_manager/pull/302))
+* Bugfix for eTag on Flutter Web ([#304](https://github.com/Baseflow/flutter_cache_manager/pull/315))
+* Bugfix for loading multiple images simultaneously ([#315](https://github.com/Baseflow/flutter_cache_manager/pull/315))
+
 ## [3.0.2] - 2021-05-10
 * Include rxdart 0.27 as possible dependency
 
