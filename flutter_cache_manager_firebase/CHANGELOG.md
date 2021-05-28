@@ -1,3 +1,6 @@
+## [2.0.0] - 2021-05-28
+* Update to null safety
+
 ## [1.1.0] - 2021-01-14
 * Update Firebase dependency
 
