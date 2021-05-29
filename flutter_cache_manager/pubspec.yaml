@@ -13,7 +13,6 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^0.13.0
-  image: ^3.0.1
   path: ^1.8.0
   path_provider: ^2.0.0
   pedantic: ^1.10.0

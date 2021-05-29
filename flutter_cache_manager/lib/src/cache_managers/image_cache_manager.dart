@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:image/image.dart';
 
 const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'gif', 'cur', 'ico'];
 mixin ImageCacheManager on BaseCacheManager {
@@ -24,8 +25,7 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
   }) async* {
     if (maxHeight == null && maxWidth == null) {
-      yield* getFileStream(url,
-          key: key, headers: headers, withProgress: withProgress);
+      yield* getFileStream(url, key: key, headers: headers, withProgress: withProgress);
       return;
     }
     key ??= url;
@@ -60,6 +60,7 @@ mixin ImageCacheManager on BaseCacheManager {
   }
 
   final Map<String, Stream<FileResponse>> _runningResizes = {};
+
   Future<FileInfo> _resizeImageFile(
     FileInfo originalFile,
     String key,
@@ -72,7 +73,7 @@ mixin ImageCacheManager on BaseCacheManager {
       return originalFile;
     }
 
-    var image = decodeImage(await originalFile.file.readAsBytes())!;
+    var image = await _decodeImage(originalFile.file);
     if (maxWidth != null && maxHeight != null) {
       var resizeFactorWidth = image.width / maxWidth;
       var resizeFactorHeight = image.height / maxHeight;
@@ -82,13 +83,13 @@ mixin ImageCacheManager on BaseCacheManager {
       maxHeight = (image.height / resizeFactor).round();
     }
 
-    var resized = copyResize(image, width: maxWidth, height: maxHeight);
-    var resizedFile = encodeNamedImage(resized, originalFileName)!;
+    var resized = await _decodeImage(originalFile.file, width: maxWidth, height: maxHeight, allowUpscaling: true);
+    var resizedFile = (await resized.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
     var maxAge = originalFile.validTill.difference(DateTime.now());
 
     var file = await putFile(
       originalFile.originalUrl,
-      Uint8List.fromList(resizedFile),
+      resizedFile,
       key: key,
       maxAge: maxAge,
       fileExtension: fileExtension,
@@ -130,4 +131,14 @@ mixin ImageCacheManager on BaseCacheManager {
       }
     }
   }
+}
+
+Future<ui.Image> _decodeImage(File file, {int? width, int? height, bool allowUpscaling = false}) {
+  // since we set allowUpscaling to false, the width and height parameters are actually max-width.
+  final image = ResizeImage(FileImage(file), width: width, height: height, allowUpscaling: allowUpscaling);
+  final completer = Completer<ui.Image>();
+  image
+      .resolve(const ImageConfiguration())
+      .addListener(ImageStreamListener((info, _) => completer.complete(info.image)));
+  return completer.future;
 }
