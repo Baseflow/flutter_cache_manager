@@ -15,16 +15,26 @@ class FirebaseHttpFileService extends HttpFileService {
     final ref = FirebaseStorage.instance.refFromURL(url);
     final metaData = await ref.getMetadata();
     final contentType = metaData.contentType;
+    final contentEncodingHeader = metaData.contentEncoding;
     final contentLanguage = metaData.contentLanguage;
     final date = metaData.timeCreated?.millisecondsSinceEpoch;
     final cacheControl = metaData.cacheControl;
+    final contentMD5Header = metaData.md5Hash;
+
+    // TODO: Not sure if the metadata from Firebase should be translated into
+    // http headers or if we should just pass through the metadata to the
+    // headers. To be safe, we're going with the former.
     final headers = <String, String>{
-      if (contentType != null) HttpHeaders.contentTypeHeader: contentType,
+      if (cacheControl != null) HttpHeaders.cacheControlHeader: cacheControl,
+      if (contentEncodingHeader != null)
+        HttpHeaders.contentEncodingHeader: contentEncodingHeader,
       if (contentLanguage != null)
         HttpHeaders.contentLanguageHeader: contentLanguage,
-      if (date != null) HttpHeaders.dateHeader: date.toString(),
-      if (cacheControl != null) HttpHeaders.cacheControlHeader: cacheControl,
+      if (contentType != null) HttpHeaders.contentTypeHeader: contentType,
+      if (contentMD5Header != null)
+        HttpHeaders.contentMD5Header: contentMD5Header,
       HttpHeaders.contentLocationHeader: metaData.fullPath,
+      if (date != null) HttpHeaders.dateHeader: date.toString(),
     };
     final stream =
         ref.getData(metaData.size ?? 10485760).asStream().where((event) {
