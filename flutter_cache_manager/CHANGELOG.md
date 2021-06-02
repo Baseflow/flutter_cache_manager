@@ -1,3 +1,6 @@
+## [3.1.1] - 2021-06-02
+* Revert exporting `File` from `package:file` due to conflicts with `dart:io` ([#321](https://github.com/Baseflow/flutter_cache_manager/pull/321))
+
 ## [3.1.0] - 2021-05-28
 * Export File from package file ([#302](https://github.com/Baseflow/flutter_cache_manager/pull/302))
 * Bugfix for eTag on Flutter Web ([#304](https://github.com/Baseflow/flutter_cache_manager/pull/315))
