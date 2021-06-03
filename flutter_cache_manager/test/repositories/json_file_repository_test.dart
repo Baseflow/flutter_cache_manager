@@ -1,4 +1,4 @@
-import 'dart:io' as io;
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
@@ -30,14 +30,14 @@ void main() {
     });
 
     test('Create repository with directory is successful', () {
-      var repository = JsonCacheInfoRepository.withFile(io.File(path));
+      var repository = JsonCacheInfoRepository.withFile(File(path));
       expect(repository, isNotNull);
     });
   });
 
   group('Open and close repository', () {
     test('Open repository should not throw', () async {
-      var repository = JsonCacheInfoRepository.withFile(io.File(path));
+      var repository = JsonCacheInfoRepository.withFile(File(path));
       await repository.open();
     });
 
@@ -59,7 +59,7 @@ void main() {
 
   group('Exist and delete', () {
     test('New repository does not exist', () async {
-      var repository = JsonCacheInfoRepository.withFile(io.File(path));
+      var repository = JsonCacheInfoRepository.withFile(File(path));
       var exists = await repository.exists();
       expect(exists, false);
     });
