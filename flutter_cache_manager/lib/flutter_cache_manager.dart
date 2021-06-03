@@ -1,5 +1,3 @@
-export 'package:file/file.dart' show File;
-
 export 'src/cache_manager.dart';
 export 'src/cache_managers/cache_managers.dart';
 export 'src/compat/file_fetcher.dart';
