@@ -1,4 +1,4 @@
-import 'dart:io' as io;
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -144,5 +144,5 @@ Future verifySize(
 }
 
 Future<Uint8List> getExampleImage() {
-  return io.File('test/images/image-120.png').readAsBytes();
+  return File('test/images/image-120.png').readAsBytes();
 }

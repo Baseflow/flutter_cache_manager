@@ -1,3 +1,9 @@
+## [3.1.1] - TBD
+* Move File to separate file. You can add it using the following import:
+```dart
+import 'package:flutter_cache_manager/file.dart' as cache_file;
+```
+
 ## [3.1.0] - 2021-05-28
 * Export File from package file ([#302](https://github.com/Baseflow/flutter_cache_manager/pull/302))
 * Bugfix for eTag on Flutter Web ([#304](https://github.com/Baseflow/flutter_cache_manager/pull/315))
