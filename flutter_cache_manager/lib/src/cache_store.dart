@@ -165,7 +165,7 @@ class CacheStore {
   Future<void> removeCachedFile(CacheObject cacheObject) async {
     final provider = await _cacheInfoRepository;
     final toRemove = <int>[];
-    unawaited(_removeCachedFile(cacheObject, toRemove));
+    await _removeCachedFile(cacheObject, toRemove);
     await provider.deleteAll(toRemove);
   }
 
@@ -182,7 +182,7 @@ class CacheStore {
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
     if (await file.exists()) {
-      unawaited(file.delete());
+      await file.delete();
     }
   }
 
