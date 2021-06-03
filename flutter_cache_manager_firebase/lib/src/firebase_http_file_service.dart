@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -13,7 +12,6 @@ class FirebaseHttpFileService extends HttpFileService {
   @override
   Future<FileServiceResponse> get(String url,
       {Map<String, String>? headers}) async {
-    final completer = Completer<FileServiceResponse>();
     final ref = FirebaseStorage.instance.refFromURL(url);
     final metaData = await ref.getMetadata();
     final contentType = metaData.contentType;
@@ -40,7 +38,6 @@ class FirebaseHttpFileService extends HttpFileService {
     };
     final stream =
         ref.getData(metaData.size ?? 10485760).asStream().where((event) {
-      if (event == null) print('null data for url $url');
       return event != null;
     }).cast<Uint8List>();
     final response = http.StreamedResponse(
@@ -49,8 +46,6 @@ class FirebaseHttpFileService extends HttpFileService {
       headers: headers,
     );
 
-    completer.complete(HttpGetResponse(response));
-
-    return completer.future;
+    return HttpGetResponse(response);
   }
 }

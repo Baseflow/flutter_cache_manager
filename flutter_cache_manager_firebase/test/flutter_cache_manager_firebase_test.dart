@@ -14,7 +14,6 @@ void main() {
     final task = storageRef.putFile(image);
     await task.whenComplete(() {});
     final cacheManager = FirebaseCacheManager();
-    print(storageRef.fullPath);
 
     cacheManager.downloadFile(storageRef.fullPath);
 
