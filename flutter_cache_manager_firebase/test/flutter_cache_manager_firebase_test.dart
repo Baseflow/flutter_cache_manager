@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 final filename = 'someimage.png';
 
 void main() {
-  test('Opens a file', () async {
+  test('Gets data from a storage ref', () async {
     final storage = MockFirebaseStorage();
     final storageRef = storage.ref().child(filename);
     final image = File(filename);
