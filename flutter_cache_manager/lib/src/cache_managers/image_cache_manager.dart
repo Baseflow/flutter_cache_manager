@@ -133,12 +133,16 @@ mixin ImageCacheManager on BaseCacheManager {
   }
 }
 
-Future<ui.Image> _decodeImage(File file, {int? width, int? height, bool allowUpscaling = false}) {
-  // since we set allowUpscaling to false, the width and height parameters are actually max-width.
-  final image = ResizeImage(FileImage(file), width: width, height: height, allowUpscaling: allowUpscaling);
+Future<ui.Image> _decodeImage(File file,
+    {int? width, int? height, bool allowUpscaling = false}) {
+  var shouldResize = width != null || height != null;
+  var fileImage = FileImage(file);
+  final image = shouldResize
+      ? ResizeImage(fileImage,
+          width: width, height: height, allowUpscaling: allowUpscaling)
+      : fileImage as ImageProvider;
   final completer = Completer<ui.Image>();
-  image
-      .resolve(const ImageConfiguration())
-      .addListener(ImageStreamListener((info, _) => completer.complete(info.image)));
+  image.resolve(const ImageConfiguration()).addListener(
+      ImageStreamListener((info, _) => completer.complete(info.image)));
   return completer.future;
 }
