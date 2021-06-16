@@ -75,6 +75,10 @@ mixin ImageCacheManager on BaseCacheManager {
     }
 
     var image = await _decodeImage(originalFile.file);
+    
+    var shouldResize = maxWidth != null ? image.width > maxWidth : false ||
+    maxHeight != null ? image.height > maxHeight : false;
+    if (!shouldResize) return originalFile;
     if (maxWidth != null && maxHeight != null) {
       var resizeFactorWidth = image.width / maxWidth;
       var resizeFactorHeight = image.height / maxHeight;
