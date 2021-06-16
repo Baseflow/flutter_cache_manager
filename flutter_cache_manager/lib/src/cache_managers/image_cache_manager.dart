@@ -84,7 +84,7 @@ mixin ImageCacheManager on BaseCacheManager {
       maxHeight = (image.height / resizeFactor).round();
     }
 
-    var resized = await _decodeImage(originalFile.file, width: maxWidth, height: maxHeight, allowUpscaling: true);
+    var resized = await _decodeImage(originalFile.file, width: maxWidth, height: maxHeight, allowUpscaling: false);
     var resizedFile = (await resized.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
     var maxAge = originalFile.validTill.difference(DateTime.now());
 
