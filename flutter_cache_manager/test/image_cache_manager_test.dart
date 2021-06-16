@@ -14,7 +14,6 @@ const fileName = 'test.jpg';
 const fileUrl = 'baseflow.com/test';
 final validTill = DateTime.now().add(const Duration(days: 1));
 void main() {
-
   setUp(() {
     WidgetsFlutterBinding.ensureInitialized();
   });
@@ -23,7 +22,6 @@ void main() {
     PaintingBinding.instance?.imageCache?.clear();
     PaintingBinding.instance?.imageCache?.clearLiveImages();
   });
-
 
   group('Test image resizing', () {
     test('Test original image size', () async {
