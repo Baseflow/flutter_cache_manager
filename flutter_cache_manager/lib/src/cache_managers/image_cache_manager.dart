@@ -143,7 +143,11 @@ Future<ui.Image> _decodeImage(File file,
           width: width, height: height, allowUpscaling: allowUpscaling)
       : fileImage as ImageProvider;
   final completer = Completer<ui.Image>();
-  image.resolve(const ImageConfiguration()).addListener(
-      ImageStreamListener((info, _) => completer.complete(info.image)));
+  image
+      .resolve(const ImageConfiguration())
+      .addListener(ImageStreamListener((info, _) {
+    completer.complete(info.image);
+    image.evict();
+  }));
   return completer.future;
 }
