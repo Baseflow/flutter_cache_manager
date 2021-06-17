@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'cache_manager_test.dart';
@@ -13,6 +14,15 @@ const fileName = 'test.jpg';
 const fileUrl = 'baseflow.com/test';
 final validTill = DateTime.now().add(const Duration(days: 1));
 void main() {
+  setUp(() {
+    WidgetsFlutterBinding.ensureInitialized();
+  });
+
+  tearDown(() {
+    PaintingBinding.instance?.imageCache?.clear();
+    PaintingBinding.instance?.imageCache?.clearLiveImages();
+  });
+
   group('Test image resizing', () {
     test('Test original image size', () async {
       final bytes = await getExampleImage();
