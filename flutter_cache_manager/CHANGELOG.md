@@ -1,3 +1,9 @@
+## [3.1.2] - 2021-06-17
+* removeFile function now completes after the file is removed from disk and not earlier ([#323](https://github.
+  com/Baseflow/flutter_cache_manager/pull/323))
+* Image resizing doesn't block ui anymore and doesn't use image package but existing Flutter components ([#319](https://github.
+  com/Baseflow/flutter_cache_manager/pull/319))
+
 ## [3.1.1] - 2021-06-03
 * Move File to separate file. You can add it using the following import:
 ```dart
