@@ -1,3 +1,6 @@
+## [2.0.1] - 2021-08-27
+* Update dependencies
+
 ## [2.0.0] - 2021-05-28
 * Update to null safety
 
