@@ -71,7 +71,7 @@ class CacheManager implements BaseCacheManager {
   /// downloaded in the background. When a cached file is not available the
   /// newly downloaded file is returned.
   @override
-  Future<File> getSingleFile(
+  Future<File?> getSingleFile(
     String url, {
     String? key,
     Map<String, String>? headers,
