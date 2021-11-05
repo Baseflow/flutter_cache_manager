@@ -1,3 +1,6 @@
+## [3.1.3] - 2021-11-05
+* Disabled resizing of cached gifs as this was broken.
+
 ## [3.1.2] - 2021-06-17
 * removeFile function now completes after the file is removed from disk and not earlier ([#323](https://github.
   com/Baseflow/flutter_cache_manager/pull/323))
