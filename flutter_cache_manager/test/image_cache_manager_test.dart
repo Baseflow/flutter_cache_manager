@@ -14,9 +14,7 @@ const fileName = 'test.jpg';
 const fileUrl = 'baseflow.com/test';
 final validTill = DateTime.now().add(const Duration(days: 1));
 void main() {
-  setUp(() {
-    WidgetsFlutterBinding.ensureInitialized();
-  });
+  setUp(WidgetsFlutterBinding.ensureInitialized);
 
   tearDown(() {
     PaintingBinding.instance?.imageCache?.clear();

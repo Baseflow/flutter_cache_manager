@@ -18,8 +18,10 @@ const url = 'https://blurha.sh/assets/images/img1.jpg';
 
 /// Example [Widget] showing the functionalities of flutter_cache_manager
 class CacheManagerPage extends StatefulWidget {
+  const CacheManagerPage({Key key}) : super(key: key);
+
   static ExamplePage createPage() {
-    return ExamplePage(Icons.save_alt, (context) => CacheManagerPage());
+    return ExamplePage(Icons.save_alt, (context) => const CacheManagerPage());
   }
 
   @override
@@ -64,8 +66,10 @@ class _CacheManagerPageState extends State<CacheManagerPage> {
 
   void _removeFile() {
     DefaultCacheManager().removeFile(url).then((value) {
+      //ignore: avoid_print
       print('File removed');
     }).onError((error, stackTrace) {
+      //ignore: avoid_print
       print(error);
     });
     setState(() {
