@@ -14,7 +14,7 @@ class ProgressIndicator extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Container(
+          SizedBox(
             width: 50.0,
             height: 50.0,
             child: CircularProgressIndicator(
