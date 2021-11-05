@@ -9,4 +9,5 @@ import 'package:mockito/annotations.dart';
   MockSpec<FileService>(as: #MockFileServiceBase),
   MockSpec<WebHelper>(),
 ])
+// ignore: unused_element
 void _f() {}

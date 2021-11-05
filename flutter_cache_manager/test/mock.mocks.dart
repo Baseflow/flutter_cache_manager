@@ -244,6 +244,6 @@ class MockWebHelper extends _i1.Mock implements _i9.WebHelper {
                 #authHeaders: authHeaders,
                 #ignoreMemCache: ignoreMemCache
               }),
-              returnValue: Stream<_i10.FileResponse>.empty())
+              returnValue: const Stream<_i10.FileResponse>.empty())
           as _i7.Stream<_i10.FileResponse>);
 }
