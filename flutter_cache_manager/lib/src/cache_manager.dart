@@ -78,10 +78,7 @@ class CacheManager implements BaseCacheManager {
   }) async {
     key ??= url;
     final cacheFile = await getFileFromCache(key);
-    if (cacheFile != null) {
-      if (cacheFile.validTill.isBefore(DateTime.now())) {
-        unawaited(downloadFile(url, key: key, authHeaders: headers));
-      }
+    if (cacheFile != null && cacheFile.validTill.isAfter(DateTime.now())) {
       return cacheFile.file;
     }
     return (await downloadFile(url, key: key, authHeaders: headers)).file;
