@@ -67,9 +67,9 @@ class CacheManager implements BaseCacheManager {
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
-  /// When a file is cached it is return directly, when it is too old the file is
-  /// downloaded in the background. When a cached file is not available the
-  /// newly downloaded file is returned.
+  /// When a file is cached and up to date it is return directly, when the cached
+  /// file is too old the file is downloaded and returned after download.
+  /// When a cached file is not available the newly downloaded file is returned.
   @override
   Future<File> getSingleFile(
     String url, {

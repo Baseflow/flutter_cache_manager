@@ -1,3 +1,6 @@
+## [3.2.0] - 2021-11-27
+* [Bugfix] getSingleFile now downloads a new file before completing as the outdated file might have been deleted.
+
 ## [3.1.3] - 2021-11-05
 * Disabled resizing of cached gifs as this was broken.
 
