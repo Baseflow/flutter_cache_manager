@@ -16,6 +16,8 @@ import 'package:pedantic/pedantic.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
 
+import '../logger.dart';
+
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
@@ -60,6 +62,8 @@ class WebHelper {
       _queue.add(QueueItem(url, key, authHeaders));
       return;
     }
+    cacheLogger.log(
+        'CacheManager: Downloading $url', CacheManagerLogLevel.verbose);
 
     concurrentCalls++;
     var subject = _memCache[key]!;

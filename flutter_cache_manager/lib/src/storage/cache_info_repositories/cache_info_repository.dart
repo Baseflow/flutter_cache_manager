@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_cache_manager/src/logger.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 
 /// Base class for cache info repositories
@@ -58,7 +59,10 @@ extension MigrationExtension on CacheInfoRepository {
     var cacheObjects = await previousRepository.getAllObjects();
     await _putAll(cacheObjects);
     var isClosed = await previousRepository.close();
-    if (!isClosed) print('Deleting an open repository while migrating.');
+    if (!isClosed) {
+      cacheLogger.log('Deleting an open repository while migrating.',
+          CacheManagerLogLevel.warning);
+    }
     await previousRepository.deleteDataFile();
   }
 
