@@ -4,6 +4,8 @@ import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:pedantic/pedantic.dart';
 
+import '../flutter_cache_manager.dart';
+import 'logger.dart';
 import 'result/file_info.dart';
 import 'storage/cache_info_repositories/cache_info_repository.dart';
 import 'storage/cache_object.dart';
@@ -41,6 +43,9 @@ class CacheStore {
       return null;
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
+    cacheLogger.log(
+        'CacheManager: Loaded $key from cache', CacheManagerLogLevel.verbose);
+
     return FileInfo(
       file,
       FileSource.Cache,

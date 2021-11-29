@@ -12,6 +12,7 @@ void main() {
     pubDevURL: 'https://pub.dev/packages/flutter_cache_manager',
     pages: [CacheManagerPage.createPage()],
   ));
+  CacheManager.logLevel = CacheManagerLogLevel.verbose;
 }
 
 const url = 'https://blurha.sh/assets/images/img1.jpg';

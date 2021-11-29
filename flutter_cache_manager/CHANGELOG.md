@@ -1,3 +1,9 @@
+## [3.3.0] - 2021-11-29
+* Added option to manage the log level. Doesn't print failed downloads by default anymore. You can set it like this:
+```dart
+CacheManager.logLevel = CacheManagerLogLevel.verbose;
+```
+
 ## [3.2.0] - 2021-11-27
 * [Bugfix] getSingleFile now downloads a new file before completing as the outdated file might have been deleted.
 
