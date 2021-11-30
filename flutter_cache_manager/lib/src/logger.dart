@@ -17,6 +17,7 @@ class CacheLogger {
   /// Function to log a message on a certain loglevel
   void log(String message, CacheManagerLogLevel level) {
     if (CacheManager.logLevel.index >= level.index) {
+      // ignore: avoid_print
       print(message);
     }
   }

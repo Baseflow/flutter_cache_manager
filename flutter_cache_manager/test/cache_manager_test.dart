@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:clock/clock.dart';
 import 'package:file/memory.dart';
@@ -491,7 +490,7 @@ void main() {
 
       var store = MockCacheStore();
       when(store.putFile(argThat(anything)))
-          .thenAnswer((_) => Future.value(VoidCallback));
+          .thenAnswer((_) => Future.value());
 
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
