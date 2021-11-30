@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
-import 'package:pedantic/pedantic.dart';
 
 import '../flutter_cache_manager.dart';
 import 'logger.dart';
@@ -86,7 +85,7 @@ class CacheStore {
           _memCache[key] = cacheObject;
         }
         completer.complete(cacheObject);
-        unawaited(_futureCache.remove(key));
+        _futureCache.remove(key);
       }));
       _futureCache[key] = completer.future;
     }
@@ -183,7 +182,7 @@ class CacheStore {
       _memCache.remove(cacheObject.key);
     }
     if (_futureCache.containsKey(cacheObject.key)) {
-      unawaited(_futureCache.remove(cacheObject.key));
+      _futureCache.remove(cacheObject.key);
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
     if (await file.exists()) {

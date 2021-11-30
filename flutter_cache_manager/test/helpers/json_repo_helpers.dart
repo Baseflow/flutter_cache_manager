@@ -45,7 +45,7 @@ class JsonRepoHelpers {
   }
 
   static final defaultValidTill = clock.now().add(const Duration(days: 7));
-  static final defaultRelativePath = 'test.png';
+  static const defaultRelativePath = 'test.png';
   static final List<CacheObject> startCacheObjects = [
     // Old object
     CacheObject(

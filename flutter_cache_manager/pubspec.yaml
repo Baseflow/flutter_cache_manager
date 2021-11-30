@@ -15,7 +15,6 @@ dependencies:
   http: ^0.13.0
   path: ^1.8.0
   path_provider: ^2.0.0
-  pedantic: ^1.10.0
   rxdart: ">=0.26.0 <0.28.0"
   sqflite: ^2.0.0+3
   uuid: ^3.0.0
@@ -25,3 +24,4 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mockito: ^5.0.0
+  flutter_lints: ^1.0.4

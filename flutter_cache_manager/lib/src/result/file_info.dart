@@ -6,6 +6,7 @@ import 'package:flutter_cache_manager/src/result/file_response.dart';
 ///Released under MIT License.
 
 /// Enum for whether the file is coming from the cache or is just downloaded.
+// ignore: constant_identifier_names
 enum FileSource { NA, Cache, Online }
 
 /// FileInfo contains the fetch File next to some info on the validity and
