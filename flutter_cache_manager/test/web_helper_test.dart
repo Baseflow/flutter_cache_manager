@@ -231,8 +231,7 @@ void main() {
 
 MockCacheStore _createStore(Config config) {
   final store = MockCacheStore();
-  when(store.putFile(argThat(anything)))
-      .thenAnswer((_) => Future.value());
+  when(store.putFile(argThat(anything))).thenAnswer((_) => Future.value());
   when(store.retrieveCacheData(argThat(anything)))
       .thenAnswer((invocation) => Future.value(CacheObject(
             invocation.positionalArguments.first as String,

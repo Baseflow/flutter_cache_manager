@@ -489,8 +489,7 @@ void main() {
       var fileUrl = 'baseflow.com/test';
 
       var store = MockCacheStore();
-      when(store.putFile(argThat(anything)))
-          .thenAnswer((_) => Future.value());
+      when(store.putFile(argThat(anything))).thenAnswer((_) => Future.value());
 
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
