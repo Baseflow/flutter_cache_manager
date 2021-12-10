@@ -188,6 +188,10 @@ class CacheStore {
     }
   }
 
+  bool memoryCacheContainsKey(String key) {
+    return _memCache.containsKey(key);
+  }
+
   Future<void> dispose() async {
     final provider = await _cacheInfoRepository;
     await provider.close();
