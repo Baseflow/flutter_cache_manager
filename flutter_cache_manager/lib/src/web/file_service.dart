@@ -32,9 +32,15 @@ class HttpFileService extends FileService {
     if (headers != null) {
       req.headers.addAll(headers);
     }
-    final httpResponse = await _httpClient.send(req);
+    req.followRedirects = false;
+    final httpResponse = HttpGetResponse(await _httpClient.send(req));
+    final location = httpResponse._header('location');
 
-    return HttpGetResponse(httpResponse);
+    if (httpResponse.statusCode == 302 && location != null) {
+      return get(location);
+    } else {
+      return httpResponse;
+    }
   }
 }
 
