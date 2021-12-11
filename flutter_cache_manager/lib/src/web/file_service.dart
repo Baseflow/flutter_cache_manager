@@ -26,9 +26,12 @@ class HttpFileService extends FileService {
       : _httpClient = httpClient ?? http.Client();
 
   @override
-  Future<FileServiceResponse> get(String url,
-      {Map<String, String>? headers}) async {
-    final req = http.Request('GET', Uri.parse(url));
+  Future<FileServiceResponse> get(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
+    final uri = Uri.parse(url);
+    final req = http.Request('GET', uri);
     if (headers != null) {
       req.headers.addAll(headers);
     }
@@ -37,7 +40,12 @@ class HttpFileService extends FileService {
     final location = httpResponse._header('location');
 
     if (httpResponse.statusCode == 302 && location != null) {
-      return get(location);
+      final redirectUri = Uri.parse(location);
+      if (uri.host == redirectUri.host) {
+        return get(location, headers: headers);
+      } else {
+        return get(location);
+      }
     } else {
       return httpResponse;
     }
