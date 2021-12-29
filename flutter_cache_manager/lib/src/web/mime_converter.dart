@@ -55,6 +55,7 @@ const mimeTypes = {
   'audio/x-aac': '.aac',
   'audio/midi audio/x-midi': '.midi',
   'audio/x-m4a': '.m4a',
+  'audio/m4a': '.m4a',
   'audio/mpeg': '.mp3',
   'audio/ogg': '.oga',
   'audio/opus': '.opus',
