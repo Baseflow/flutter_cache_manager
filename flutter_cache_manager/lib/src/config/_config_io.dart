@@ -1,9 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_object_provider.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system_io.dart';
 
