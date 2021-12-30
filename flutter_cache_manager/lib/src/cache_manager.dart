@@ -4,17 +4,10 @@ import 'dart:typed_data';
 import 'package:file/file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/cache_managers/base_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/logger.dart';
-import 'package:flutter_cache_manager/src/result/download_progress.dart';
-import 'package:flutter_cache_manager/src/result/file_info.dart';
-import 'package:flutter_cache_manager/src/result/file_response.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:uuid/uuid.dart';
-
-import 'config/config.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor

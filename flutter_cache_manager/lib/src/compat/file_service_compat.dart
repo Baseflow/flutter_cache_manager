@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:clock/clock.dart';
-import 'package:flutter_cache_manager/src/compat/file_fetcher.dart';
 
 import '../../flutter_cache_manager.dart';
 import '../web/mime_converter.dart';
