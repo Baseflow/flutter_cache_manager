@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 
 import '../flutter_cache_manager.dart';
-import 'logger.dart';
-import 'storage/cache_info_repositories/cache_info_repository.dart';
 import 'storage/cache_object.dart';
 
 ///Flutter Cache Manager
