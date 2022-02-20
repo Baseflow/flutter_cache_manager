@@ -1,5 +1,4 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:mockito/annotations.dart';
 
