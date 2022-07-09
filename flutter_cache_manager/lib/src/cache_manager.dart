@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:file/file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:uuid/uuid.dart';
@@ -36,7 +35,6 @@ class CacheManager implements BaseCacheManager {
     _webHelper = WebHelper(_store, config.fileService);
   }
 
-  @visibleForTesting
   CacheManager.custom(
     Config config, {
     CacheStore? cacheStore,
