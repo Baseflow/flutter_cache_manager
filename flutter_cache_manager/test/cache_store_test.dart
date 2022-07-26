@@ -42,9 +42,6 @@ void main() {
     });
 
     test('Store should return FileInfo when file is cached', () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
-
       var config = createTestConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now());
@@ -102,9 +99,6 @@ void main() {
     });
 
     test('Store should return CacheInfo when file is cached', () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
-
       var config = createTestConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now(), id: 1);
@@ -117,8 +111,6 @@ void main() {
 
     test('Store should return CacheInfo from memory when asked twice',
         () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
       var config = createTestConfig();
 
@@ -139,8 +131,6 @@ void main() {
     test(
         'Store should return File from memcache only when file is retrieved before',
         () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
       var config = createTestConfig();
 
@@ -215,8 +205,6 @@ void main() {
 
   group('Removing files in store', () {
     test('Store should remove fileinfo from repo on delete', () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
       var config = createTestConfig();
 
