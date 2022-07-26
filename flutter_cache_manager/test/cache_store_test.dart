@@ -11,6 +11,27 @@ import 'helpers/mock_cache_info_repository.dart';
 import 'helpers/test_configuration.dart';
 
 void main() {
+  late int fileId;
+  late String fileName;
+  late String fileUrl;
+  late DateTime validTill;
+
+  late CacheObject cacheObject;
+
+  setUp(() {
+    fileId = 666;
+    fileName = 'testimage.png';
+    fileUrl = 'baseflow.com/test.png';
+    validTill = DateTime(2017, 9, 7, 17, 30);
+
+    cacheObject = CacheObject(
+      fileUrl,
+      relativePath: fileName,
+      id: fileId,
+      validTill: validTill,
+    );
+  });
+
   group('Retrieving files from store', () {
     test('Store should return null when file not cached', () async {
       var repo = MockCacheInfoRepository();
@@ -34,6 +55,28 @@ void main() {
       var store = CacheStore(config);
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
+    });
+
+    test('Store should return null if file is not cached', () async {
+      var config = createTestConfig();
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill,
+          id: fileId, key: fileUrl);
+
+      var tempDir = createDir();
+      await (await tempDir).childFile('testimage.png').create();
+
+      final store = CacheStore(config);
+
+      final _results = Future.wait([
+        store.removeCachedFile(cacheObject),
+        store.removeCachedFile(cacheObject),
+      ]);
+
+      expect(
+        () => _results,
+        returnsNormally,
+      );
     });
 
     test('Store should return null when file is no longer cached', () async {
