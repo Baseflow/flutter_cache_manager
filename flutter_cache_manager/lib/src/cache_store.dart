@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:io' as io;
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 
 import '../flutter_cache_manager.dart';
@@ -180,8 +180,9 @@ class CacheStore {
     if (_futureCache.containsKey(cacheObject.key)) {
       _futureCache.remove(cacheObject.key);
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
-    if (await file.exists()) {
+    final file = io.File(cacheObject.relativePath);
+
+    if (file.existsSync()) {
       await file.delete();
     }
   }
