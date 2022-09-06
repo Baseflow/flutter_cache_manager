@@ -1,7 +1,8 @@
 name: flutter_cache_manager
 description: Generic cache manager for flutter. Saves web files on the storages of the device and saves the cache info using sqflite.
 version: 3.3.0
-homepage: https://github.com/Baseflow/flutter_cache_manager/tree/master/flutter_cache_manager
+repository: https://github.com/Baseflow/flutter_cache_manager/tree/master/flutter_cache_manager
+issue_tracker: https://github.com/Baseflow/flutter_cache_manager/issues
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
