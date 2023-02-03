@@ -8,17 +8,17 @@ import 'progress_indicator.dart' as p_i;
 /// A [Widget] showing the information about the status of the [FileResponse]
 class DownloadPage extends StatelessWidget {
   final Stream<FileResponse> fileStream;
-  final VoidCallback downloadFile;
-  final VoidCallback clearCache;
-  final VoidCallback removeFile;
+  final VoidCallback? downloadFile;
+  final VoidCallback? clearCache;
+  final VoidCallback? removeFile;
 
   const DownloadPage({
-    Key key,
-    this.fileStream,
+    super.key,
+    required this.fileStream,
     this.downloadFile,
     this.clearCache,
     this.removeFile,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +36,10 @@ class DownloadPage extends StatelessWidget {
           );
         } else if (loading) {
           body = p_i.ProgressIndicator(
-              progress: snapshot.data as DownloadProgress);
+              progress: snapshot.data as DownloadProgress?);
         } else {
           body = FileInfoWidget(
-            fileInfo: snapshot.data as FileInfo,
+            fileInfo: snapshot.data! as FileInfo,
             clearCache: clearCache,
             removeFile: removeFile,
           );

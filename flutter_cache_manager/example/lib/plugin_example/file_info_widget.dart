@@ -4,15 +4,15 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 /// A [Widget] showing all available information about the downloaded file
 class FileInfoWidget extends StatelessWidget {
   final FileInfo fileInfo;
-  final VoidCallback clearCache;
-  final VoidCallback removeFile;
+  final VoidCallback? clearCache;
+  final VoidCallback? removeFile;
 
   const FileInfoWidget({
-    Key key,
-    this.fileInfo,
+    super.key,
+    required this.fileInfo,
     this.clearCache,
     this.removeFile,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class FileInfoWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(10.0),
           // ignore: deprecated_member_use
-          child: RaisedButton(
+          child: ElevatedButton(
             child: const Text('CLEAR CACHE'),
             onPressed: clearCache,
           ),
@@ -46,7 +46,7 @@ class FileInfoWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(10.0),
           // ignore: deprecated_member_use
-          child: RaisedButton(
+          child: ElevatedButton(
             child: const Text('REMOVE FILE'),
             onPressed: removeFile,
           ),

@@ -5,24 +5,24 @@ publish_to: none
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.10.2 <3.0.0"
+  sdk: ">=2.17.0 <3.0.0"
 
 dependencies:
   baseflow_plugin_template:
     git:
       url: https://github.com/Baseflow/baseflow_plugin_template.git
-      ref: v1.0.0
+      ref: baseflow_plugin_template_v2.1.1
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
   flutter_cache_manager:
     path: ../
-  url_launcher: ^5.4.11
+  url_launcher: ^6.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^1.0.4
+  flutter_lints: ^2.0.0
 
 
 # The following section is specific to Flutter.

@@ -4,9 +4,9 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 /// A centered and sized [CircularProgressIndicator] to show download progress
 /// in the [DownloadPage].
 class ProgressIndicator extends StatelessWidget {
-  final DownloadProgress progress;
+  final DownloadProgress? progress;
 
-  const ProgressIndicator({Key key, this.progress}) : super(key: key);
+  const ProgressIndicator({super.key, this.progress});
 
   @override
   Widget build(BuildContext context) {
