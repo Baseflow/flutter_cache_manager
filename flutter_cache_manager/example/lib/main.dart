@@ -25,7 +25,7 @@ class CacheManagerPage extends StatefulWidget {
   }
 
   @override
-  _CacheManagerPageState createState() => _CacheManagerPageState();
+  State<CacheManagerPage> createState() => _CacheManagerPageState();
 }
 
 class _CacheManagerPageState extends State<CacheManagerPage> {

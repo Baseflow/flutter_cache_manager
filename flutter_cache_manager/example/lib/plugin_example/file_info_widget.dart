@@ -22,11 +22,10 @@ class FileInfoWidget extends StatelessWidget {
           title: const Text('Original URL'),
           subtitle: Text(fileInfo.originalUrl),
         ),
-        if (fileInfo.file != null)
-          ListTile(
-            title: const Text('Local file path'),
-            subtitle: Text(fileInfo.file.path),
-          ),
+        ListTile(
+          title: const Text('Local file path'),
+          subtitle: Text(fileInfo.file.path),
+        ),
         ListTile(
           title: const Text('Loaded from'),
           subtitle: Text(fileInfo.source.toString()),
@@ -39,16 +38,16 @@ class FileInfoWidget extends StatelessWidget {
           padding: const EdgeInsets.all(10.0),
           // ignore: deprecated_member_use
           child: ElevatedButton(
-            child: const Text('CLEAR CACHE'),
             onPressed: clearCache,
+            child: const Text('CLEAR CACHE'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(10.0),
           // ignore: deprecated_member_use
           child: ElevatedButton(
-            child: const Text('REMOVE FILE'),
             onPressed: removeFile,
+            child: const Text('REMOVE FILE'),
           ),
         ),
       ],
