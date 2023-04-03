@@ -155,7 +155,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
           stack: stacktrace,
           library: 'flutter cache manager',
           context: ErrorDescription('Thrown when reading the file containing '
-              'cache info. The cached files cannot be used by the cache manager'
+              'cache info. The cached files cannot be used by the cache manager '
               'anymore.'),
         ));
       }
