@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
-
 import '../flutter_cache_manager.dart';
+import '../src/storage/file_system/file_system.dart';
 import 'storage/cache_object.dart';
 
 ///Flutter Cache Manager

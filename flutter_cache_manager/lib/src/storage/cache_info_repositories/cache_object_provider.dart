@@ -1,11 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+
 import '../cache_object.dart';
 import 'cache_info_repository.dart';
+import 'helper_methods.dart';
 
 const _tableCacheObject = 'cacheObject';
 
@@ -124,7 +125,7 @@ class CacheObjectProvider extends CacheInfoRepository
   @override
   Future<int> deleteAll(Iterable<int> ids) {
     return db!.delete(_tableCacheObject,
-        where: '${CacheObject.columnId} IN (' + ids.join(',') + ')');
+        where: '${CacheObject.columnId} IN (${ids.join(',')})');
   }
 
   @override
