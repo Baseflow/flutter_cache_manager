@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:clock/clock.dart';
 import 'package:http/http.dart' as http;
+
 import 'mime_converter.dart';
 
 ///Flutter Cache Manager
@@ -14,6 +16,7 @@ import 'mime_converter.dart';
 /// from other apps or from local storage.
 abstract class FileService {
   int concurrentFetches = 10;
+
   Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
 }
 

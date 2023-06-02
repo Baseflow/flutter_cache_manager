@@ -7,6 +7,7 @@ import '../web/mime_converter.dart';
 
 class FileServiceCompat extends FileService {
   final FileFetcher fileFetcher;
+
   FileServiceCompat(this.fileFetcher);
 
   @override

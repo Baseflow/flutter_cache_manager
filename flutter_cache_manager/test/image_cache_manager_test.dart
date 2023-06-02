@@ -17,8 +17,8 @@ void main() {
   setUp(WidgetsFlutterBinding.ensureInitialized);
 
   tearDown(() {
-    PaintingBinding.instance?.imageCache?.clear();
-    PaintingBinding.instance?.imageCache?.clearLiveImages();
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
   });
 
   group('Test image resizing', () {

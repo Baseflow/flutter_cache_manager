@@ -45,6 +45,7 @@ class WebHelper {
   }
 
   var concurrentCalls = 0;
+
   Future<void> _downloadOrAddToQueue(
     String url,
     String key,

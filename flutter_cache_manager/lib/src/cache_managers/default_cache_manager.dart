@@ -7,6 +7,7 @@ class DefaultCacheManager extends CacheManager with ImageCacheManager {
   static const key = 'libCachedImageData';
 
   static final DefaultCacheManager _instance = DefaultCacheManager._();
+
   factory DefaultCacheManager() {
     return _instance;
   }

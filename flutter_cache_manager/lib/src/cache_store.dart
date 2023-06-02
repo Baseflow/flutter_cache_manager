@@ -17,9 +17,12 @@ class CacheStore {
   FileSystem fileSystem;
 
   final Config _config;
+
   String get storeKey => _config.cacheKey;
   final Future<CacheInfoRepository> _cacheInfoRepository;
+
   int get _capacity => _config.maxNrOfCacheObjects;
+
   Duration get _maxAge => _config.stalePeriod;
 
   DateTime lastCleanupRun = DateTime.now();

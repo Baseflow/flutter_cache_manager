@@ -32,9 +32,14 @@ abstract class Config {
   }) = impl.Config;
 
   String get cacheKey;
+
   Duration get stalePeriod;
+
   int get maxNrOfCacheObjects;
+
   CacheInfoRepository get repo;
+
   FileSystem get fileSystem;
+
   FileService get fileService;
 }
