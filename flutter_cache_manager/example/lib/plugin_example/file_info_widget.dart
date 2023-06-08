@@ -3,16 +3,16 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 /// A [Widget] showing all available information about the downloaded file
 class FileInfoWidget extends StatelessWidget {
-  final FileInfo fileInfo;
+  final FileInfo? fileInfo;
   final VoidCallback? clearCache;
   final VoidCallback? removeFile;
 
   const FileInfoWidget({
-    Key? key,
-    required this.fileInfo,
+    super.key,
+    this.fileInfo,
     this.clearCache,
     this.removeFile,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,35 +20,35 @@ class FileInfoWidget extends StatelessWidget {
       children: <Widget>[
         ListTile(
           title: const Text('Original URL'),
-          subtitle: Text(fileInfo.originalUrl),
+          subtitle: Text(fileInfo?.originalUrl ?? ''),
         ),
-        if (fileInfo.file != null)
+        if (fileInfo?.file != null)
           ListTile(
             title: const Text('Local file path'),
-            subtitle: Text(fileInfo.file.path),
+            subtitle: Text(fileInfo?.file.path ?? ''),
           ),
         ListTile(
           title: const Text('Loaded from'),
-          subtitle: Text(fileInfo.source.toString()),
+          subtitle: Text(fileInfo?.source.toString() ?? ''),
         ),
         ListTile(
           title: const Text('Valid Until'),
-          subtitle: Text(fileInfo.validTill.toIso8601String()),
+          subtitle: Text(fileInfo?.validTill.toIso8601String() ?? ''),
         ),
         Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(10),
           // ignore: deprecated_member_use
           child: ElevatedButton(
-            child: const Text('CLEAR CACHE'),
             onPressed: clearCache,
+            child: const Text('CLEAR CACHE'),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(10),
           // ignore: deprecated_member_use
           child: ElevatedButton(
-            child: const Text('REMOVE FILE'),
             onPressed: removeFile,
+            child: const Text('REMOVE FILE'),
           ),
         ),
       ],

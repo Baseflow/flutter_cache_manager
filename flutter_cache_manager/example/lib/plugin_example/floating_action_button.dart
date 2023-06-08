@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class Fab extends StatelessWidget {
   final VoidCallback? downloadFile;
 
-  const Fab({Key? key, this.downloadFile}) : super(key: key);
+  const Fab({super.key, this.downloadFile});
 
   @override
   Widget build(BuildContext context) {
