@@ -1,5 +1,5 @@
-## [3.4.0] - 2023-05-29
-* Require Dart ^3.0.0 (for http ^1.0.0)
+## [3.3.1] - 2023-06-20
+* Support for Dart 3.0.0 and http ^1.0.0
 
 ## [3.3.0] - 2021-11-29
 * Added option to manage the log level. Doesn't print failed downloads by default anymore. You can set it like this:
