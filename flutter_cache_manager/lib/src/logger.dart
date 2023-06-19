@@ -14,7 +14,7 @@ enum CacheManagerLogLevel {
 
 /// [CacheLogger] which is used by the cache manager to log useful information
 class CacheLogger {
-  /// Function to log a message on a certain loglevel
+  /// Function to log a message on a certain log level
   void log(String message, CacheManagerLogLevel level) {
     if (CacheManager.logLevel.index >= level.index) {
       // ignore: avoid_print

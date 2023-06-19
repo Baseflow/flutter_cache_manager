@@ -43,7 +43,7 @@ abstract class CacheInfoRepository {
   Future<List<CacheObject>> getOldObjects(Duration maxAge);
 
   /// Close the connection to the repository. If this is the last connection
-  /// to the repository it will return true and the repository is trully
+  /// to the repository it will return true and the repository is truly
   /// closed. If there are still open connections it will return false;
   Future<bool> close();
 

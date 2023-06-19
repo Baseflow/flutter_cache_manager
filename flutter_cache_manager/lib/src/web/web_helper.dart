@@ -39,7 +39,7 @@ class WebHelper {
     if (subject == null || ignoreMemCache) {
       subject = BehaviorSubject<FileResponse>();
       _memCache[key] = subject;
-      unawaited(_downloadOrAddToQueue(url, key, authHeaders));
+      _downloadOrAddToQueue(url, key, authHeaders);
     }
     return subject.stream;
   }
@@ -139,11 +139,11 @@ class WebHelper {
       newCacheObject = newCacheObject.copyWith(length: savedBytes);
     }
 
-    unawaited(_store.putFile(newCacheObject).then((_) {
+    _store.putFile(newCacheObject).then((_) {
       if (newCacheObject.relativePath != oldCacheObject.relativePath) {
         _removeOldFile(oldCacheObject.relativePath);
       }
-    }));
+    });
 
     final file = await _store.fileSystem.createFile(
       newCacheObject.relativePath,
@@ -164,7 +164,7 @@ class WebHelper {
     if (!statusCodesFileNotChanged.contains(response.statusCode)) {
       if (!filePath.endsWith(fileExtension)) {
         //Delete old file directly when file extension changed
-        unawaited(_removeOldFile(filePath));
+        _removeOldFile(filePath);
       }
       // Store new file on different path
       filePath = '${const Uuid().v1()}$fileExtension';
@@ -178,11 +178,11 @@ class WebHelper {
 
   Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {
     var receivedBytesResultController = StreamController<int>();
-    unawaited(_saveFileAndPostUpdates(
+    _saveFileAndPostUpdates(
       receivedBytesResultController,
       cacheObject,
       response,
-    ));
+    );
     return receivedBytesResultController.stream;
   }
 

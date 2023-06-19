@@ -149,7 +149,7 @@ class CacheManager implements BaseCacheManager {
         }
       }
     }
-    unawaited(streamController.close());
+    streamController.close();
   }
 
   ///Download the file and add to cache
@@ -213,7 +213,7 @@ class CacheManager implements BaseCacheManager {
 
     final file = await _config.fileSystem.createFile(cacheObject.relativePath);
     await file.writeAsBytes(fileBytes);
-    unawaited(_store.putFile(cacheObject));
+    _store.putFile(cacheObject);
     return file;
   }
 
@@ -255,7 +255,7 @@ class CacheManager implements BaseCacheManager {
         .map((event) => event)
         .pipe(sink);
 
-    unawaited(_store.putFile(cacheObject));
+    _store.putFile(cacheObject);
     return file;
   }
 
