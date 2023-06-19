@@ -27,10 +27,10 @@ class CacheManagerPage extends StatefulWidget {
   }
 
   @override
-  _CacheManagerPageState createState() => _CacheManagerPageState();
+  CacheManagerPageState createState() => CacheManagerPageState();
 }
 
-class _CacheManagerPageState extends State<CacheManagerPage> {
+class CacheManagerPageState extends State<CacheManagerPage> {
   Stream<FileResponse>? fileStream;
 
   void _downloadFile() {

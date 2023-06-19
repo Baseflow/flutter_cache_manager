@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:clock/clock.dart';
-
-import '../../flutter_cache_manager.dart';
-import '../web/mime_converter.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/web/mime_converter.dart';
 
 class FileServiceCompat extends FileService {
   final FileFetcher fileFetcher;
