@@ -93,10 +93,11 @@ class HttpGetResponse implements FileServiceResponse {
       for (final setting in controlSettings) {
         final sanitizedSetting = setting.trim().toLowerCase();
         if (sanitizedSetting == 'no-cache') {
-          ageDuration = const Duration();
+          ageDuration = Duration.zero;
         }
         if (sanitizedSetting.startsWith('max-age=')) {
-          var validSeconds = int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
+          final validSeconds =
+              int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
           if (validSeconds > 0) {
             ageDuration = Duration(seconds: validSeconds);
           }

@@ -60,13 +60,13 @@ class WebHelper {
         'CacheManager: Downloading $url', CacheManagerLogLevel.verbose);
 
     concurrentCalls++;
-    var subject = _memCache[key]!;
+    final subject = _memCache[key]!;
     try {
-      await for (var result
+      await for (final result
           in _updateFile(url, key, authHeaders: authHeaders)) {
         subject.add(result);
       }
-    } catch (e, stackTrace) {
+    } on Object catch (e, stackTrace) {
       subject.addError(e, stackTrace);
     } finally {
       concurrentCalls--;
@@ -78,7 +78,7 @@ class WebHelper {
 
   void _checkQueue() {
     if (_queue.isEmpty) return;
-    var next = _queue.removeFirst();
+    final next = _queue.removeFirst();
     _downloadOrAddToQueue(next.url, next.key, next.headers);
   }
 
@@ -131,7 +131,7 @@ class WebHelper {
     var newCacheObject = _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
       var savedBytes = 0;
-      await for (var progress in _saveFile(newCacheObject, response)) {
+      await for (final progress in _saveFile(newCacheObject, response)) {
         savedBytes = progress;
         yield DownloadProgress(
             cacheObject.url, response.contentLength, progress);
@@ -177,7 +177,7 @@ class WebHelper {
   }
 
   Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {
-    var receivedBytesResultController = StreamController<int>();
+    final receivedBytesResultController = StreamController<int>();
     _saveFileAndPostUpdates(
       receivedBytesResultController,
       cacheObject,
@@ -186,7 +186,7 @@ class WebHelper {
     return receivedBytesResultController.stream;
   }
 
-  Future _saveFileAndPostUpdates(
+  Future<void> _saveFileAndPostUpdates(
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
       FileServiceResponse response) async {
@@ -200,7 +200,7 @@ class WebHelper {
         receivedBytesResultController.add(receivedBytes);
         return s;
       }).pipe(sink);
-    } catch (e, stacktrace) {
+    } on Object catch (e, stacktrace) {
       receivedBytesResultController.addError(e, stacktrace);
     }
     await receivedBytesResultController.close();
@@ -218,5 +218,6 @@ class WebHelper {
 class HttpExceptionWithStatus extends HttpException {
   const HttpExceptionWithStatus(this.statusCode, String message, {Uri? uri})
       : super(message, uri: uri);
+
   final int statusCode;
 }

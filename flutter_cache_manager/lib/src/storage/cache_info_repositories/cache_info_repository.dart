@@ -56,9 +56,9 @@ extension MigrationExtension on CacheInfoRepository {
     if (!await previousRepository.exists()) return;
 
     await previousRepository.open();
-    var cacheObjects = await previousRepository.getAllObjects();
+    final cacheObjects = await previousRepository.getAllObjects();
     await _putAll(cacheObjects);
-    var isClosed = await previousRepository.close();
+    final isClosed = await previousRepository.close();
     if (!isClosed) {
       cacheLogger.log('Deleting an open repository while migrating.',
           CacheManagerLogLevel.warning);
@@ -67,9 +67,9 @@ extension MigrationExtension on CacheInfoRepository {
   }
 
   Future<List<CacheObject>> _putAll(List<CacheObject> cacheObjects) async {
-    var storedObjects = <CacheObject>[];
-    for (var newObject in cacheObjects) {
-      var existingObject = await get(newObject.key);
+    final storedObjects = <CacheObject>[];
+    for (final newObject in cacheObjects) {
+      final existingObject = await get(newObject.key);
       final CacheObject storedObject;
       if (existingObject == null) {
         storedObject = await insert(

@@ -114,8 +114,13 @@ class CacheManager implements BaseCacheManager {
     return streamController.stream;
   }
 
-  Future<void> _pushFileToStream(StreamController streamController, String url,
-      String? key, Map<String, String>? headers, bool withProgress) async {
+  Future<void> _pushFileToStream(
+    StreamController<dynamic> streamController,
+    String url,
+    String? key,
+    Map<String, String>? headers,
+    bool withProgress,
+  ) async {
     key ??= url;
     FileInfo? cacheFile;
     try {
@@ -124,14 +129,14 @@ class CacheManager implements BaseCacheManager {
         streamController.add(cacheFile);
         withProgress = false;
       }
-    } catch (e) {
+    } on Object catch (e) {
       cacheLogger.log(
           'CacheManager: Failed to load cached file for $url with error:\n$e',
           CacheManagerLogLevel.debug);
     }
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
-        await for (var response
+        await for (final response
             in _webHelper.downloadFile(url, key: key, authHeaders: headers)) {
           if (response is DownloadProgress && withProgress) {
             streamController.add(response);
@@ -140,7 +145,7 @@ class CacheManager implements BaseCacheManager {
             streamController.add(response);
           }
         }
-      } catch (e) {
+      } on Object catch (e) {
         cacheLogger.log(
             'CacheManager: Failed to download file from $url with error:\n$e',
             CacheManagerLogLevel.debug);
@@ -159,7 +164,7 @@ class CacheManager implements BaseCacheManager {
       Map<String, String>? authHeaders,
       bool force = false}) async {
     key ??= url;
-    var fileResponse = await _webHelper
+    final fileResponse = await _webHelper
         .downloadFile(
           url,
           key: key,
@@ -246,10 +251,10 @@ class CacheManager implements BaseCacheManager {
       eTag: eTag,
     );
 
-    var file = await _config.fileSystem.createFile(cacheObject.relativePath);
+    final file = await _config.fileSystem.createFile(cacheObject.relativePath);
 
     // Always copy file
-    var sink = file.openWrite();
+    final sink = file.openWrite();
     await source
         // this map is need to map UInt8List to List<int>
         .map((event) => event)

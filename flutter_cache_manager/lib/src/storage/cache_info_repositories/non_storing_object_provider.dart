@@ -19,7 +19,7 @@ class NonStoringObjectProvider implements CacheInfoRepository {
 
   @override
   Future<CacheObject?> get(String url) {
-    return Future.value(null);
+    return Future.value();
   }
 
   @override

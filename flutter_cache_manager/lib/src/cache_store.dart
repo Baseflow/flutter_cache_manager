@@ -104,7 +104,7 @@ class CacheStore {
     if (cacheObject == null) {
       return false;
     }
-    var file = await fileSystem.createFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     return file.exists();
   }
 
