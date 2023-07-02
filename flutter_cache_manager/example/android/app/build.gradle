@@ -46,7 +46,7 @@ android {
     defaultConfig {
         applicationId "com.baseflow.example"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

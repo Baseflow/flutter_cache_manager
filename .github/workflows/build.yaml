@@ -90,6 +90,7 @@ jobs:
       # Ensure correct JAVA version is installed.
       - uses: actions/setup-java@v3
         with:
+          distribution: 'zulu'
           java-version: '17'
 
       # Make sure the stable version of Flutter is available
