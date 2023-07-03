@@ -82,14 +82,14 @@ void main() {
         });
       });
 
-      Future<FileFetcherResponse> _defaultHttpGetter(String url,
+      Future<FileFetcherResponse> defaultHttpGetter(String url,
           {Map<String, String>? headers}) async {
         var httpResponse = await client.get(Uri.parse(url), headers: headers);
         return HttpFileFetcherResponse(httpResponse);
       }
 
       await withClock(Clock.fixed(DateTime.now()), () async {
-        var httpFileFetcher = FileServiceCompat(_defaultHttpGetter);
+        var httpFileFetcher = FileServiceCompat(defaultHttpGetter);
         final now = clock.now();
         final response = await httpFileFetcher.get('http://test.com/image');
 

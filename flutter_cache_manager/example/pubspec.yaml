@@ -1,34 +1,23 @@
 name: example
-description: A new Flutter project.
+description: A project that showcases usage of flutter_cache_manager
 publish_to: none
-
 version: 1.0.0+1
-
 environment:
-  sdk: ">=2.10.2 <3.0.0"
+  sdk: '>=2.17.0 <4.0.0'
 
 dependencies:
-  baseflow_plugin_template:
-    git:
-      url: https://github.com/Baseflow/baseflow_plugin_template.git
-      ref: v1.0.0
-  cupertino_icons: ^1.0.2
+  baseflow_plugin_template: ^2.1.2
+  cupertino_icons: ^1.0.5
   flutter:
     sdk: flutter
   flutter_cache_manager:
     path: ../
-  url_launcher: ^5.4.11
+  url_launcher: ^6.1.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^1.0.4
+  flutter_lints: ^2.0.1
 
-
-# The following section is specific to Flutter.
 flutter:
   uses-material-design: true
-
-  assets:
-    - packages/baseflow_plugin_template/logo.png
-    - packages/baseflow_plugin_template/poweredByBaseflow.png

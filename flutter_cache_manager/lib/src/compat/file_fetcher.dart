@@ -12,8 +12,7 @@ typedef FileFetcher = Future<FileFetcherResponse> Function(String url,
     {Map<String, String>? headers});
 
 abstract class FileFetcherResponse {
-  // ignore: always_declare_return_types
-  get statusCode;
+  Object get statusCode;
 
   Uint8List get bodyBytes;
 
@@ -42,6 +41,5 @@ class HttpFileFetcherResponse implements FileFetcherResponse {
   Uint8List get bodyBytes => _response.bodyBytes;
 
   @override
-  // ignore: always_declare_return_types
-  get statusCode => _response.statusCode;
+  Object get statusCode => _response.statusCode;
 }

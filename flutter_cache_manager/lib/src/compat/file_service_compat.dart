@@ -1,18 +1,18 @@
 import 'dart:io';
 
 import 'package:clock/clock.dart';
-
-import '../../flutter_cache_manager.dart';
-import '../web/mime_converter.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/web/mime_converter.dart';
 
 class FileServiceCompat extends FileService {
   final FileFetcher fileFetcher;
+
   FileServiceCompat(this.fileFetcher);
 
   @override
   Future<FileServiceResponse> get(String url,
       {Map<String, String>? headers}) async {
-    var legacyResponse = await fileFetcher(url, headers: headers);
+    final legacyResponse = await fileFetcher(url, headers: headers);
     return CompatFileServiceGetResponse(legacyResponse);
   }
 }
@@ -43,10 +43,11 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
       for (final setting in controlSettings) {
         final sanitizedSetting = setting.trim().toLowerCase();
         if (sanitizedSetting == 'no-cache') {
-          ageDuration = const Duration();
+          ageDuration = Duration.zero;
         }
         if (sanitizedSetting.startsWith('max-age=')) {
-          var validSeconds = int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
+          final validSeconds =
+              int.tryParse(sanitizedSetting.split('=')[1]) ?? 0;
           if (validSeconds > 0) {
             ageDuration = Duration(seconds: validSeconds);
           }
@@ -65,7 +66,7 @@ class CompatFileServiceGetResponse implements FileServiceResponse {
     var fileExtension = '';
     final contentTypeHeader = _header(HttpHeaders.contentTypeHeader);
     if (contentTypeHeader != null) {
-      var contentType = ContentType.parse(contentTypeHeader);
+      final contentType = ContentType.parse(contentTypeHeader);
       fileExtension = contentType.fileExtension;
     }
     return fileExtension;
