@@ -47,11 +47,8 @@ class DownloadPage extends StatelessWidget {
 
         return Scaffold(
           body: body,
-          floatingActionButton: !loading
-              ? Fab(
-                  downloadFile: downloadFile,
-                )
-              : null,
+          floatingActionButton:
+              !loading ? Fab(downloadFile: downloadFile) : null,
         );
       },
     );

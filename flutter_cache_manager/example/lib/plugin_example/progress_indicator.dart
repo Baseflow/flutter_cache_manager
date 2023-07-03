@@ -13,11 +13,11 @@ class ProgressIndicator extends StatelessWidget {
     return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
+        children: [
           SizedBox(
             width: 50,
             height: 50,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               value: progress?.progress,
             ),
           ),

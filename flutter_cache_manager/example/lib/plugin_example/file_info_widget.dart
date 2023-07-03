@@ -17,7 +17,7 @@ class FileInfoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      children: <Widget>[
+      children: [
         ListTile(
           title: const Text('Original URL'),
           subtitle: Text(fileInfo.originalUrl),
@@ -36,7 +36,6 @@ class FileInfoWidget extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(10),
-          // ignore: deprecated_member_use
           child: ElevatedButton(
             onPressed: clearCache,
             child: const Text('CLEAR CACHE'),
@@ -44,7 +43,6 @@ class FileInfoWidget extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(10),
-          // ignore: deprecated_member_use
           child: ElevatedButton(
             onPressed: removeFile,
             child: const Text('REMOVE FILE'),

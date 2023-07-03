@@ -1,6 +1,7 @@
 import 'package:baseflow_plugin_template/baseflow_plugin_template.dart';
 import 'package:example/plugin_example/download_page.dart';
 import 'package:example/plugin_example/floating_action_button.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -68,11 +69,13 @@ class CacheManagerPageState extends State<CacheManagerPage> {
 
   void _removeFile() {
     DefaultCacheManager().removeFile(url).then((value) {
-      //ignore: avoid_print
-      print('File removed');
+      if (kDebugMode) {
+        print('File removed');
+      }
     }).onError((error, stackTrace) {
-      //ignore: avoid_print
-      print(error);
+      if (kDebugMode) {
+        print(error);
+      }
     });
     setState(() {
       fileStream = null;
