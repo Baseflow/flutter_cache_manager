@@ -35,7 +35,7 @@ class DownloadPage extends StatelessWidget {
           );
         } else if (loading) {
           body = p_i.ProgressIndicator(
-            progress: snapshot.data as DownloadProgress,
+            progress: snapshot.data as DownloadProgress?,
           );
         } else {
           body = FileInfoWidget(
