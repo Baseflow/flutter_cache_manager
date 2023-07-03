@@ -5,20 +5,21 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'cache_manager_test.dart';
 import 'helpers/config_extensions.dart';
-
 import 'helpers/test_configuration.dart';
 
 const fileName = 'test.jpg';
 const fileUrl = 'baseflow.com/test';
 final validTill = DateTime.now().add(const Duration(days: 1));
+
 void main() {
   setUp(WidgetsFlutterBinding.ensureInitialized);
 
   tearDown(() {
-    PaintingBinding.instance?.imageCache?.clear();
-    PaintingBinding.instance?.imageCache?.clearLiveImages();
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
   });
 
   group('Test image resizing', () {

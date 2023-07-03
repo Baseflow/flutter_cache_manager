@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 /// A [FloatingActionButton] used for downloading a file in [CacheManagerPage]
 class Fab extends StatelessWidget {
   final VoidCallback downloadFile;
-  const Fab({Key key, this.downloadFile}) : super(key: key);
+
+  const Fab({
+    required this.downloadFile,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
