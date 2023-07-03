@@ -20,19 +20,19 @@ class FileInfoWidget extends StatelessWidget {
       children: <Widget>[
         ListTile(
           title: const Text('Original URL'),
-          subtitle: Text(fileInfo.originalUrl ?? ''),
+          subtitle: Text(fileInfo.originalUrl),
         ),
         ListTile(
           title: const Text('Local file path'),
-          subtitle: Text(fileInfo.file.path ?? ''),
+          subtitle: Text(fileInfo.file.path),
         ),
         ListTile(
           title: const Text('Loaded from'),
-          subtitle: Text(fileInfo.source.toString() ?? ''),
+          subtitle: Text(fileInfo.source.toString()),
         ),
         ListTile(
           title: const Text('Valid Until'),
-          subtitle: Text(fileInfo.validTill.toIso8601String() ?? ''),
+          subtitle: Text(fileInfo.validTill.toIso8601String()),
         ),
         Padding(
           padding: const EdgeInsets.all(10),
