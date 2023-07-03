@@ -224,15 +224,17 @@ class CacheObjectProvider extends CacheInfoRepository
       return;
     }
 
-    Database? readDb;
+    Database? pragmaDb;
     bool isIntegral = true;
 
     try {
-      readDb = await openReadOnlyDatabase(path);
-      final check = await readDb.rawQuery("pragma integrity_check");
+      pragmaDb = await openDatabase(path);
+      final check = await pragmaDb.rawQuery("pragma integrity_check");
       isIntegral = check.length == 1 && check[0].values.first == "ok";
+    } on DatabaseException catch (e) {
+      isIntegral = false;
     } finally {
-      await readDb?.close();
+      await pragmaDb?.close();
     }
 
     if (!isIntegral) {
