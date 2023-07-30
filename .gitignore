@@ -94,3 +94,5 @@ flutter_export_environment.sh
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 example/.flutter-plugins-dependencies
 flutter_cache_manager/example/ios/Flutter/.last_build_id
+
+flutter_cache_manager/coverage/
