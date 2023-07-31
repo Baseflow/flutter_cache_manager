@@ -7,7 +7,41 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
+
 mixin ImageCacheManager on BaseCacheManager {
+  /// Get the image from the cache and resize if needed
+  /// Specify [ignoreMemCache] to force a re-read from the database
+  Future<FileInfo?> getImageFileFromCache(
+    String key, {
+    int? maxHeight,
+    int? maxWidth,
+    bool ignoreMemCache = false,
+  }) async {
+    final fromCache =
+        await getFileFromCache(key, ignoreMemCache: ignoreMemCache);
+    if ((maxHeight == null && maxWidth == null) || fromCache == null) {
+      return fromCache;
+    }
+
+    var resizedKey = 'resized';
+    if (maxWidth != null) resizedKey += '_w$maxWidth';
+    if (maxHeight != null) resizedKey += '_h$maxHeight';
+    resizedKey += '_$key';
+
+    final fromCacheResized =
+        await getFileFromCache(resizedKey, ignoreMemCache: ignoreMemCache);
+    if (fromCacheResized != null) {
+      return fromCacheResized;
+    }
+    final resizedFile = await _resizeImageFile(
+      fromCache,
+      resizedKey,
+      maxWidth,
+      maxHeight,
+    );
+    return resizedFile;
+  }
+
   /// Returns a resized image file to fit within maxHeight and maxWidth. It
   /// tries to keep the aspect ratio. It stores the resized image by adding
   /// the size to the key or url. For example when resizing
