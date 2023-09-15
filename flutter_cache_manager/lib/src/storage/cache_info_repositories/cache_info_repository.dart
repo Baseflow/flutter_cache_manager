@@ -43,7 +43,7 @@ abstract class CacheInfoRepository {
   Future<List<CacheObject>> getOldObjects(Duration maxAge);
 
   /// Close the connection to the repository. If this is the last connection
-  /// to the repository it will return true and the repository is trully
+  /// to the repository it will return true and the repository is truly
   /// closed. If there are still open connections it will return false;
   Future<bool> close();
 
@@ -56,9 +56,9 @@ extension MigrationExtension on CacheInfoRepository {
     if (!await previousRepository.exists()) return;
 
     await previousRepository.open();
-    var cacheObjects = await previousRepository.getAllObjects();
+    final cacheObjects = await previousRepository.getAllObjects();
     await _putAll(cacheObjects);
-    var isClosed = await previousRepository.close();
+    final isClosed = await previousRepository.close();
     if (!isClosed) {
       cacheLogger.log('Deleting an open repository while migrating.',
           CacheManagerLogLevel.warning);
@@ -67,9 +67,9 @@ extension MigrationExtension on CacheInfoRepository {
   }
 
   Future<List<CacheObject>> _putAll(List<CacheObject> cacheObjects) async {
-    var storedObjects = <CacheObject>[];
-    for (var newObject in cacheObjects) {
-      var existingObject = await get(newObject.key);
+    final storedObjects = <CacheObject>[];
+    for (final newObject in cacheObjects) {
+      final existingObject = await get(newObject.key);
       final CacheObject storedObject;
       if (existingObject == null) {
         storedObject = await insert(

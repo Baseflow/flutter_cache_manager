@@ -5,12 +5,11 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-
-import 'cache_info_repository.dart';
-import 'helper_methods.dart';
 
 class JsonCacheInfoRepository extends CacheInfoRepository
     with CacheInfoRepositoryHelperMethods {
@@ -37,7 +36,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     if (!shouldOpenOnNewConnection()) {
       return openCompleter!.future;
     }
-    var file = await _getFile();
+    final file = await _getFile();
     await _readFile(file);
     return opened();
   }
@@ -62,9 +61,9 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     if (cacheObject.id != null) {
       throw ArgumentError("Inserted objects shouldn't have an existing id.");
     }
-    var keys = _jsonCache.keys;
-    var lastId = keys.isEmpty ? 0 : keys.reduce(max);
-    var id = lastId + 1;
+    final keys = _jsonCache.keys;
+    final lastId = keys.isEmpty ? 0 : keys.reduce(max);
+    final id = lastId + 1;
 
     cacheObject = cacheObject.copyWith(id: id);
     return _put(cacheObject, setTouchedToNow);
@@ -83,13 +82,13 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   }
 
   @override
-  Future updateOrInsert(CacheObject cacheObject) {
+  Future<dynamic> updateOrInsert(CacheObject cacheObject) {
     return cacheObject.id == null ? insert(cacheObject) : update(cacheObject);
   }
 
   @override
   Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
-    var allSorted = _cacheObjects.values.toList()
+    final allSorted = _cacheObjects.values.toList()
       ..sort((c1, c2) => c1.touched!.compareTo(c2.touched!));
     if (allSorted.length <= capacity) return [];
     return allSorted.getRange(0, allSorted.length - capacity).toList();
@@ -97,7 +96,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
 
   @override
   Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
-    var oldestTimestamp = DateTime.now().subtract(maxAge);
+    final oldestTimestamp = DateTime.now().subtract(maxAge);
     return _cacheObjects.values
         .where(
           (element) => element.touched!.isBefore(oldestTimestamp),
@@ -107,7 +106,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
 
   @override
   Future<int> delete(int id) async {
-    var cacheObject = _cacheObjects.values.firstWhereOrNull(
+    final cacheObject = _cacheObjects.values.firstWhereOrNull(
       (element) => element.id == id,
     );
     if (cacheObject == null) {
@@ -120,7 +119,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   @override
   Future<int> deleteAll(Iterable<int> ids) async {
     var deleted = 0;
-    for (var id in ids) {
+    for (final id in ids) {
       deleted += await delete(id);
     }
     return deleted;
@@ -135,28 +134,29 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     return true;
   }
 
-  Future _readFile(File file) async {
+  Future<void> _readFile(File file) async {
     _cacheObjects.clear();
     _jsonCache.clear();
     if (await file.exists()) {
       try {
-        var jsonString = await file.readAsString();
-        var json = jsonDecode(jsonString) as List<dynamic>;
-        for (var element in json) {
+        final jsonString = await file.readAsString();
+        final json = jsonDecode(jsonString) as List<dynamic>;
+        for (final element in json) {
           if (element is! Map<String, dynamic>) continue;
-          var map = element;
-          var cacheObject = CacheObject.fromMap(map);
+          final map = element;
+          final cacheObject = CacheObject.fromMap(map);
           _jsonCache[cacheObject.id!] = map;
           _cacheObjects[cacheObject.key] = cacheObject;
         }
-      } catch (e, stacktrace) {
+      } on Object catch (e, stacktrace) {
         FlutterError.reportError(FlutterErrorDetails(
           exception: e,
           stack: stacktrace,
           library: 'flutter cache manager',
-          context: ErrorDescription('Thrown when reading the file containing '
-              'cache info. The cached files cannot be used by the cache manager'
-              'anymore.'),
+          context: ErrorDescription(
+            'Thrown when reading the file containing cache info. '
+            'The cached files cannot be used by the cache manager anymore.',
+          ),
         ));
       }
     }
@@ -165,7 +165,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   CacheObject _put(CacheObject cacheObject, bool setTouchedToNow) {
     final map = cacheObject.toMap(setTouchedToNow: setTouchedToNow);
     _jsonCache[cacheObject.id!] = map;
-    var updatedCacheObject = CacheObject.fromMap(map);
+    final updatedCacheObject = CacheObject.fromMap(map);
     _cacheObjects[cacheObject.key] = updatedCacheObject;
     _cacheUpdated();
     return updatedCacheObject;
@@ -185,15 +185,15 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   Timer? timer;
   Duration timerDuration = const Duration(seconds: 3);
 
-  Future _saveFile() async {
+  Future<void> _saveFile() async {
     timer?.cancel();
     timer = null;
     await _file!.writeAsString(jsonEncode(_jsonCache.values.toList()));
   }
 
   @override
-  Future deleteDataFile() async {
-    var file = await _getFile();
+  Future<void> deleteDataFile() async {
+    final file = await _getFile();
     if (await file.exists()) {
       await file.delete();
     }
@@ -201,7 +201,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
 
   @override
   Future<bool> exists() async {
-    var file = await _getFile();
+    final file = await _getFile();
     return file.exists();
   }
 

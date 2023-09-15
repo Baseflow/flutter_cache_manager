@@ -8,6 +8,7 @@ import 'mock_file_service.dart';
 
 extension ConfigExtensions on Config {
   MockCacheInfoRepository get mockRepo => repo as MockCacheInfoRepository;
+
   MockFileService get mockFileService => fileService as MockFileService;
 
   Future<File> returnsFile(String fileName, {List<int>? data}) async {

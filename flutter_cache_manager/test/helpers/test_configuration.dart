@@ -18,6 +18,7 @@ Config createTestConfig() {
 class TestFileSystem extends FileSystem {
   final directoryFuture =
       MemoryFileSystem().systemTempDirectory.createTemp('test');
+
   @override
   Future<File> createFile(String name) async {
     var dir = await directoryFuture;

@@ -1,8 +1,7 @@
+import 'package:flutter_cache_manager/src/config/config.dart' as def;
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
-
-import 'config.dart' as def;
 
 class Config implements def.Config {
   //ignore: avoid_unused_constructor_parameters

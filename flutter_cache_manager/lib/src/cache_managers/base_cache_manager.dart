@@ -1,9 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:file/file.dart';
-
-import '../result/file_info.dart';
-import '../result/file_response.dart';
+import 'package:flutter_cache_manager/src/result/file_info.dart';
+import 'package:flutter_cache_manager/src/result/file_response.dart';
 
 /// Interface of the CacheManager. In general [CacheManager] can be used
 /// directly.

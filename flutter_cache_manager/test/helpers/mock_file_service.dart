@@ -8,6 +8,7 @@ import '../mock.mocks.dart';
 
 class MockFileService extends MockFileServiceBase {
   MockFileService._();
+
   factory MockFileService({bool includeStandardResponse = true}) {
     var fileService = MockFileService._();
     if (includeStandardResponse) {

@@ -3,5 +3,5 @@ class QueueItem {
   final String key;
   final Map<String, String>? headers;
 
-  QueueItem(this.url, this.key, this.headers);
+  const QueueItem(this.url, this.key, this.headers);
 }

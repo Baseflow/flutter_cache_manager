@@ -1,9 +1,8 @@
 import 'package:file/file.dart' hide FileSystem;
 import 'package:file/local.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-
-import 'file_system.dart';
 
 class IOFileSystem implements FileSystem {
   final Future<Directory> _fileDir;
@@ -12,18 +11,18 @@ class IOFileSystem implements FileSystem {
   IOFileSystem(this._cacheKey) : _fileDir = createDirectory(_cacheKey);
 
   static Future<Directory> createDirectory(String key) async {
-    var baseDir = await getTemporaryDirectory();
-    var path = p.join(baseDir.path, key);
+    final baseDir = await getTemporaryDirectory();
+    final path = p.join(baseDir.path, key);
 
-    var fs = const LocalFileSystem();
-    var directory = fs.directory((path));
+    const fs = LocalFileSystem();
+    final directory = fs.directory(path);
     await directory.create(recursive: true);
     return directory;
   }
 
   @override
   Future<File> createFile(String name) async {
-    var directory = (await _fileDir);
+    final directory = await _fileDir;
     if (!(await directory.exists())) {
       await createDirectory(_cacheKey);
     }
