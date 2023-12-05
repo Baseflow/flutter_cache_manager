@@ -151,10 +151,12 @@ class CacheManager implements BaseCacheManager {
         cacheLogger.log(
             'CacheManager: Failed to download file from $url with error:\n$e',
             CacheManagerLogLevel.debug);
-        if (streamController.hasListener) {
+        if (cacheFile == null && streamController.hasListener) {
           streamController.addError(e);
         }
-        if (cacheFile != null) {
+
+        if (cacheFile != null && e is HttpExceptionWithStatus && e.statusCode == 404) {
+          streamController.addError(e);
           await removeFile(key);
         }
       }
