@@ -1,3 +1,6 @@
+## [3.3.2] - 2023-12-05
+* [Bugfix] For a previously cached file that got removed on the server, now evicts that file on 404 and notifies listeners.
+
 ## [3.3.1] - 2023-07-03
 * Support Dart 3.0.0 for http ^1.0.0 and file ^7.0.0
 * Update example
