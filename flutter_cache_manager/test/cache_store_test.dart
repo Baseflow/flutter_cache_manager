@@ -5,8 +5,8 @@ import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'helpers/config_extensions.dart';
 
+import 'helpers/config_extensions.dart';
 import 'helpers/mock_cache_info_repository.dart';
 import 'helpers/test_configuration.dart';
 
