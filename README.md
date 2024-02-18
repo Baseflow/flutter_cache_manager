@@ -104,3 +104,20 @@ the stale period.
 - The constructor now expects a Config object with some settings you were used to, but some are slightly different.
 For example the system where you want to store your files is not just a dictionary anymore, but a FileSystem. That way
 you have more freedom on where to store your files.
+
+## Issue with Ios Video Play
+   /// For ios 
+  use this
+  // 1> fileinfo will provide name of the path in which video is stored in temporary directory
+  var fileInfo = await kCacheManager
+  .getFileFromCache("Your url");
+
+  // 2> using rename function will change the name of the path
+  final name = await fileInfo!.file
+  .rename(fileInfo.file.path.replaceAll(".bin", ".mp4"));
+
+  // 3> after that use the name on your link
+
+  controller = VideoPlayerController.file(name)
+
+  // work like a charm
