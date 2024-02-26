@@ -36,6 +36,21 @@ void main() {
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
     });
 
+    test('Store should return FileInfo when not-found file is cached',
+        () async {
+      var fileUrl = 'baseflow.com/test.png';
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, null, DateTime.now());
+
+      var tempDir = createDir();
+      await (await tempDir).childFile('testimage.png').create();
+
+      var store = CacheStore(config);
+
+      expect(await store.getFile('baseflow.com/test.png'), isNotNull);
+    });
+
     test('Store should return null when file is no longer cached', () async {
       var repo = MockCacheInfoRepository();
 
@@ -65,6 +80,19 @@ void main() {
       var config = createTestConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now(), id: 1);
+
+      var store = CacheStore(config);
+      final cacheObject = await store.retrieveCacheData(fileUrl);
+      expect(cacheObject, isNotNull);
+      expect(cacheObject!.id, isNotNull);
+    });
+
+    test('Store should return not-found CacheInfo when file is cached',
+        () async {
+      var fileUrl = 'baseflow.com/test.png';
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, null, DateTime.now(), id: 1);
 
       var store = CacheStore(config);
       final cacheObject = await store.retrieveCacheData(fileUrl);
@@ -127,6 +155,20 @@ void main() {
       verify(config.repo.updateOrInsert(cacheObject)).called(1);
     });
 
+    test('Store should store not-found fileinfo in repo', () async {
+      var config = createTestConfig();
+      var store = CacheStore(config);
+
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: null,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      await store.putFile(cacheObject);
+
+      verify(config.repo.updateOrInsert(cacheObject)).called(1);
+    });
+
     test(
         'Store should store fileinfo in repo and id should be available afterwards',
         () async {
@@ -138,7 +180,7 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
-      await config.returnsFile(cacheObject.relativePath);
+      await config.returnsFile(cacheObject.relativePath!);
       when(config.mockRepo.updateOrInsert(cacheObject)).thenAnswer(
         (realInvocation) async => cacheObject.copyWith(id: 1),
       );
@@ -169,6 +211,29 @@ void main() {
       var cacheObject = CacheObject(
         fileUrl,
         relativePath: fileName,
+        id: 1,
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      await store.removeCachedFile(cacheObject);
+
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
+    });
+
+    test('Store should remove not-found fileinfo from repo on delete',
+        () async {
+      var fileUrl = 'baseflow.com/test.png';
+      var validTill = DateTime.now();
+      var config = createTestConfig();
+
+      config.returnsCacheObject(fileUrl, null, validTill);
+
+      var store = CacheStore(config);
+      store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+
+      var cacheObject = CacheObject(
+        fileUrl,
+        relativePath: null,
         id: 1,
         validTill: clock.now().add(const Duration(days: 7)),
       );

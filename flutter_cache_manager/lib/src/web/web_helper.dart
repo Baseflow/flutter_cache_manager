@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -19,13 +20,22 @@ const statusCodesNewFile = [HttpStatus.ok, HttpStatus.accepted];
 const statusCodesFileNotChanged = [HttpStatus.notModified];
 
 class WebHelper {
-  WebHelper(this._store, FileService? fileFetcher)
-      : _memCache = {},
-        fileFetcher = fileFetcher ?? HttpFileService();
+  WebHelper(
+    this._store,
+    FileService? fileFetcher, {
+    /// If true, enables caching of 404 responses.
+    bool cache404Responses = false,
+  })  : _memCache = {},
+        fileFetcher = fileFetcher ?? HttpFileService(),
+        _cache404Responses = cache404Responses;
 
   final CacheStore _store;
   @visibleForTesting
   final FileService fileFetcher;
+
+  /// If set, enables caching of 404 responses and determines how long the
+  /// cached responses are valid for.
+  final bool _cache404Responses;
   final Map<String, BehaviorSubject<FileResponse>> _memCache;
   final Queue<QueueItem> _queue = Queue();
 
@@ -117,9 +127,15 @@ class WebHelper {
 
   Stream<FileResponse> _manageResponse(
       CacheObject cacheObject, FileServiceResponse response) async* {
-    final hasNewFile = statusCodesNewFile.contains(response.statusCode);
-    final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
-    if (!hasNewFile && !keepOldFile) {
+    final allowed404Response =
+        _cache404Responses && response.statusCode == HttpStatus.notFound;
+
+    final hasNewResult =
+        statusCodesNewFile.contains(response.statusCode) || allowed404Response;
+    final keepOldResult =
+        statusCodesFileNotChanged.contains(response.statusCode);
+
+    if (!hasNewResult && !keepOldResult) {
       throw HttpExceptionWithStatus(
         response.statusCode,
         'Invalid statusCode: ${response.statusCode}',
@@ -129,7 +145,7 @@ class WebHelper {
 
     final oldCacheObject = cacheObject;
     var newCacheObject = _setDataFromHeaders(cacheObject, response);
-    if (statusCodesNewFile.contains(response.statusCode)) {
+    if (hasNewResult) {
       var savedBytes = 0;
       await for (final progress in _saveFile(newCacheObject, response)) {
         savedBytes = progress;
@@ -145,9 +161,10 @@ class WebHelper {
       }
     });
 
-    final file = await _store.fileSystem.createFile(
-      newCacheObject.relativePath,
-    );
+    final relativePath = newCacheObject.relativePath;
+    final file = relativePath == null
+        ? null
+        : await _store.fileSystem.createFile(relativePath);
     yield FileInfo(
       file,
       FileSource.Online,
@@ -162,13 +179,19 @@ class WebHelper {
     var filePath = cacheObject.relativePath;
 
     if (!statusCodesFileNotChanged.contains(response.statusCode)) {
-      if (!filePath.endsWith(fileExtension)) {
+      if (filePath != null && !filePath.endsWith(fileExtension)) {
         //Delete old file directly when file extension changed
         _removeOldFile(filePath);
       }
       // Store new file on different path
       filePath = '${const Uuid().v1()}$fileExtension';
     }
+
+    if (response.statusCode == HttpStatus.notFound) {
+      filePath = null;
+      cacheObject = cacheObject.withoutRelativePath();
+    }
+
     return cacheObject.copyWith(
       relativePath: filePath,
       validTill: response.validTill,
@@ -190,11 +213,14 @@ class WebHelper {
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
       FileServiceResponse response) async {
-    final file = await _store.fileSystem.createFile(cacheObject.relativePath);
+    final relativePath = cacheObject.relativePath;
+    final file = relativePath == null
+        ? null
+        : await _store.fileSystem.createFile(relativePath);
 
     try {
       var receivedBytes = 0;
-      final sink = file.openWrite();
+      final sink = file?.openWrite() ?? NullStreamSink<List<int>>();
       await response.content.map((s) {
         receivedBytes += s.length;
         receivedBytesResultController.add(receivedBytes);

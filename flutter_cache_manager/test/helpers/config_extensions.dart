@@ -19,7 +19,7 @@ extension ConfigExtensions on Config {
 
   void returnsCacheObject(
     String fileUrl,
-    String fileName,
+    String? fileName,
     DateTime validTill, {
     String? key,
     int? id,

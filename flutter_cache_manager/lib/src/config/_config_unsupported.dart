@@ -13,6 +13,8 @@ class Config implements def.Config {
     //ignore: avoid_unused_constructor_parameters
     int? maxNrOfCacheObjects,
     //ignore: avoid_unused_constructor_parameters
+    bool? cache404Responses,
+    //ignore: avoid_unused_constructor_parameters
     CacheInfoRepository? repo,
     //ignore: avoid_unused_constructor_parameters
     FileSystem? fileSystem,
@@ -36,6 +38,9 @@ class Config implements def.Config {
 
   @override
   int get maxNrOfCacheObjects => throw UnimplementedError();
+
+  @override
+  bool get cache404Responses => throw UnimplementedError();
 
   @override
   FileService get fileService => throw UnimplementedError();

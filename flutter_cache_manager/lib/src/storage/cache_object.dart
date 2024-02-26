@@ -30,7 +30,7 @@ class CacheObject {
       : id = map[columnId] as int,
         url = map[columnUrl] as String,
         key = map[columnKey] as String? ?? map[columnUrl] as String,
-        relativePath = map[columnPath] as String,
+        relativePath = map[columnPath] as String?,
         validTill =
             DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
         eTag = map[columnETag] as String?,
@@ -49,8 +49,8 @@ class CacheObject {
   /// This key is optional and will default to [url] if not specified
   final String key;
 
-  /// Where the cached file is stored
-  final String relativePath;
+  /// Where the cached file is stored if it exists
+  final String? relativePath;
 
   /// When this cached item becomes invalid
   final DateTime validTill;
@@ -103,4 +103,15 @@ class CacheObject {
       touched: touched,
     );
   }
+
+  CacheObject withoutRelativePath() => CacheObject(
+        url,
+        id: id,
+        key: key,
+        relativePath: null,
+        validTill: validTill,
+        eTag: eTag,
+        length: length,
+        touched: touched,
+      );
 }

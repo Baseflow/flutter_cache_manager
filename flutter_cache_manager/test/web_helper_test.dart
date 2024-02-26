@@ -41,7 +41,7 @@ void main() {
       expect(result, isNotNull);
     });
 
-    test('404 throws', () async {
+    test('404 throws when not allowed', () async {
       const imageUrl = 'baseflow.com/testimage';
 
       var config = createTestConfig();
@@ -60,6 +60,28 @@ void main() {
           () async => webHelper.downloadFile(imageUrl).toList(),
           throwsA(predicate(
               (e) => e is HttpExceptionWithStatus && e.statusCode == 404)));
+    });
+
+    test('404 is cached when allowed', () async {
+      const imageUrl = 'baseflow.com/testimage';
+
+      var config = createTestConfig();
+      var store = CacheStore(config);
+
+      final fileService = MockFileService();
+      when(fileService.get(imageUrl, headers: anyNamed('headers')))
+          .thenAnswer((_) {
+        return Future.value(MockFileFetcherResponse(
+            Stream.value([]), 0, null, '', 404, DateTime.now()));
+      });
+
+      var webHelper = WebHelper(store, fileService, cache404Responses: true);
+
+      final result = await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo);
+      expect(result, isNotNull);
+      expect((result as FileInfo).file, isNull);
     });
 
     test('304 ignores content', () async {
@@ -84,7 +106,7 @@ void main() {
   });
 
   group('Parallel logic', () {
-    test('Calling webhelper twice excecutes once', () async {
+    test('Calling webhelper twice executes once', () async {
       const imageUrl = 'baseflow.com/testimage';
 
       var config = createTestConfig();
@@ -111,7 +133,7 @@ void main() {
       verify(store.retrieveCacheData(any)).called(1);
     });
 
-    test('Calling webhelper twice excecutes twice when memcache ignored',
+    test('Calling webhelper twice executes twice when memcache ignored',
         () async {
       const imageUrl = 'baseflow.com/testimage';
 
@@ -205,6 +227,37 @@ void main() {
           .firstWhere((r) => r is FileInfo, orElse: null);
       expect(result, isNotNull);
       verify(store.putFile(any)).called(1);
+    });
+
+    test(
+        'When not yet cached and response is allowed 404, new cacheobject should be made',
+        () async {
+      const imageUrl = 'baseflow.com/testimage';
+      const fileName = 'testv1.jpg';
+      final validTill = DateTime.now();
+
+      var config = createTestConfig();
+      var store = _createStore(config);
+      config.returnsCacheObject(imageUrl, fileName, validTill);
+
+      final fileService = MockFileService();
+      when(fileService.get(imageUrl, headers: anyNamed('headers')))
+          .thenAnswer((_) {
+        return Future.value(MockFileFetcherResponse(
+            Stream.value([]), 6, 'testv1', '.jpg', 404, DateTime.now()));
+      });
+
+      var webHelper = WebHelper(store, fileService, cache404Responses: true);
+
+      final result = await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo);
+      expect(result, isNotNull);
+      verify(store.putFile(argThat(isA<CacheObject>().having(
+              (cacheObject) => cacheObject.relativePath,
+              'relativePath',
+              isNull))))
+          .called(1);
     });
 
     test('File should be removed if extension changed', () async {

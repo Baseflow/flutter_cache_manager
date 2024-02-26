@@ -24,7 +24,7 @@ class FileInfoWidget extends StatelessWidget {
         ),
         ListTile(
           title: const Text('Local file path'),
-          subtitle: Text(fileInfo.file.path),
+          subtitle: Text(fileInfo.file?.path ?? 'Not found'),
         ),
         ListTile(
           title: const Text('Loaded from'),

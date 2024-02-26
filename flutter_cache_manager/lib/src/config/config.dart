@@ -14,6 +14,8 @@ abstract class Config {
   /// [maxNrOfCacheObjects] defines how large the cache is allowed to be. If
   /// there are more files the files that haven't been used for the longest
   /// time will be removed.
+  /// [cache404Responses] controls whether 404 responses are cached. The default
+  /// behaviour is to not cache 404s.
   /// [repo] is the [CacheInfoRepository] which stores the cache metadata. On
   /// Android, iOS and macOS this defaults to [CacheObjectProvider], a
   /// sqflite implementation due to legacy. On web this defaults to
@@ -25,6 +27,7 @@ abstract class Config {
     String cacheKey, {
     Duration stalePeriod,
     int maxNrOfCacheObjects,
+    bool cache404Responses,
     CacheInfoRepository repo,
     FileSystem fileSystem,
     FileService fileService,
@@ -35,6 +38,8 @@ abstract class Config {
   Duration get stalePeriod;
 
   int get maxNrOfCacheObjects;
+
+  bool get cache404Responses;
 
   CacheInfoRepository get repo;
 

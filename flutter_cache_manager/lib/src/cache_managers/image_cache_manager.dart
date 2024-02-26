@@ -64,25 +64,28 @@ mixin ImageCacheManager on BaseCacheManager {
   final Map<String, Stream<FileResponse>> _runningResizes = {};
 
   Future<FileInfo> _resizeImageFile(
-    FileInfo originalFile,
+    FileInfo originalFileInfo,
     String key,
     int? maxWidth,
     int? maxHeight,
   ) async {
-    final originalFileName = originalFile.file.path;
+    final originalFile = originalFileInfo.file;
+    if (originalFile == null) return originalFileInfo;
+
+    final originalFileName = originalFile.path;
     final fileExtension = originalFileName.split('.').last;
     if (!supportedFileNames.contains(fileExtension)) {
-      return originalFile;
+      return originalFileInfo;
     }
 
-    final image = await _decodeImage(originalFile.file);
+    final image = await _decodeImage(originalFile);
 
     final shouldResize = maxWidth != null
         ? image.width > maxWidth
         : false || maxHeight != null
             ? image.height > maxHeight
             : false;
-    if (!shouldResize) return originalFile;
+    if (!shouldResize) return originalFileInfo;
     if (maxWidth != null && maxHeight != null) {
       final resizeFactorWidth = image.width / maxWidth;
       final resizeFactorHeight = image.height / maxHeight;
@@ -92,16 +95,16 @@ mixin ImageCacheManager on BaseCacheManager {
       maxHeight = (image.height / resizeFactor).round();
     }
 
-    final resized = await _decodeImage(originalFile.file,
-        width: maxWidth, height: maxHeight);
+    final resized =
+        await _decodeImage(originalFile, width: maxWidth, height: maxHeight);
     final resizedFile =
         (await resized.toByteData(format: ui.ImageByteFormat.png))!
             .buffer
             .asUint8List();
-    final maxAge = originalFile.validTill.difference(DateTime.now());
+    final maxAge = originalFileInfo.validTill.difference(DateTime.now());
 
     final file = await putFile(
-      originalFile.originalUrl,
+      originalFileInfo.originalUrl,
       resizedFile,
       key: key,
       maxAge: maxAge,
@@ -110,9 +113,9 @@ mixin ImageCacheManager on BaseCacheManager {
 
     return FileInfo(
       file,
-      originalFile.source,
-      originalFile.validTill,
-      originalFile.originalUrl,
+      originalFileInfo.source,
+      originalFileInfo.validTill,
+      originalFileInfo.originalUrl,
     );
   }
 

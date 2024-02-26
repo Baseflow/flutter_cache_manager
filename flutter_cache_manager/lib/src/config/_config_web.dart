@@ -10,11 +10,13 @@ class Config implements def.Config {
     this.cacheKey, {
     Duration? stalePeriod,
     int? maxNrOfCacheObjects,
+    bool? cache404Responses,
     CacheInfoRepository? repo,
     FileSystem? fileSystem,
     FileService? fileService,
   })  : stalePeriod = stalePeriod ?? const Duration(days: 30),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
+        cache404Responses = cache404Responses ?? false,
         repo = repo ?? NonStoringObjectProvider(),
         fileSystem = fileSystem ?? MemoryCacheSystem(),
         fileService = fileService ?? HttpFileService();
@@ -33,6 +35,9 @@ class Config implements def.Config {
 
   @override
   final int maxNrOfCacheObjects;
+
+  @override
+  final bool cache404Responses;
 
   @override
   final FileService fileService;

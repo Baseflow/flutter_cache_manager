@@ -28,11 +28,23 @@ void main() {
       await verifySize(bytes, 120, 120);
     });
 
+    test('File should not be modified when none was saved', () async {
+      var validTill = DateTime.now().add(const Duration(days: 1));
+      var config = createTestConfig()
+        ..returnsCacheObject(fileUrl, null, validTill);
+      var cacheManager = TestCacheManager(config);
+
+      var result = await cacheManager
+          .getImageFile(fileUrl, maxWidth: 100, maxHeight: 100)
+          .last as FileInfo;
+      expect(result.file, isNull);
+    });
+
     test('File should not be modified when no height or width is given',
         () async {
       var cacheManager = await setupCacheManager();
       var result = await cacheManager.getImageFile(fileUrl).last as FileInfo;
-      var image = await result.file.readAsBytes();
+      var image = await result.file!.readAsBytes();
       await verifySize(image, 120, 120);
     });
 
@@ -44,7 +56,7 @@ void main() {
             maxHeight: 100,
           )
           .last as FileInfo;
-      var image = await result.file.readAsBytes();
+      var image = await result.file!.readAsBytes();
       await verifySize(image, 100, 100);
     });
 
@@ -56,7 +68,7 @@ void main() {
             maxWidth: 100,
           )
           .last as FileInfo;
-      var image = await result.file.readAsBytes();
+      var image = await result.file!.readAsBytes();
       await verifySize(image, 100, 100);
     });
 
@@ -66,7 +78,7 @@ void main() {
       var result = await cacheManager
           .getImageFile(fileUrl, maxWidth: 100, maxHeight: 80)
           .last as FileInfo;
-      var image = await result.file.readAsBytes();
+      var image = await result.file!.readAsBytes();
       await verifySize(image, 80, 80);
     });
   });

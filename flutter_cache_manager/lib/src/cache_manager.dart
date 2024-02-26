@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:async/async.dart';
 import 'package:file/file.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -33,7 +34,11 @@ class CacheManager implements BaseCacheManager {
   CacheManager(Config config)
       : _config = config,
         _store = CacheStore(config) {
-    _webHelper = WebHelper(_store, config.fileService);
+    _webHelper = WebHelper(
+      _store,
+      config.fileService,
+      cache404Responses: config.cache404Responses,
+    );
   }
 
   @visibleForTesting
@@ -43,7 +48,12 @@ class CacheManager implements BaseCacheManager {
     WebHelper? webHelper,
   })  : _config = config,
         _store = cacheStore ?? CacheStore(config) {
-    _webHelper = webHelper ?? WebHelper(_store, config.fileService);
+    _webHelper = webHelper ??
+        WebHelper(
+          _store,
+          config.fileService,
+          cache404Responses: config.cache404Responses,
+        );
   }
 
   final Config _config;
@@ -66,7 +76,7 @@ class CacheManager implements BaseCacheManager {
   /// file is too old the file is downloaded and returned after download.
   /// When a cached file is not available the newly downloaded file is returned.
   @override
-  Future<File> getSingleFile(
+  Future<File?> getSingleFile(
     String url, {
     String? key,
     Map<String, String>? headers,
@@ -194,7 +204,7 @@ class CacheManager implements BaseCacheManager {
   /// is re-used.
   /// The returned [File] is saved on disk.
   @override
-  Future<File> putFile(
+  Future<File?> putFile(
     String url,
     Uint8List fileBytes, {
     String? key,
@@ -216,8 +226,11 @@ class CacheManager implements BaseCacheManager {
       eTag: eTag,
     );
 
-    final file = await _config.fileSystem.createFile(cacheObject.relativePath);
-    await file.writeAsBytes(fileBytes);
+    final relativePath = cacheObject.relativePath;
+    final file = relativePath == null
+        ? null
+        : await _config.fileSystem.createFile(relativePath);
+    await file?.writeAsBytes(fileBytes);
     _store.putFile(cacheObject);
     return file;
   }
@@ -230,7 +243,7 @@ class CacheManager implements BaseCacheManager {
   /// is re-used.
   /// The returned [File] is saved on disk.
   @override
-  Future<File> putFileStream(
+  Future<File?> putFileStream(
     String url,
     Stream<List<int>> source, {
     String? key,
@@ -251,10 +264,13 @@ class CacheManager implements BaseCacheManager {
       eTag: eTag,
     );
 
-    final file = await _config.fileSystem.createFile(cacheObject.relativePath);
+    final relativePath = cacheObject.relativePath;
+    final file = relativePath == null
+        ? null
+        : await _config.fileSystem.createFile(relativePath);
 
-    // Always copy file
-    final sink = file.openWrite();
+    // Copy the file if it exists
+    final sink = file?.openWrite() ?? NullStreamSink<List<int>>();
     await source
         // this map is need to map UInt8List to List<int>
         .map((event) => event)

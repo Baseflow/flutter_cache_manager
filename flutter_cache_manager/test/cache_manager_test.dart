@@ -33,6 +33,19 @@ void main() {
       config.verifyNoDownloadCall();
     });
 
+    test('Valid not-found cacheFile should not call to web', () async {
+      var fileUrl = 'baseflow.com/test';
+      var validTill = DateTime.now().add(const Duration(days: 1));
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, null, validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager.getSingleFile(fileUrl);
+      expect(result, isNull);
+      config.verifyNoDownloadCall();
+    });
+
     test('Outdated cacheFile should call to web', () async {
       var fileName = 'test.jpg';
       var fileUrl = 'baseflow.com/test';
@@ -82,6 +95,21 @@ void main() {
       config.verifyNoDownloadCall();
     });
 
+    test('Valid not-found cacheFile should not call to web', () async {
+      var config = createTestConfig();
+
+      var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
+      var validTill = DateTime.now().add(const Duration(days: 1));
+
+      config.returnsCacheObject(fileUrl, null, validTill, key: fileKey);
+      var cacheManager = TestCacheManager(config);
+
+      var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+      expect(result, isNull);
+      config.verifyNoDownloadCall();
+    });
+
     test('Outdated cacheFile should call to web', () async {
       var fileName = 'test.jpg';
       var fileUrl = 'baseflow.com/test';
@@ -100,21 +128,21 @@ void main() {
       config.verifyDownloadCall();
     });
 
-    // test('Non-existing cacheFile should call to web', () async {
-    //   var fileName = 'test.jpg';
-    //   var fileUrl = 'baseflow.com/test';
-    //   var fileKey = 'test1234';
-    //   var validTill = DateTime.now().subtract(const Duration(days: 1));
-    //
-    //   var config = createTestConfig();
-    //   config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
-    //
-    //   var cacheManager = TestCacheManager(config);
-    //
-    //   var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
-    //   expect(result, isNotNull);
-    //   config.verifyDownloadCall();
-    // });
+    test('Non-existing cacheFile should call to web', () async {
+      var fileName = 'test.jpg';
+      var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
+      var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, fileName, validTill, key: fileKey);
+
+      var cacheManager = TestCacheManager(config);
+
+      var result = await cacheManager.getSingleFile(fileUrl, key: fileKey);
+      expect(result, isNotNull);
+      config.verifyDownloadCall();
+    });
   });
 
   group('Tests for getFile', () {
@@ -130,6 +158,25 @@ void main() {
       var store = MockCacheStore();
       var file = await createTestConfig().fileSystem.createFile(fileName);
       var fileInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
+
+      var cacheManager = TestCacheManager(config, store: store);
+
+      // ignore: deprecated_member_use_from_same_package
+      var fileStream = cacheManager.getFile(fileUrl);
+      expect(fileStream, emits(fileInfo));
+      config.verifyNoDownloadCall();
+    });
+
+    test('Valid not-found cacheFile should not call to web', () async {
+      var fileUrl = 'baseflow.com/test';
+      var validTill = DateTime.now().add(const Duration(days: 1));
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, null, validTill);
+
+      var store = MockCacheStore();
+      var fileInfo = FileInfo(null, FileSource.Cache, validTill, fileUrl);
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(fileInfo));
 
       var cacheManager = TestCacheManager(config, store: store);
@@ -235,6 +282,21 @@ void main() {
       config.verifyNoDownloadCall();
     });
 
+    test('Valid not-found cacheFile should not call to web', () async {
+      var fileUrl = 'baseflow.com/test';
+      var fileKey = 'test1234';
+      var validTill = DateTime.now().add(const Duration(days: 1));
+
+      var config = createTestConfig();
+      config.returnsCacheObject(fileUrl, null, validTill, key: fileKey);
+
+      var cacheManager = TestCacheManager(config);
+
+      // ignore: deprecated_member_use_from_same_package
+      await cacheManager.getFile(fileUrl, key: fileKey).toList();
+      config.verifyNoDownloadCall();
+    });
+
     test('Outdated cacheFile should call to web', () async {
       var fileName = 'test.jpg';
       var fileUrl = 'baseflow.com/test';
@@ -281,7 +343,7 @@ void main() {
 
       var file = await cacheManager.putFile(fileUrl, fileBytes,
           fileExtension: extension);
-      expect(await file.exists(), true);
+      expect(await file!.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
       verify(store.putFile(any)).called(1);
     });
@@ -297,7 +359,7 @@ void main() {
 
       var file = await cacheManager.putFile(fileUrl, fileBytes,
           key: fileKey, fileExtension: extension);
-      expect(await file.exists(), true);
+      expect(await file!.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
       final arg =
           verify(store.putFile(captureAny)).captured.first as CacheObject;
@@ -321,7 +383,7 @@ void main() {
       var file = await cacheManager.putFileStream(
           fileUrl, existingFile.openRead(),
           fileExtension: extension);
-      expect(await file.exists(), true);
+      expect(await file!.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
       verify(store.putFile(any)).called(1);
     });
@@ -343,7 +405,7 @@ void main() {
       var file = await cacheManager.putFileStream(
           fileUrl, existingFile.openRead(),
           key: fileKey, fileExtension: extension);
-      expect(await file.exists(), true);
+      expect(await file!.exists(), true);
       expect(await file.readAsBytes(), fileBytes);
       final arg =
           verify(store.putFile(captureAny)).captured.first as CacheObject;
@@ -361,6 +423,24 @@ void main() {
           .thenAnswer((_) => Future.value(CacheObject(
                 fileUrl,
                 relativePath: 'test.png',
+                validTill: clock.now(),
+                id: 123,
+              )));
+
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
+
+      await cacheManager.removeFile(fileUrl);
+      verify(store.removeCachedFile(any)).called(1);
+    });
+
+    test('Remove not-found file from cache', () async {
+      var fileUrl = 'baseflow.com/test';
+
+      var store = MockCacheStore();
+      when(store.retrieveCacheData(fileUrl))
+          .thenAnswer((_) => Future.value(CacheObject(
+                fileUrl,
+                relativePath: null,
                 validTill: clock.now(),
                 id: 123,
               )));

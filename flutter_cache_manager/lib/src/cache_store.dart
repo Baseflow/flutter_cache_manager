@@ -39,7 +39,9 @@ class CacheStore {
     if (cacheObject == null) {
       return null;
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
+    final relativePath = cacheObject.relativePath;
+    final file =
+        relativePath == null ? null : await fileSystem.createFile(relativePath);
     cacheLogger.log(
         'CacheManager: Loaded $key from cache', CacheManagerLogLevel.verbose);
 
@@ -64,14 +66,15 @@ class CacheStore {
   Future<CacheObject?> retrieveCacheData(String key,
       {bool ignoreMemCache = false}) async {
     if (!ignoreMemCache && _memCache.containsKey(key)) {
-      if (await _fileExists(_memCache[key])) {
+      if (await _fileExistsIfExpectedTo(_memCache[key])) {
         return _memCache[key];
       }
     }
     if (!_futureCache.containsKey(key)) {
       final completer = Completer<CacheObject?>();
       _getCacheDataFromDatabase(key).then((cacheObject) async {
-        if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
+        if (cacheObject?.id != null &&
+            !await _fileExistsIfExpectedTo(cacheObject)) {
           final provider = await _cacheInfoRepository;
           await provider.delete(cacheObject!.id!);
           cacheObject = null;
@@ -95,23 +98,36 @@ class CacheStore {
     if (cacheObject == null) {
       return null;
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
+    final relativePath = cacheObject.relativePath;
+    final file =
+        relativePath == null ? null : await fileSystem.createFile(relativePath);
     return FileInfo(
-        file, FileSource.Cache, cacheObject.validTill, cacheObject.url);
+      file,
+      FileSource.Cache,
+      cacheObject.validTill,
+      cacheObject.url,
+    );
   }
 
-  Future<bool> _fileExists(CacheObject? cacheObject) async {
+  Future<bool> _fileExistsIfExpectedTo(CacheObject? cacheObject) async {
     if (cacheObject == null) {
       return false;
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
+
+    // Cached not-found result, file is not expected to exist.
+    if (cacheObject.relativePath == null) {
+      return true;
+    }
+
+    final file = await fileSystem.createFile(cacheObject.relativePath!);
+
     return file.exists();
   }
 
   Future<CacheObject?> _getCacheDataFromDatabase(String key) async {
     final provider = await _cacheInfoRepository;
     final data = await provider.get(key);
-    if (await _fileExists(data)) {
+    if (await _fileExistsIfExpectedTo(data)) {
       _updateCacheDataInDatabase(data!);
     }
     _scheduleCleanup();
@@ -182,8 +198,10 @@ class CacheStore {
     if (_futureCache.containsKey(cacheObject.key)) {
       _futureCache.remove(cacheObject.key);
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
-    if (await file.exists()) {
+    final relativePath = cacheObject.relativePath;
+    final file =
+        relativePath == null ? null : await fileSystem.createFile(relativePath);
+    if (file != null && await file.exists()) {
       await file.delete();
     }
   }

@@ -16,7 +16,7 @@ class FileInfo extends FileResponse {
       : super(originalUrl);
 
   /// Fetched file
-  final File file;
+  final File? file;
 
   /// Source from the file, can be cache or online (web).
   final FileSource source;

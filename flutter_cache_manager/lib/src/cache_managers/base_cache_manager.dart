@@ -12,7 +12,7 @@ abstract class BaseCacheManager {
   /// When a file is cached it is return directly, when it is too old the file is
   /// downloaded in the background. When a cached file is not available the
   /// newly downloaded file is returned.
-  Future<File> getSingleFile(
+  Future<File?> getSingleFile(
     String url, {
     String key,
     Map<String, String> headers,
@@ -57,7 +57,7 @@ abstract class BaseCacheManager {
   /// for example "jpg". When cache info is available for the url that path
   /// is re-used.
   /// The returned [File] is saved on disk.
-  Future<File> putFile(
+  Future<File?> putFile(
     String url,
     Uint8List fileBytes, {
     String? key,
@@ -73,7 +73,7 @@ abstract class BaseCacheManager {
   /// for example "jpg". When cache info is available for the url that path
   /// is re-used.
   /// The returned [File] is saved on disk.
-  Future<File> putFileStream(
+  Future<File?> putFileStream(
     String url,
     Stream<List<int>> source, {
     String? key,
