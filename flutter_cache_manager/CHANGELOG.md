@@ -1,3 +1,6 @@
+## [3.3.2] - 2024-04-25
+* Updates dependencies to their latest versions.
+
 ## [3.3.1] - 2023-07-03
 * Support Dart 3.0.0 for http ^1.0.0 and file ^7.0.0
 * Update example
