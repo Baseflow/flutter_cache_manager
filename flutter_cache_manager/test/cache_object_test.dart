@@ -15,11 +15,11 @@ void main() {
   final validDate = DateTime.utc(2020, 03, 27, 09, 26).toLocal();
   final now = DateTime(2020, 03, 28, 09, 26);
 
-  final testId = 1;
-  final relativePath = 'test.png';
-  final testUrl = 'www.test.com/image';
-  final testKey = 'test123';
-  final eTag = 'test1';
+  const testId = 1;
+  const relativePath = 'test.png';
+  const testUrl = 'www.test.com/image';
+  const testKey = 'test123';
+  const eTag = 'test1';
 
   test('constructor, no explicit key', () {
     final object = CacheObject(

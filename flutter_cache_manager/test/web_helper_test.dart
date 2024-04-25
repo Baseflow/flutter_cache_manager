@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:clock/clock.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -232,8 +230,7 @@ void main() {
 
 MockCacheStore _createStore(Config config) {
   final store = MockCacheStore();
-  when(store.putFile(argThat(anything)))
-      .thenAnswer((_) => Future.value(VoidCallback));
+  when(store.putFile(argThat(anything))).thenAnswer((_) => Future.value());
   when(store.retrieveCacheData(argThat(anything)))
       .thenAnswer((invocation) => Future.value(CacheObject(
             invocation.positionalArguments.first as String,

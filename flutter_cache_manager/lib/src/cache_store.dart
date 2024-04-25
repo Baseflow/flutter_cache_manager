@@ -1,14 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter_cache_manager/src/config/config.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
-import 'package:pedantic/pedantic.dart';
-
-import '../flutter_cache_manager.dart';
-import 'logger.dart';
-import 'result/file_info.dart';
-import 'storage/cache_info_repositories/cache_info_repository.dart';
-import 'storage/cache_object.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -23,9 +17,12 @@ class CacheStore {
   FileSystem fileSystem;
 
   final Config _config;
+
   String get storeKey => _config.cacheKey;
   final Future<CacheInfoRepository> _cacheInfoRepository;
+
   int get _capacity => _config.maxNrOfCacheObjects;
+
   Duration get _maxAge => _config.stalePeriod;
 
   DateTime lastCleanupRun = DateTime.now();
@@ -73,7 +70,7 @@ class CacheStore {
     }
     if (!_futureCache.containsKey(key)) {
       final completer = Completer<CacheObject?>();
-      unawaited(_getCacheDataFromDatabase(key).then((cacheObject) async {
+      _getCacheDataFromDatabase(key).then((cacheObject) async {
         if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
           final provider = await _cacheInfoRepository;
           await provider.delete(cacheObject!.id!);
@@ -86,8 +83,8 @@ class CacheStore {
           _memCache[key] = cacheObject;
         }
         completer.complete(cacheObject);
-        unawaited(_futureCache.remove(key));
-      }));
+        _futureCache.remove(key);
+      });
       _futureCache[key] = completer.future;
     }
     return _futureCache[key];
@@ -107,7 +104,7 @@ class CacheStore {
     if (cacheObject == null) {
       return false;
     }
-    var file = await fileSystem.createFile(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
     return file.exists();
   }
 
@@ -115,7 +112,7 @@ class CacheStore {
     final provider = await _cacheInfoRepository;
     final data = await provider.get(key);
     if (await _fileExists(data)) {
-      unawaited(_updateCacheDataInDatabase(data!));
+      _updateCacheDataInDatabase(data!);
     }
     _scheduleCleanup();
     return data;
@@ -142,12 +139,12 @@ class CacheStore {
 
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
     for (final cacheObject in overCapacity) {
-      unawaited(_removeCachedFile(cacheObject, toRemove));
+      _removeCachedFile(cacheObject, toRemove);
     }
 
     final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in oldObjects) {
-      unawaited(_removeCachedFile(cacheObject, toRemove));
+      _removeCachedFile(cacheObject, toRemove);
     }
 
     await provider.deleteAll(toRemove);
@@ -158,7 +155,7 @@ class CacheStore {
     final toRemove = <int>[];
     final allObjects = await provider.getAllObjects();
     for (final cacheObject in allObjects) {
-      unawaited(_removeCachedFile(cacheObject, toRemove));
+      _removeCachedFile(cacheObject, toRemove);
     }
     await provider.deleteAll(toRemove);
   }
@@ -183,7 +180,7 @@ class CacheStore {
       _memCache.remove(cacheObject.key);
     }
     if (_futureCache.containsKey(cacheObject.key)) {
-      unawaited(_futureCache.remove(cacheObject.key));
+      _futureCache.remove(cacheObject.key);
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
     if (await file.exists()) {

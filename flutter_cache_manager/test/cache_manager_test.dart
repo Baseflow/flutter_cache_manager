@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:clock/clock.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/cache_managers/image_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -490,8 +487,7 @@ void main() {
       var fileUrl = 'baseflow.com/test';
 
       var store = MockCacheStore();
-      when(store.putFile(argThat(anything)))
-          .thenAnswer((_) => Future.value(VoidCallback));
+      when(store.putFile(argThat(anything))).thenAnswer((_) => Future.value());
 
       when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(null));
 
