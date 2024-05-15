@@ -48,6 +48,9 @@ class CacheManager implements BaseCacheManager {
 
   final Config _config;
 
+  /// Get the config
+  Config get config => _config;
+
   /// Store helper for cached files
   final CacheStore _store;
 
