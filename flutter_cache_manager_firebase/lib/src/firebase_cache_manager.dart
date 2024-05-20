@@ -12,6 +12,8 @@ class FirebaseCacheManager extends CacheManager {
 
   final RetryOptions? retryOptions;
 
+  final RetryOptions? retryOptions;
+
   factory FirebaseCacheManager() {
     return _instance;
   }
