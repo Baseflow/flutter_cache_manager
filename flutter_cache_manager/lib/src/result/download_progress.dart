@@ -2,8 +2,7 @@ import 'package:flutter_cache_manager/src/result/file_response.dart';
 
 /// Progress of the file that is being downloaded from the [originalUrl].
 class DownloadProgress extends FileResponse {
-  const DownloadProgress(String originalUrl, this.totalSize, this.downloaded)
-      : super(originalUrl);
+  const DownloadProgress(super.originalUrl, this.totalSize, this.downloaded);
 
   /// download progress as an double between 0 and 1.
   /// When the final size is unknown or the downloaded size exceeds the total
