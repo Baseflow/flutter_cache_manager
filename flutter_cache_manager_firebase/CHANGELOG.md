@@ -1,5 +1,5 @@
-## [2.0.2] - 2024-04-25
-* Updates dependencies to their latest versions.
+## [2.0.2] - 2023-05-25
+* Update dependencies
 
 ## [2.0.1] - 2021-08-27
 * Update dependencies
