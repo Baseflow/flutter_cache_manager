@@ -6,13 +6,16 @@ import 'firebase_http_file_service.dart';
 /// and store them in your local cache.
 class FirebaseCacheManager extends CacheManager {
   static const key = 'firebaseCache';
+  static String? _bucket;
 
   static late final FirebaseCacheManager _instance = FirebaseCacheManager._();
 
-  factory FirebaseCacheManager() {
+  factory FirebaseCacheManager({String? bucket}) {
+    _bucket = bucket;
     return _instance;
   }
 
   FirebaseCacheManager._()
-      : super(Config(key, fileService: FirebaseHttpFileService()));
+      : super(
+            Config(key, fileService: FirebaseHttpFileService(bucket: _bucket)));
 }
