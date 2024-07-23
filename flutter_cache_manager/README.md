@@ -56,6 +56,9 @@ The image from the url is resized within the specifications, and the resized ima
 always tries to keep the existing aspect ratios. The original image is also cached and used to resize the image if 
 you call this method with other height/width parameters.
 
+And also there's a `getFileFromCache` method that returns a resized image from the cache only without downloading it.
+`getFileFromCache` only retrieves from cache and returns no image when the image is not in the cache.
+
 ## Other implementations
 When your files are stored on Firebase Storage you can use [flutter_cache_manager_firebase](https://pub.dev/packages/flutter_cache_manager_firebase).
 
