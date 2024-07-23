@@ -7,7 +7,7 @@ import 'firebase_http_file_service.dart';
 class FirebaseCacheManager extends CacheManager {
   static const key = 'firebaseCache';
 
-  static late final FirebaseCacheManager _instance = FirebaseCacheManager._();
+  static final FirebaseCacheManager _instance = FirebaseCacheManager._();
 
   factory FirebaseCacheManager() {
     return _instance;
