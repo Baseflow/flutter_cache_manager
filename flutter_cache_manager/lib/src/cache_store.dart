@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'dart:io' as io;
@@ -185,7 +186,12 @@ class CacheStore {
     final file = io.File(cacheObject.relativePath);
 
     if (file.existsSync()) {
-      await file.delete();
+      try {
+        await file.delete();
+        // ignore: unused_catch_clause
+      } on PathNotFoundException catch (e) {
+        // File has already been deleted. Do nothing #184
+      }
     }
   }
 
