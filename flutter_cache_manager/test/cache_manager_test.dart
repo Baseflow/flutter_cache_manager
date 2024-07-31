@@ -215,6 +215,42 @@ void main() {
       await expectLater(fileStream, emitsError(error));
       verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
     });
+
+    test(
+        'Outdated cacheFile should call to web, where 404 response should add Error to Stream and evict cache',
+        () async {
+      var fileName = 'test.jpg';
+      var fileUrl = 'baseflow.com/test';
+      var validTill = DateTime.now().subtract(const Duration(days: 1));
+
+      var store = MockCacheStore();
+      var file = await createTestConfig().fileSystem.createFile(fileName);
+      var cachedInfo = FileInfo(file, FileSource.Cache, validTill, fileUrl);
+      var cacheObject = CacheObject(fileUrl,
+          relativePath: file.path, validTill: validTill, id: 123);
+      when(store.getFile(fileUrl)).thenAnswer((_) => Future.value(cachedInfo));
+      when(store.retrieveCacheData(fileUrl))
+          .thenAnswer((_) => Future.value(cacheObject));
+
+      var webHelper = MockWebHelper();
+      var error = HttpExceptionWithStatus(404, 'Invalid statusCode: 404',
+          uri: Uri.parse(fileUrl));
+      when(webHelper.downloadFile(fileUrl, key: anyNamed('key')))
+          .thenThrow(error);
+
+      var cacheManager = TestCacheManager(
+        createTestConfig(),
+        store: store,
+        webHelper: webHelper,
+      );
+
+      // ignore: deprecated_member_use_from_same_package
+      var fileStream = cacheManager.getFile(fileUrl);
+      await expectLater(
+          fileStream, emitsInOrder([cachedInfo, emitsError(error)]));
+      verify(webHelper.downloadFile(any, key: anyNamed('key'))).called(1);
+      verify(store.removeCachedFile(cacheObject)).called(1);
+    });
   });
   group('explicit key', () {
     test('Valid cacheFile should not call to web', () async {
