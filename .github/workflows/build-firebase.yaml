@@ -3,13 +3,17 @@ name: build firebase
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the develop branch
 on:
+  workflow_dispatch:
+
   push:
+    tags:
+      - "*"
     branches: [develop, main]
     paths:
       - "flutter_cache_manager_firebase/**"
       - ".github/workflows/**"
   pull_request:
-    branches: [develop]
+    branches: [develop, main]
     paths:
       - "flutter_cache_manager_firebase/**"
       - ".github/workflows/**"
