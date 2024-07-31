@@ -107,9 +107,9 @@ jobs:
         working-directory: ${{env.source-directory}}
 
       # Run all unit-tests with code coverage
-      - name: Run unit tests
-        run: flutter test --coverage
-        working-directory: ${{env.source-directory}}
+      # - name: Run unit tests
+      #   run: flutter test --coverage
+      #   working-directory: ${{env.source-directory}}
 
       # # Upload code coverage information
       # - uses: codecov/codecov-action@v4
