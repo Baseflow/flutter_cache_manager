@@ -144,7 +144,9 @@ void main() {
       verify(config.repo.updateOrInsert(cacheObject)).called(1);
     });
 
-    test('Store should store fileinfo in repo and id should be available afterwards', () async {
+    test(
+        'Store should store fileinfo in repo and id should be available afterwards',
+        () async {
       var config = createTestConfig();
 
       var cacheObject = CacheObject(
@@ -189,7 +191,8 @@ void main() {
       );
       await store.removeCachedFile(cacheObject);
 
-      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should remove file over capacity', () async {
@@ -205,16 +208,20 @@ void main() {
       );
       await config.returnsFile('testimage.png');
 
-      when(config.mockRepo.getObjectsOverCapacity(any)).thenAnswer((_) => Future.value([cacheObject]));
-      when(config.mockRepo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
-      when(config.mockRepo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(cacheObject));
+      when(config.mockRepo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([cacheObject]));
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
       await untilCalled(config.mockRepo.deleteAll(any));
 
       verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
-      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should remove file over that are too old', () async {
@@ -230,16 +237,20 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
-      when(config.mockRepo.getObjectsOverCapacity(any)).thenAnswer((_) => Future.value([]));
-      when(config.mockRepo.getOldObjects(any)).thenAnswer((_) => Future.value([cacheObject]));
-      when(config.mockRepo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(cacheObject));
+      when(config.mockRepo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([cacheObject]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
       await untilCalled(config.mockRepo.deleteAll(any));
 
       verify(config.mockRepo.getOldObjects(any)).called(1);
-      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should remove file old and over capacity', () async {
@@ -255,9 +266,12 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
-      when(config.mockRepo.getObjectsOverCapacity(any)).thenAnswer((_) => Future.value([cacheObject]));
-      when(config.mockRepo.getOldObjects(any)).thenAnswer((_) => Future.value([cacheObject]));
-      when(config.mockRepo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(cacheObject));
+      when(config.mockRepo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([cacheObject]));
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([cacheObject]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
@@ -266,7 +280,8 @@ void main() {
 
       verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
       verify(config.mockRepo.getOldObjects(any)).called(1);
-      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id)))).called(1);
+      verify(config.mockRepo.deleteAll(argThat(contains(cacheObject.id))))
+          .called(1);
     });
 
     test('Store should recheck cache info when file is removed', () async {
@@ -282,16 +297,20 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
-      when(config.mockRepo.getObjectsOverCapacity(any)).thenAnswer((_) => Future.value([]));
-      when(config.mockRepo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
-      when(config.mockRepo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(cacheObject));
+      when(config.mockRepo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
       await file.delete();
       expect(await store.getFile('baseflow.com/test.png'), isNull);
     });
 
-    test('Store should not remove files that are not old or over capacity', () async {
+    test('Store should not remove files that are not old or over capacity',
+        () async {
       var config = createTestConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
@@ -304,9 +323,12 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
-      when(config.mockRepo.getObjectsOverCapacity(any)).thenAnswer((_) => Future.value([]));
-      when(config.mockRepo.getOldObjects(any)).thenAnswer((_) => Future.value([]));
-      when(config.mockRepo.get('baseflow.com/test.png')).thenAnswer((_) => Future.value(cacheObject));
+      when(config.mockRepo.getObjectsOverCapacity(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.getOldObjects(any))
+          .thenAnswer((_) => Future.value([]));
+      when(config.mockRepo.get('baseflow.com/test.png'))
+          .thenAnswer((_) => Future.value(cacheObject));
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
 
@@ -341,11 +363,13 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
-      when(config.mockRepo.getAllObjects()).thenAnswer((_) => Future.value([co1, co2, co3]));
+      when(config.mockRepo.getAllObjects())
+          .thenAnswer((_) => Future.value([co1, co2, co3]));
 
       await store.emptyCache();
 
-      verify(config.mockRepo.deleteAll(argThat(containsAll([co1.id, co2.id, co3.id])))).called(1);
+      verify(config.mockRepo
+          .deleteAll(argThat(containsAll([co1.id, co2.id, co3.id])))).called(1);
     });
   });
 }
