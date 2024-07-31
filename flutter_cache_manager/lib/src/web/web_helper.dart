@@ -153,6 +153,7 @@ class WebHelper {
       FileSource.Online,
       newCacheObject.validTill,
       newCacheObject.url,
+      statusCode: response.statusCode,
     );
   }
 
