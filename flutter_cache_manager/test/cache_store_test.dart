@@ -11,6 +11,27 @@ import 'helpers/mock_cache_info_repository.dart';
 import 'helpers/test_configuration.dart';
 
 void main() {
+  late int fileId;
+  late String fileName;
+  late String fileUrl;
+  late DateTime validTill;
+
+  late CacheObject cacheObject;
+
+  setUp(() {
+    fileId = 666;
+    fileName = 'testimage.png';
+    fileUrl = 'baseflow.com/test.png';
+    validTill = DateTime(2017, 9, 7, 17, 30);
+
+    cacheObject = CacheObject(
+      fileUrl,
+      relativePath: fileName,
+      id: fileId,
+      validTill: validTill,
+    );
+  });
+
   group('Retrieving files from store', () {
     test('Store should return null when file not cached', () async {
       var repo = MockCacheInfoRepository();
@@ -21,9 +42,6 @@ void main() {
     });
 
     test('Store should return FileInfo when file is cached', () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
-
       var config = createTestConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now());
@@ -34,6 +52,28 @@ void main() {
       var store = CacheStore(config);
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
+    });
+
+    test('Store should return null if file is not cached', () async {
+      var config = createTestConfig();
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill,
+          id: fileId, key: fileUrl);
+
+      var tempDir = createDir();
+      await (await tempDir).childFile('testimage.png').create();
+
+      final store = CacheStore(config);
+
+      final results = Future.wait([
+        store.removeCachedFile(cacheObject),
+        store.removeCachedFile(cacheObject),
+      ]);
+
+      expect(
+        () => results,
+        returnsNormally,
+      );
     });
 
     test('Store should return null when file is no longer cached', () async {
@@ -59,9 +99,6 @@ void main() {
     });
 
     test('Store should return CacheInfo when file is cached', () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
-
       var config = createTestConfig();
       await config.returnsFile(fileName);
       config.returnsCacheObject(fileUrl, fileName, DateTime.now(), id: 1);
@@ -74,8 +111,6 @@ void main() {
 
     test('Store should return CacheInfo from memory when asked twice',
         () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
       var config = createTestConfig();
 
@@ -96,8 +131,6 @@ void main() {
     test(
         'Store should return File from memcache only when file is retrieved before',
         () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
       var config = createTestConfig();
 
@@ -172,8 +205,6 @@ void main() {
 
   group('Removing files in store', () {
     test('Store should remove fileinfo from repo on delete', () async {
-      var fileName = 'testimage.png';
-      var fileUrl = 'baseflow.com/test.png';
       var validTill = DateTime.now();
       var config = createTestConfig();
 
