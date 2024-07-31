@@ -12,14 +12,14 @@ class FirebaseCacheManager extends CacheManager {
 
   final RetryOptions? retryOptions;
 
-  final RetryOptions? retryOptions;
-
   factory FirebaseCacheManager() {
     return _instance;
   }
 
-  FirebaseCacheManager.retry({this.retryOptions = const RetryOptions()}): super(Config(key, fileService: FirebaseHttpFileService(retryOptions: retryOptions)));
+  FirebaseCacheManager.retry({this.retryOptions = const RetryOptions()})
+      : super(Config(key,
+            fileService: FirebaseHttpFileService(retryOptions: retryOptions)));
 
-  FirebaseCacheManager._({this.retryOptions})
+  FirebaseCacheManager._(this.retryOptions)
       : super(Config(key, fileService: FirebaseHttpFileService()));
 }
