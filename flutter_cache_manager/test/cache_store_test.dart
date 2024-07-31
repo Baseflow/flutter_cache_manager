@@ -65,13 +65,13 @@ void main() {
 
       final store = CacheStore(config);
 
-      final _results = Future.wait([
+      final results = Future.wait([
         store.removeCachedFile(cacheObject),
         store.removeCachedFile(cacheObject),
       ]);
 
       expect(
-        () => _results,
+        () => results,
         returnsNormally,
       );
     });
