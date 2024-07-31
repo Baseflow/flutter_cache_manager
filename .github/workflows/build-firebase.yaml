@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      source-directory: ./flutter_cache_manager_firebase_firebase
+      source-directory: ./flutter_cache_manager_firebase
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
