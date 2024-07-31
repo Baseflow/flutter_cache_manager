@@ -447,3 +447,4 @@ jobs:
       # Publish the package
       - name: Publish package
         run: dart pub publish -v -f
+        working-directory: ${{env.source-directory}}
