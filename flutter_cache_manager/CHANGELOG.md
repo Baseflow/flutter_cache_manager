@@ -1,6 +1,11 @@
-## [3.3.4] - 2023-12-05
+## [3.4.0] - 2024-08-01
 
 * [Bugfix] For a previously cached file that got removed on the server, now evicts that file on 404 and notifies listeners.
+* Allow to override ifNoneMatchHeader
+* Get cache total size
+* Export File System
+* Expose memoryCacheContainsKey method from cache_store
+* Updates dependencies
 
 ## [3.3.3] - 2024-07-23
 

@@ -1,3 +1,9 @@
+## [2.1.0] - 2024-08-01
+
+* Support setting a bucket
+* Add retry options
+* Updates dependencies
+
 ## [2.0.3] - 2024-07-23
 
 * Updates dependencies ([#457](https://github.com/Baseflow/flutter_cache_manager/pull/457))
