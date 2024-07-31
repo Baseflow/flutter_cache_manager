@@ -155,7 +155,9 @@ class CacheManager implements BaseCacheManager {
           streamController.addError(e);
         }
 
-        if (cacheFile != null && e is HttpExceptionWithStatus && e.statusCode == 404) {
+        if (cacheFile != null &&
+            e is HttpExceptionWithStatus &&
+            e.statusCode == 404) {
           if (streamController.hasListener) {
             streamController.addError(e);
           }
