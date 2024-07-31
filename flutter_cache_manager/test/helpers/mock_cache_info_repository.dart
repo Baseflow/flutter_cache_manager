@@ -1,5 +1,6 @@
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:mockito/mockito.dart';
+
 import '../mock.mocks.dart';
 
 class MockCacheInfoRepository extends MockCacheInfoRepositoryBase {

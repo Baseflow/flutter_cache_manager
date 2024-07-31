@@ -13,12 +13,12 @@ class DownloadPage extends StatelessWidget {
   final VoidCallback removeFile;
 
   const DownloadPage({
-    Key key,
-    this.fileStream,
-    this.downloadFile,
-    this.clearCache,
-    this.removeFile,
-  }) : super(key: key);
+    required this.fileStream,
+    required this.downloadFile,
+    required this.clearCache,
+    required this.removeFile,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +26,7 @@ class DownloadPage extends StatelessWidget {
       stream: fileStream,
       builder: (context, snapshot) {
         Widget body;
-
-        var loading = !snapshot.hasData || snapshot.data is DownloadProgress;
+        final loading = !snapshot.hasData || snapshot.data is DownloadProgress;
 
         if (snapshot.hasError) {
           body = ListTile(
@@ -36,23 +35,20 @@ class DownloadPage extends StatelessWidget {
           );
         } else if (loading) {
           body = p_i.ProgressIndicator(
-              progress: snapshot.data as DownloadProgress);
+            progress: snapshot.data as DownloadProgress?,
+          );
         } else {
           body = FileInfoWidget(
-            fileInfo: snapshot.data as FileInfo,
+            fileInfo: snapshot.requireData as FileInfo,
             clearCache: clearCache,
             removeFile: removeFile,
           );
         }
 
         return Scaffold(
-          appBar: null,
           body: body,
-          floatingActionButton: !loading
-              ? Fab(
-                  downloadFile: downloadFile,
-                )
-              : null,
+          floatingActionButton:
+              !loading ? Fab(downloadFile: downloadFile) : null,
         );
       },
     );

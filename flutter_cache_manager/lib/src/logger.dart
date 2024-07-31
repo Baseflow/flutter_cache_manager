@@ -1,4 +1,4 @@
-import '../flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 /// Instance of the cache manager. Can be set to a custom one if preferred.
 CacheLogger cacheLogger = CacheLogger();
@@ -14,7 +14,7 @@ enum CacheManagerLogLevel {
 
 /// [CacheLogger] which is used by the cache manager to log useful information
 class CacheLogger {
-  /// Function to log a message on a certain loglevel
+  /// Function to log a message on a certain log level
   void log(String message, CacheManagerLogLevel level) {
     if (CacheManager.logLevel.index >= level.index) {
       // ignore: avoid_print

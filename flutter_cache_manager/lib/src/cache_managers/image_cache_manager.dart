@@ -36,7 +36,7 @@ mixin ImageCacheManager on BaseCacheManager {
     if (maxHeight != null) resizedKey += '_h$maxHeight';
     resizedKey += '_$key';
 
-    var fromCache = await getFileFromCache(resizedKey);
+    final fromCache = await getFileFromCache(resizedKey);
     if (fromCache != null) {
       yield fromCache;
       if (fromCache.validTill.isAfter(DateTime.now())) {
@@ -69,38 +69,38 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
     int? maxHeight,
   ) async {
-    var originalFileName = originalFile.file.path;
-    var fileExtension = originalFileName.split('.').last;
+    final originalFileName = originalFile.file.path;
+    final fileExtension = originalFileName.split('.').last;
     if (!supportedFileNames.contains(fileExtension)) {
       return originalFile;
     }
 
-    var image = await _decodeImage(originalFile.file);
+    final image = await _decodeImage(originalFile.file);
 
-    var shouldResize = maxWidth != null
+    final shouldResize = maxWidth != null
         ? image.width > maxWidth
         : false || maxHeight != null
             ? image.height > maxHeight
             : false;
     if (!shouldResize) return originalFile;
     if (maxWidth != null && maxHeight != null) {
-      var resizeFactorWidth = image.width / maxWidth;
-      var resizeFactorHeight = image.height / maxHeight;
-      var resizeFactor = max(resizeFactorHeight, resizeFactorWidth);
+      final resizeFactorWidth = image.width / maxWidth;
+      final resizeFactorHeight = image.height / maxHeight;
+      final resizeFactor = max(resizeFactorHeight, resizeFactorWidth);
 
       maxWidth = (image.width / resizeFactor).round();
       maxHeight = (image.height / resizeFactor).round();
     }
 
-    var resized = await _decodeImage(originalFile.file,
-        width: maxWidth, height: maxHeight, allowUpscaling: false);
-    var resizedFile =
+    final resized = await _decodeImage(originalFile.file,
+        width: maxWidth, height: maxHeight);
+    final resizedFile =
         (await resized.toByteData(format: ui.ImageByteFormat.png))!
             .buffer
             .asUint8List();
-    var maxAge = originalFile.validTill.difference(DateTime.now());
+    final maxAge = originalFile.validTill.difference(DateTime.now());
 
-    var file = await putFile(
+    final file = await putFile(
       originalFile.originalUrl,
       resizedFile,
       key: key,
@@ -125,7 +125,7 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
     int? maxHeight,
   }) async* {
-    await for (var response in getFileStream(
+    await for (final response in getFileStream(
       url,
       key: originalKey,
       headers: headers,
@@ -148,15 +148,15 @@ mixin ImageCacheManager on BaseCacheManager {
 
 Future<ui.Image> _decodeImage(File file,
     {int? width, int? height, bool allowUpscaling = false}) {
-  var shouldResize = width != null || height != null;
-  var fileImage = FileImage(file);
+  final shouldResize = width != null || height != null;
+  final fileImage = FileImage(file);
   final image = shouldResize
       ? ResizeImage(fileImage,
           width: width, height: height, allowUpscaling: allowUpscaling)
       : fileImage as ImageProvider;
   final completer = Completer<ui.Image>();
   image
-      .resolve(const ImageConfiguration())
+      .resolve(ImageConfiguration.empty)
       .addListener(ImageStreamListener((info, _) {
     completer.complete(info.image);
     image.evict();

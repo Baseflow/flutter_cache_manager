@@ -4,6 +4,7 @@ import '../mock.mocks.dart';
 
 class MockCacheStore extends MockCacheStoreBase {
   MockCacheStore._();
+
   factory MockCacheStore() {
     final store = MockCacheStore._();
     when(store.retrieveCacheData(any,

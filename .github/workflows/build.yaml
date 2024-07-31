@@ -4,13 +4,15 @@ name: build
 # events but only for the develop branch
 on:
   push:
-    branches: [ develop, master ]
+    branches: [develop, main]
     paths:
-      - 'flutter_cache_manager/**'
+      - "flutter_cache_manager/**"
+      - ".github/workflows/**"
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
     paths:
-      - 'flutter_cache_manager/**'
+      - "flutter_cache_manager/**"
+      - ".github/workflows/**"
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -26,12 +28,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Download all Flutter packages
       - name: Download dependencies
@@ -40,7 +45,7 @@ jobs:
 
       # Run Flutter Format to ensure formatting is valid
       - name: Run Flutter Format
-        run: flutter format --set-exit-if-changed .
+        run: dart format --set-exit-if-changed .
         working-directory: ${{env.source-directory}}
 
   analyze:
@@ -55,12 +60,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Download all Flutter packages
       - name: Download dependencies
@@ -85,17 +93,21 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Ensure correct JAVA version is installed.
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: '12.x'
+          distribution: "zulu"
+          java-version: "17"
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Download all Flutter packages
       - name: Download dependencies
@@ -120,12 +132,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Download all Flutter packages
       - name: Download dependencies
@@ -150,12 +165,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Enable platform support
       - name: Enable macOS
@@ -185,12 +203,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Enable platform support
       - name: Enable Windows
@@ -224,12 +245,15 @@ jobs:
       - run: sudo apt-get install -y ninja-build libgtk-3-dev libblkid-dev
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Enable platform support
       - name: Enable Linux
@@ -264,12 +288,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Download all Flutter packages
       - name: Download dependencies
@@ -292,12 +319,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Make sure the stable version of Flutter is available
-      - uses: subosito/flutter-action@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
+          architecture: x64
+          cache: true
 
       # Download all Flutter packages
       - name: Download dependencies
@@ -309,9 +339,11 @@ jobs:
         run: flutter test --coverage
         working-directory: ${{env.source-directory}}
 
-      # Upload code coverage information
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ${{env.source-directory}}/coverage/lcov.info # optional
-          name: CacheManager # optional
-          fail_ci_if_error: true
+      # # Upload code coverage information
+      # - uses: codecov/codecov-action@v4
+      #   env:
+      #      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      #   with:
+      #     files: ${{env.source-directory}}/coverage/lcov.info
+      #     name: CacheManager
+      #     fail_ci_if_error: true
