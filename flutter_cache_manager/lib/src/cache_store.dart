@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'dart:io' as io;
-import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
