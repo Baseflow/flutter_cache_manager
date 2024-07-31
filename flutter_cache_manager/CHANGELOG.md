@@ -1,3 +1,6 @@
+## [3.3.3] - 2024-07-23
+* Updates dependencies ([#457](https://github.com/Baseflow/flutter_cache_manager/pull/457))
+
 ## [3.3.2] - 2024-04-25
 * Updates dependencies to their latest versions.
 
