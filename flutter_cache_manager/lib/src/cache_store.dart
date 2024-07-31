@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 
 ///Flutter Cache Manager
@@ -186,6 +185,10 @@ class CacheStore {
     if (await file.exists()) {
       await file.delete();
     }
+  }
+
+  bool memoryCacheContainsKey(String key) {
+    return _memCache.containsKey(key);
   }
 
   Future<void> dispose() async {

@@ -110,6 +110,23 @@ void main() {
       await store.getFile(fileUrl);
       expect(await store.getFileFromMemory(fileUrl), isNotNull);
     });
+
+    test(
+        'Store.memoryCacheContainsKey should return true if the key is present in the memory cache',
+        () async {
+      var config = createTestConfig();
+      var store = CacheStore(config);
+
+      var cacheObject = CacheObject(
+        'baseflow.com/test.png',
+        relativePath: 'testimage.png',
+        validTill: clock.now().add(const Duration(days: 7)),
+      );
+      await store.putFile(cacheObject);
+
+      expect(store.memoryCacheContainsKey('baseflow.com/test.png'), true);
+      expect(store.memoryCacheContainsKey('unseen-file'), false);
+    });
   });
 
   group('Storing files in store', () {
