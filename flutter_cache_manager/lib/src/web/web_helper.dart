@@ -100,15 +100,16 @@ class WebHelper {
   Future<FileServiceResponse> _download(
       CacheObject cacheObject, Map<String, String>? authHeaders) {
     final headers = <String, String>{};
-    if (authHeaders != null) {
-      headers.addAll(authHeaders);
-    }
 
     final etag = cacheObject.eTag;
 
     // Adding `if-none-match` header on web causes a CORS error.
     if (etag != null && !kIsWeb) {
       headers[HttpHeaders.ifNoneMatchHeader] = etag;
+    }
+
+    if (authHeaders != null) {
+      headers.addAll(authHeaders);
     }
 
     return fileFetcher.get(cacheObject.url, headers: headers);
@@ -152,6 +153,7 @@ class WebHelper {
       FileSource.Online,
       newCacheObject.validTill,
       newCacheObject.url,
+      statusCode: response.statusCode,
     );
   }
 
