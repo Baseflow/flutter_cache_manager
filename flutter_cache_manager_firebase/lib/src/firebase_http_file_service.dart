@@ -10,12 +10,21 @@ class FirebaseHttpFileService extends HttpFileService {
 
   FirebaseHttpFileService({
     this.retryOptions,
-  });
+    this.bucket,
+  }) : super();
+
+  final String? bucket;
 
   @override
   Future<FileServiceResponse> get(String url,
       {Map<String, String>? headers}) async {
-    var ref = FirebaseStorage.instance.ref().child(url);
+    late Reference ref;
+    if (bucket != null) {
+      ref =
+          FirebaseStorage.instanceFor(bucket: "gs://$bucket").ref().child(url);
+    } else {
+      ref = FirebaseStorage.instance.ref().child(url);
+    }
 
     String downloadUrl;
     if (retryOptions != null) {
