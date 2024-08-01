@@ -291,6 +291,6 @@ class CacheManager implements BaseCacheManager {
   /// Closes the cache database
   @override
   Future<void> dispose() async {
-    await _config.repo.close();
+    await _store.close();
   }
 }
