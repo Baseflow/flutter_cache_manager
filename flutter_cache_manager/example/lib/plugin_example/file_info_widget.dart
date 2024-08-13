@@ -8,25 +8,24 @@ class FileInfoWidget extends StatelessWidget {
   final VoidCallback removeFile;
 
   const FileInfoWidget({
-    Key key,
-    this.fileInfo,
-    this.clearCache,
-    this.removeFile,
-  }) : super(key: key);
+    required this.clearCache,
+    required this.removeFile,
+    required this.fileInfo,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      children: <Widget>[
+      children: [
         ListTile(
           title: const Text('Original URL'),
           subtitle: Text(fileInfo.originalUrl),
         ),
-        if (fileInfo.file != null)
-          ListTile(
-            title: const Text('Local file path'),
-            subtitle: Text(fileInfo.file.path),
-          ),
+        ListTile(
+          title: const Text('Local file path'),
+          subtitle: Text(fileInfo.file.path),
+        ),
         ListTile(
           title: const Text('Loaded from'),
           subtitle: Text(fileInfo.source.toString()),
@@ -36,19 +35,17 @@ class FileInfoWidget extends StatelessWidget {
           subtitle: Text(fileInfo.validTill.toIso8601String()),
         ),
         Padding(
-          padding: const EdgeInsets.all(10.0),
-          // ignore: deprecated_member_use
-          child: RaisedButton(
-            child: const Text('CLEAR CACHE'),
+          padding: const EdgeInsets.all(10),
+          child: ElevatedButton(
             onPressed: clearCache,
+            child: const Text('CLEAR CACHE'),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(10.0),
-          // ignore: deprecated_member_use
-          child: RaisedButton(
-            child: const Text('REMOVE FILE'),
+          padding: const EdgeInsets.all(10),
+          child: ElevatedButton(
             onPressed: removeFile,
+            child: const Text('REMOVE FILE'),
           ),
         ),
       ],

@@ -6,7 +6,6 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/queue_item.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
@@ -39,12 +38,13 @@ class WebHelper {
     if (subject == null || ignoreMemCache) {
       subject = BehaviorSubject<FileResponse>();
       _memCache[key] = subject;
-      unawaited(_downloadOrAddToQueue(url, key, authHeaders));
+      _downloadOrAddToQueue(url, key, authHeaders);
     }
     return subject.stream;
   }
 
   var concurrentCalls = 0;
+
   Future<void> _downloadOrAddToQueue(
     String url,
     String key,
@@ -59,13 +59,13 @@ class WebHelper {
         'CacheManager: Downloading $url', CacheManagerLogLevel.verbose);
 
     concurrentCalls++;
-    var subject = _memCache[key]!;
+    final subject = _memCache[key]!;
     try {
-      await for (var result
+      await for (final result
           in _updateFile(url, key, authHeaders: authHeaders)) {
         subject.add(result);
       }
-    } catch (e, stackTrace) {
+    } on Object catch (e, stackTrace) {
       subject.addError(e, stackTrace);
     } finally {
       concurrentCalls--;
@@ -77,7 +77,7 @@ class WebHelper {
 
   void _checkQueue() {
     if (_queue.isEmpty) return;
-    var next = _queue.removeFirst();
+    final next = _queue.removeFirst();
     _downloadOrAddToQueue(next.url, next.key, next.headers);
   }
 
@@ -100,15 +100,16 @@ class WebHelper {
   Future<FileServiceResponse> _download(
       CacheObject cacheObject, Map<String, String>? authHeaders) {
     final headers = <String, String>{};
-    if (authHeaders != null) {
-      headers.addAll(authHeaders);
-    }
 
     final etag = cacheObject.eTag;
 
     // Adding `if-none-match` header on web causes a CORS error.
     if (etag != null && !kIsWeb) {
       headers[HttpHeaders.ifNoneMatchHeader] = etag;
+    }
+
+    if (authHeaders != null) {
+      headers.addAll(authHeaders);
     }
 
     return fileFetcher.get(cacheObject.url, headers: headers);
@@ -130,7 +131,7 @@ class WebHelper {
     var newCacheObject = _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
       var savedBytes = 0;
-      await for (var progress in _saveFile(newCacheObject, response)) {
+      await for (final progress in _saveFile(newCacheObject, response)) {
         savedBytes = progress;
         yield DownloadProgress(
             cacheObject.url, response.contentLength, progress);
@@ -138,11 +139,11 @@ class WebHelper {
       newCacheObject = newCacheObject.copyWith(length: savedBytes);
     }
 
-    unawaited(_store.putFile(newCacheObject).then((_) {
+    _store.putFile(newCacheObject).then((_) {
       if (newCacheObject.relativePath != oldCacheObject.relativePath) {
         _removeOldFile(oldCacheObject.relativePath);
       }
-    }));
+    });
 
     final file = await _store.fileSystem.createFile(
       newCacheObject.relativePath,
@@ -152,6 +153,7 @@ class WebHelper {
       FileSource.Online,
       newCacheObject.validTill,
       newCacheObject.url,
+      statusCode: response.statusCode,
     );
   }
 
@@ -163,7 +165,7 @@ class WebHelper {
     if (!statusCodesFileNotChanged.contains(response.statusCode)) {
       if (!filePath.endsWith(fileExtension)) {
         //Delete old file directly when file extension changed
-        unawaited(_removeOldFile(filePath));
+        _removeOldFile(filePath);
       }
       // Store new file on different path
       filePath = '${const Uuid().v1()}$fileExtension';
@@ -176,16 +178,16 @@ class WebHelper {
   }
 
   Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {
-    var receivedBytesResultController = StreamController<int>();
-    unawaited(_saveFileAndPostUpdates(
+    final receivedBytesResultController = StreamController<int>();
+    _saveFileAndPostUpdates(
       receivedBytesResultController,
       cacheObject,
       response,
-    ));
+    );
     return receivedBytesResultController.stream;
   }
 
-  Future _saveFileAndPostUpdates(
+  Future<void> _saveFileAndPostUpdates(
       StreamController<int> receivedBytesResultController,
       CacheObject cacheObject,
       FileServiceResponse response) async {
@@ -199,7 +201,7 @@ class WebHelper {
         receivedBytesResultController.add(receivedBytes);
         return s;
       }).pipe(sink);
-    } catch (e, stacktrace) {
+    } on Object catch (e, stacktrace) {
       receivedBytesResultController.addError(e, stacktrace);
     }
     await receivedBytesResultController.close();
@@ -217,5 +219,6 @@ class WebHelper {
 class HttpExceptionWithStatus extends HttpException {
   const HttpExceptionWithStatus(this.statusCode, String message, {Uri? uri})
       : super(message, uri: uri);
+
   final int statusCode;
 }

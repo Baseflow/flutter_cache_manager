@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 mixin CacheInfoRepositoryHelperMethods on CacheInfoRepository {
-  var openConnections = 0;
+  int openConnections = 0;
   Completer<bool>? openCompleter;
 
   bool shouldOpenOnNewConnection() {
