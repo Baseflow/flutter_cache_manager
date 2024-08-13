@@ -6,7 +6,6 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/queue_item.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
@@ -101,15 +100,16 @@ class WebHelper {
   Future<FileServiceResponse> _download(
       CacheObject cacheObject, Map<String, String>? authHeaders) {
     final headers = <String, String>{};
-    if (authHeaders != null) {
-      headers.addAll(authHeaders);
-    }
 
     final etag = cacheObject.eTag;
 
     // Adding `if-none-match` header on web causes a CORS error.
     if (etag != null && !kIsWeb) {
       headers[HttpHeaders.ifNoneMatchHeader] = etag;
+    }
+
+    if (authHeaders != null) {
+      headers.addAll(authHeaders);
     }
 
     return fileFetcher.get(cacheObject.url, headers: headers);
@@ -153,6 +153,7 @@ class WebHelper {
       FileSource.Online,
       newCacheObject.validTill,
       newCacheObject.url,
+      statusCode: response.statusCode,
     );
   }
 

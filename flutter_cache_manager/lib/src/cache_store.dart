@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
-import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
+import 'dart:io' as io;
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -182,14 +182,34 @@ class CacheStore {
     if (_futureCache.containsKey(cacheObject.key)) {
       _futureCache.remove(cacheObject.key);
     }
-    final file = await fileSystem.createFile(cacheObject.relativePath);
-    if (await file.exists()) {
-      await file.delete();
+    final file = io.File(cacheObject.relativePath);
+
+    if (file.existsSync()) {
+      try {
+        await file.delete();
+        // ignore: unused_catch_clause
+      } on PathNotFoundException catch (e) {
+        // File has already been deleted. Do nothing #184
+      }
     }
+  }
+
+  bool memoryCacheContainsKey(String key) {
+    return _memCache.containsKey(key);
   }
 
   Future<void> dispose() async {
     final provider = await _cacheInfoRepository;
     await provider.close();
+  }
+
+  Future<int> getCacheSize() async {
+    final provider = await _cacheInfoRepository;
+    final allObjects = await provider.getAllObjects();
+    int total = 0;
+    for (var cacheObject in allObjects) {
+      total += cacheObject.length ?? 0;
+    }
+    return total;
   }
 }

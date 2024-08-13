@@ -5,7 +5,6 @@ import 'package:file/file.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:uuid/uuid.dart';
 
@@ -47,6 +46,9 @@ class CacheManager implements BaseCacheManager {
   }
 
   final Config _config;
+
+  /// Get the config
+  Config get config => _config;
 
   /// Store helper for cached files
   final CacheStore _store;
@@ -151,6 +153,15 @@ class CacheManager implements BaseCacheManager {
             CacheManagerLogLevel.debug);
         if (cacheFile == null && streamController.hasListener) {
           streamController.addError(e);
+        }
+
+        if (cacheFile != null &&
+            e is HttpExceptionWithStatus &&
+            e.statusCode == 404) {
+          if (streamController.hasListener) {
+            streamController.addError(e);
+          }
+          await removeFile(key);
         }
       }
     }
