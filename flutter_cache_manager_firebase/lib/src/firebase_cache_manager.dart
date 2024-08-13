@@ -1,4 +1,5 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:retry/retry.dart';
 
 import 'firebase_http_file_service.dart';
 
@@ -7,12 +8,21 @@ import 'firebase_http_file_service.dart';
 class FirebaseCacheManager extends CacheManager {
   static const key = 'firebaseCache';
 
-  static late final FirebaseCacheManager _instance = FirebaseCacheManager._();
+  static final FirebaseCacheManager _instance =
+      FirebaseCacheManager._(retryOptions: retryOptions, bucket: bucket);
 
-  factory FirebaseCacheManager() {
+  static RetryOptions? retryOptions;
+
+  static String? bucket;
+
+  factory FirebaseCacheManager({RetryOptions? retryOptions, String? bucket}) {
+    bucket = bucket;
+    retryOptions = retryOptions;
     return _instance;
   }
 
-  FirebaseCacheManager._()
-      : super(Config(key, fileService: FirebaseHttpFileService()));
+  FirebaseCacheManager._({RetryOptions? retryOptions, String? bucket})
+      : super(Config(key,
+            fileService: FirebaseHttpFileService(
+                retryOptions: retryOptions, bucket: bucket)));
 }
