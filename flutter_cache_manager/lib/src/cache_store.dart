@@ -154,9 +154,11 @@ class CacheStore {
     final provider = await _cacheInfoRepository;
     final toRemove = <int>[];
     final allObjects = await provider.getAllObjects();
+    var futures = <Future>[];
     for (final cacheObject in allObjects) {
-      _removeCachedFile(cacheObject, toRemove);
+      futures.add(_removeCachedFile(cacheObject, toRemove));
     }
+    await Future.wait(futures);
     await provider.deleteAll(toRemove);
   }
 
@@ -180,7 +182,7 @@ class CacheStore {
       _memCache.remove(cacheObject.key);
     }
     if (_futureCache.containsKey(cacheObject.key)) {
-      _futureCache.remove(cacheObject.key);
+      await _futureCache.remove(cacheObject.key);
     }
     final file = io.File(cacheObject.relativePath);
 
