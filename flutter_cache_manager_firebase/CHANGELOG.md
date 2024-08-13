@@ -1,3 +1,7 @@
+## [2.1.1] - 2024-08-13
+
+* Target js_interop for Wasm support
+
 ## [2.1.0] - 2024-08-01
 
 * Support setting a bucket
