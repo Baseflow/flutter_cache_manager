@@ -125,6 +125,59 @@ void main() {
       expect(progress, isNotEmpty);
     });
   });
+  group('Test resized image getting from cache', () {
+    test('Image should be fetched from cache without resizing', () async {
+      var config = await setupConfig(cacheKey: fileName);
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager.getImageFileFromCache(
+        fileName,
+      ) as FileInfo?;
+
+      await verifySize(result?.file.readAsBytesSync(), 120, 120);
+      config.verifyNoDownloadCall();
+    });
+
+    test('Image should be fetched from cache with resizing', () async {
+      var config = await setupConfig(cacheKey: fileName);
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager.getImageFileFromCache(
+        fileName,
+        maxHeight: 100,
+        maxWidth: 80,
+      ) as FileInfo?;
+
+      await verifySize(result?.file.readAsBytesSync(), 80, 80);
+      config.verifyNoDownloadCall();
+    });
+
+    test('Resized image should be fetched from cache', () async {
+      var config = await setupConfig(cacheKey: fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill,
+          key: 'resized_w100_h80_$fileName');
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager.getImageFileFromCache(
+        fileName,
+        maxWidth: 100,
+        maxHeight: 80,
+      ) as FileInfo?;
+
+      expect(result, isNotNull);
+      config.verifyNoDownloadCall();
+    });
+
+    test('If no image is in cache null should be returned', () async {
+      var config = await setupConfig(cacheKey: '');
+      var cacheManager = TestCacheManager(config);
+      var result = await cacheManager.getImageFileFromCache(
+        fileUrl,
+        maxWidth: 100,
+        maxHeight: 80,
+      ) as FileInfo?;
+
+      expect(result, isNull);
+      config.verifyNoDownloadCall();
+    });
+  });
 }
 
 Future<TestCacheManager> setupCacheManager() async {
@@ -140,10 +193,15 @@ Future<Config> setupConfig({String? cacheKey}) async {
 }
 
 Future verifySize(
-  Uint8List image,
+  Uint8List? image,
   int expectedWidth,
   int expectedHeight,
 ) async {
+  expect(image, isNotNull);
+  if (image == null) {
+    return;
+  }
+
   var codec = await instantiateImageCodec(image);
   var frame = await codec.getNextFrame();
   var height = frame.image.height;
