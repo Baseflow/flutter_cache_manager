@@ -61,6 +61,31 @@ mixin ImageCacheManager on BaseCacheManager {
     _runningResizes.remove(resizedKey);
   }
 
+  Future<bool> _isImage(File file) async {
+    if (!await file.exists()) {
+      debugPrint('file is not found: ${file.path}');
+      return false;
+    }
+    final raf = await file.open();
+    final header = await raf.read(8);
+    await raf.close();
+    final hexString =
+        header.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
+    if (hexString.startsWith('ffd8')) {
+      return true; // JPEG
+    } else if (hexString.startsWith('89504e47')) {
+      return true; // PNG
+    } else if (hexString.startsWith('00000200')) {
+      return true; // TGA
+    } else if (hexString.startsWith('00000100')) {
+      return true; // CUR
+    } else if (hexString.startsWith('00000000')) {
+      return true; // ICO
+    }
+
+    return false;
+  }
+
   final Map<String, Stream<FileResponse>> _runningResizes = {};
 
   Future<FileInfo> _resizeImageFile(
@@ -69,9 +94,10 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
     int? maxHeight,
   ) async {
+    bool isImage = await _isImage(originalFile.file);
     final originalFileName = originalFile.file.path;
     final fileExtension = originalFileName.split('.').last;
-    if (!supportedFileNames.contains(fileExtension)) {
+    if (!isImage) {
       return originalFile;
     }
 
