@@ -373,7 +373,6 @@ void main() {
       var config = createTestConfig();
       var store = CacheStore(config);
       store.cleanupRunMinInterval = const Duration(milliseconds: 1);
-      await config.returnsFile('testimage.png');
 
       var co1 = CacheObject(
         'baseflow.com/test.png',
@@ -394,10 +393,29 @@ void main() {
         validTill: clock.now().add(const Duration(days: 7)),
       );
 
+      final cacheObjects = [co1, co2, co3];
+
+      // Write the cache files to the filesystem
+      final List<File> cacheFiles = [];
+      for (var cacheObject in cacheObjects) {
+        final f = await config.returnsFile(cacheObject.relativePath);
+        cacheFiles.add(f);
+      }
+
+      // Include an extra file
+      // This could be a desync between the store and the filesystem
+      cacheFiles
+          .add(await config.returnsFile("non-existent-file-in-store.png"));
+
       when(config.mockRepo.getAllObjects())
-          .thenAnswer((_) => Future.value([co1, co2, co3]));
+          .thenAnswer((_) => Future.value(cacheObjects));
 
       await store.emptyCache();
+
+      // make sure that all cached files in the filesystem are deleted
+      for (var cacheFile in cacheFiles) {
+        expect(await cacheFile.exists(), isFalse);
+      }
 
       verify(config.mockRepo
           .deleteAll(argThat(containsAll([co1.id, co2.id, co3.id])))).called(1);

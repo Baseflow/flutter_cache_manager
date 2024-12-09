@@ -25,4 +25,12 @@ class TestFileSystem extends FileSystem {
     await dir.create(recursive: true);
     return dir.childFile(name);
   }
+
+  @override
+  Future<void> deleteCacheDir() async {
+    var dir = await directoryFuture;
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+  }
 }

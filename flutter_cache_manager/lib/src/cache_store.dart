@@ -151,13 +151,19 @@ class CacheStore {
 
   Future<void> emptyCache() async {
     final provider = await _cacheInfoRepository;
-    final toRemove = <int>[];
     final allObjects = await provider.getAllObjects();
-    var futures = <Future>[];
+
+    // Remove the cache files from the filesystem
+    await _removeCacheDir();
+
+    // Delete objects from store
+    final toRemove = <int>{};
     for (final cacheObject in allObjects) {
-      futures.add(_removeCachedFile(cacheObject, toRemove));
+      if (cacheObject.id != null) {
+        toRemove.add(cacheObject.id!);
+      }
     }
-    await Future.wait(futures);
+
     await provider.deleteAll(toRemove);
   }
 
@@ -192,6 +198,18 @@ class CacheStore {
       } on PathNotFoundException catch (e) {
         // File has already been deleted. Do nothing #184
       }
+    }
+  }
+
+  Future<void> _removeCacheDir() async {
+    _memCache.clear();
+    _futureCache.clear();
+
+    try {
+      await fileSystem.deleteCacheDir();
+    } on FileSystemException {
+      // If the filesystem implementation doesn't check if the file
+      // exists before deleting it could fail
     }
   }
 
