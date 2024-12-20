@@ -6,6 +6,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/web/interlaced/interlaced_transformer.dart';
 import 'package:flutter_cache_manager/src/web/queue_item.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
@@ -145,14 +146,37 @@ class WebHelper {
     var newCacheObject = _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
       var savedBytes = 0;
-      await for (final progress in _saveFile(newCacheObject, response)) {
-        savedBytes = progress;
-        yield DownloadProgress(
-          cacheObject.url,
-          response.contentLength,
-          progress,
-        );
+      final chunkStream =
+          _saveFile(newCacheObject, response).asBroadcastStream();
+
+      final stream = MergeStream([
+        chunkStream,
+        chunkStream
+            .transform<InterlacedData>(const InterlacedConverter())
+            .distinctUnique(
+              equals: (a, b) => a.data.length == b.data.length,
+              hashCode: (e) => e.data.length,
+            ),
+      ]);
+
+      await for (final progress in stream) {
+        if (progress is InterlacedData) {
+          yield InterlacedProgress(
+            cacheObject.url,
+            response.contentLength,
+            progress.data.length,
+            progress.data,
+          );
+        } else if (progress is List<int>) {
+          savedBytes += progress.length;
+          yield DownloadProgress(
+            cacheObject.url,
+            response.contentLength,
+            savedBytes,
+          );
+        }
       }
+
       newCacheObject = newCacheObject.copyWith(length: savedBytes);
     }
 
@@ -195,8 +219,11 @@ class WebHelper {
     );
   }
 
-  Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {
-    final receivedBytesResultController = StreamController<int>();
+  Stream<List<int>> _saveFile(
+    CacheObject cacheObject,
+    FileServiceResponse response,
+  ) {
+    final receivedBytesResultController = StreamController<List<int>>();
     _saveFileAndPostUpdates(
       receivedBytesResultController,
       cacheObject,
@@ -206,22 +233,18 @@ class WebHelper {
   }
 
   Future<void> _saveFileAndPostUpdates(
-    StreamController<int> receivedBytesResultController,
+    StreamController<List<int>> receivedBytesResultController,
     CacheObject cacheObject,
     FileServiceResponse response,
   ) async {
     final file = await _store.fileSystem.createFile(cacheObject.relativePath);
 
     try {
-      var receivedBytes = 0;
       final sink = file.openWrite();
-      await response.content
-          .map((s) {
-            receivedBytes += s.length;
-            receivedBytesResultController.add(receivedBytes);
-            return s;
-          })
-          .pipe(sink);
+      await response.content.map((s) {
+        receivedBytesResultController.add(s);
+        return s;
+      }).pipe(sink);
     } on Object catch (e, stacktrace) {
       receivedBytesResultController.addError(e, stacktrace);
     }
