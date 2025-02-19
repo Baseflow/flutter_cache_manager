@@ -28,7 +28,8 @@ abstract class BaseCacheManager {
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
-  /// [timeout] can be used to specify a timeout for the download.
+  /// [timeout] can be used to specify a timeout for the download, and it will throw
+  /// a [TimeoutException] when the download takes longer than the specified timeout.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
   ///
