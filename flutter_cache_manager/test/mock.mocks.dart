@@ -443,12 +443,16 @@ class MockFileServiceBase extends _i1.Mock implements _i3.FileService {
   _i4.Future<_i3.FileServiceResponse> get(
     String? url, {
     Map<String, String>? headers,
+    Duration? timeout,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
           #get,
           [url],
-          {#headers: headers},
+          {
+            #headers: headers,
+            #timeout: timeout,
+          },
         ),
         returnValue: _i4.Future<_i3.FileServiceResponse>.value(
             _FakeFileServiceResponse_4(
@@ -456,7 +460,10 @@ class MockFileServiceBase extends _i1.Mock implements _i3.FileService {
           Invocation.method(
             #get,
             [url],
-            {#headers: headers},
+            {
+              #headers: headers,
+              #timeout: timeout,
+            },
           ),
         )),
       ) as _i4.Future<_i3.FileServiceResponse>);
@@ -499,6 +506,7 @@ class MockWebHelper extends _i1.Mock implements _i7.WebHelper {
     String? url, {
     String? key,
     Map<String, String>? authHeaders,
+    Duration? timeout,
     bool? ignoreMemCache = false,
   }) =>
       (super.noSuchMethod(
@@ -508,6 +516,7 @@ class MockWebHelper extends _i1.Mock implements _i7.WebHelper {
           {
             #key: key,
             #authHeaders: authHeaders,
+            #timeout: timeout,
             #ignoreMemCache: ignoreMemCache,
           },
         ),

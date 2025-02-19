@@ -11,9 +11,12 @@ class FileServiceCompat extends FileService {
 
   @override
   Future<FileServiceResponse> get(String url,
-      {Map<String, String>? headers}) async {
-    final legacyResponse = await fileFetcher(url, headers: headers);
-    return CompatFileServiceGetResponse(legacyResponse);
+      {Map<String, String>? headers, Duration? timeout}) async {
+    var legacyResponse = fileFetcher(url, headers: headers);
+    if (timeout != null) {
+      legacyResponse = legacyResponse.timeout(timeout);
+    }
+    return CompatFileServiceGetResponse(await legacyResponse);
   }
 }
 

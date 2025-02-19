@@ -21,13 +21,19 @@ mixin ImageCacheManager on BaseCacheManager {
     String url, {
     String? key,
     Map<String, String>? headers,
+    Duration? timeout,
     bool withProgress = false,
     int? maxHeight,
     int? maxWidth,
   }) async* {
     if (maxHeight == null && maxWidth == null) {
-      yield* getFileStream(url,
-          key: key, headers: headers, withProgress: withProgress);
+      yield* getFileStream(
+        url,
+        key: key,
+        headers: headers,
+        timeout: timeout,
+        withProgress: withProgress,
+      );
       return;
     }
     key ??= url;
