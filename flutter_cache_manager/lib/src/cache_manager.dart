@@ -108,11 +108,17 @@ class CacheManager implements BaseCacheManager {
   /// returned from the cache there will be no progress given, although the file
   /// might be outdated and a new file is being downloaded in the background.
   @override
-  Stream<FileResponse> getFileStream(String url,
-      {String? key, Map<String, String>? headers, bool withProgress = false}) {
+  Stream<FileResponse> getFileStream(
+    String url, {
+    String? key,
+    Map<String, String>? headers,
+    Duration? timeout,
+    bool withProgress = false,
+  }) {
     key ??= url;
     final streamController = StreamController<FileResponse>();
-    _pushFileToStream(streamController, url, key, headers, withProgress);
+    _pushFileToStream(
+        streamController, url, key, headers, timeout, withProgress);
     return streamController.stream;
   }
 
@@ -121,6 +127,7 @@ class CacheManager implements BaseCacheManager {
     String url,
     String? key,
     Map<String, String>? headers,
+    Duration? timeout,
     bool withProgress,
   ) async {
     key ??= url;
@@ -139,7 +146,7 @@ class CacheManager implements BaseCacheManager {
     if (cacheFile == null || cacheFile.validTill.isBefore(DateTime.now())) {
       try {
         await for (final response
-            in _webHelper.downloadFile(url, key: key, authHeaders: headers)) {
+            in _webHelper.downloadFile(url, key: key, authHeaders: headers, timeout: timeout)) {
           if (response is DownloadProgress && withProgress) {
             streamController.add(response);
           }
@@ -173,6 +180,7 @@ class CacheManager implements BaseCacheManager {
   Future<FileInfo> downloadFile(String url,
       {String? key,
       Map<String, String>? authHeaders,
+      Duration? timeout,
       bool force = false}) async {
     key ??= url;
     final fileResponse = await _webHelper
@@ -180,6 +188,7 @@ class CacheManager implements BaseCacheManager {
           url,
           key: key,
           authHeaders: authHeaders,
+          timeout: timeout,
           ignoreMemCache: force,
         )
         .firstWhere((r) => r is FileInfo);

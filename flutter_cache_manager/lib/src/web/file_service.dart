@@ -16,7 +16,11 @@ import 'package:http/http.dart' as http;
 abstract class FileService {
   int concurrentFetches = 10;
 
-  Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
+  Future<FileServiceResponse> get(
+    String url, {
+    Map<String, String>? headers,
+    Duration? timeout,
+  });
 }
 
 /// [HttpFileService] is the most common file service and the default for
@@ -29,14 +33,18 @@ class HttpFileService extends FileService {
 
   @override
   Future<FileServiceResponse> get(String url,
-      {Map<String, String>? headers}) async {
+      {Map<String, String>? headers, Duration? timeout}) async {
     final req = http.Request('GET', Uri.parse(url));
     if (headers != null) {
       req.headers.addAll(headers);
     }
-    final httpResponse = await _httpClient.send(req);
 
-    return HttpGetResponse(httpResponse);
+    var streamedResponse = _httpClient.send(req);
+    if (timeout != null) {
+      streamedResponse = streamedResponse.timeout(timeout);
+    }
+
+    return HttpGetResponse(await streamedResponse);
   }
 }
 
