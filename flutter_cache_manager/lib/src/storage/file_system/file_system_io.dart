@@ -1,8 +1,10 @@
+import 'dart:io' as io;
+
 import 'package:file/file.dart' hide FileSystem;
 import 'package:file/local.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
 
 class IOFileSystem implements FileSystem {
   final Future<Directory> _fileDir;
@@ -11,7 +13,7 @@ class IOFileSystem implements FileSystem {
   IOFileSystem(this._cacheKey) : _fileDir = createDirectory(_cacheKey);
 
   static Future<Directory> createDirectory(String key) async {
-    final baseDir = await getTemporaryDirectory();
+    final baseDir = await getDirectory();
     final path = p.join(baseDir.path, key);
 
     const fs = LocalFileSystem();
@@ -27,5 +29,10 @@ class IOFileSystem implements FileSystem {
       await createDirectory(_cacheKey);
     }
     return directory.childFile(name);
+  }
+
+  static Future<io.Directory> getDirectory() async{
+    final path = await getDatabasesPath();
+    return io.Directory(path);
   }
 }

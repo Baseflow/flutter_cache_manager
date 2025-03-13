@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
+import 'package:sqflite/sqflite.dart';
 
 class NonStoringObjectProvider implements CacheInfoRepository {
   @override
@@ -71,5 +74,11 @@ class NonStoringObjectProvider implements CacheInfoRepository {
   @override
   Future<bool> exists() async {
     return false;
+  }
+
+  @override
+  Future<Directory> getDirectory() async{
+    final path = await getDatabasesPath();
+    return Directory(path);
   }
 }

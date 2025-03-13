@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_cache_manager/src/logger.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
@@ -49,6 +50,9 @@ abstract class CacheInfoRepository {
 
   /// Deletes the cache data file including all cache data.
   Future<void> deleteDataFile();
+
+  /// The cached directory
+  Future<Directory> getDirectory();
 }
 
 extension MigrationExtension on CacheInfoRepository {
