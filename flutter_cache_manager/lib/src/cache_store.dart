@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'dart:io' as io;
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -184,7 +183,7 @@ class CacheStore {
     if (_futureCache.containsKey(cacheObject.key)) {
       await _futureCache.remove(cacheObject.key);
     }
-    final file = io.File(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
 
     if (file.existsSync()) {
       try {

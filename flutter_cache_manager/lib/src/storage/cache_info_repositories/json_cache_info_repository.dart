@@ -9,7 +9,7 @@ import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
 
 class JsonCacheInfoRepository extends CacheInfoRepository
     with CacheInfoRepositoryHelperMethods {
@@ -210,7 +210,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
       if (path != null) {
         directory = File(path!).parent;
       } else {
-        directory ??= await getApplicationSupportDirectory();
+        directory ??= await getDirectory();
       }
       await directory!.create(recursive: true);
       if (path == null || !path!.endsWith('.json')) {
@@ -219,5 +219,11 @@ class JsonCacheInfoRepository extends CacheInfoRepository
       _file = File(path!);
     }
     return _file!;
+  }
+  
+  @override
+  Future<Directory> getDirectory() async{
+    final path = await getDatabasesPath();
+    return Directory(path);
   }
 }

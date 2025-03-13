@@ -4,7 +4,7 @@ import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 const _tableCacheObject = 'cacheObject';
@@ -193,7 +193,7 @@ class CacheObjectProvider extends CacheInfoRepository
     if (_path != null) {
       directory = File(_path!).parent;
     } else {
-      directory = await getApplicationSupportDirectory();
+      directory = await getDirectory();
     }
     await directory.create(recursive: true);
     if (_path == null || !_path!.endsWith('.db')) {
@@ -201,6 +201,12 @@ class CacheObjectProvider extends CacheInfoRepository
     }
     await _migrateOldDbPath(_path!);
     return _path!;
+  }
+
+  @override
+  Future<Directory> getDirectory() async {
+    final path = await getDatabasesPath();
+    return Directory(path);
   }
 
   // Migration for pre-V2 path on iOS and macOS
