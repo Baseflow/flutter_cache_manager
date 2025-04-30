@@ -20,6 +20,17 @@ class InterlacedConverter extends Converter<List<int>, InterlacedData> {
       InterlacedByteConversionSink(sink);
 }
 
+/// Represents a decoder check function and its corresponding decoder constructor
+class DecoderCheck {
+  final bool? Function(BytesBuilder) check;
+  final InterlacedDecoder Function(BytesBuilder) createDecoder;
+
+  const DecoderCheck({
+    required this.check,
+    required this.createDecoder,
+  });
+}
+
 class InterlacedByteConversionSink implements ChunkedConversionSink<Uint8List> {
   final Sink<InterlacedData> _output;
 
@@ -27,6 +38,13 @@ class InterlacedByteConversionSink implements ChunkedConversionSink<Uint8List> {
   BytesBuilder? _buffer = BytesBuilder();
 
   InterlacedDecoder? _decoder;
+
+  static final _decoderChecks = [
+    DecoderCheck(
+      check: ProgressiveJPEGDecoder.isProgressiveJPEG,
+      createDecoder: (buffer) => ProgressiveJPEGDecoder(buffer),
+    ),
+  ];
 
   InterlacedByteConversionSink(this._output);
 
@@ -59,9 +77,31 @@ class InterlacedByteConversionSink implements ChunkedConversionSink<Uint8List> {
   }
 
   InterlacedDecoder? resolveDecoder() {
-    if (ProgressiveJPEGDecoder.isProgressiveJPEG(_buffer)) {
-      return ProgressiveJPEGDecoder(_buffer!);
+    // Try each decoder check
+    for (final decoderCheck in _decoderChecks) {
+      final result = decoderCheck.check(_buffer!);
+      if (result == true) {
+        return decoderCheck.createDecoder(_buffer!);
+      }
     }
+
+    // Check if all decoders returned false
+    if (_decoderChecks.every(
+      (check) => check.check(_buffer!) == false,
+    )) {
+      return DumbDecoder(_buffer!);
+    }
+
+    return null;
+  }
+}
+
+class DumbDecoder extends InterlacedDecoder {
+  DumbDecoder(super.buffer);
+
+  @override
+  InterlacedData? addChunk(List<int> chunk) {
+    buffer.add(chunk);
     return null;
   }
 }

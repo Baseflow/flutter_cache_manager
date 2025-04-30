@@ -4,24 +4,29 @@ import 'package:flutter_cache_manager/src/web/interlaced/interlaced_transformer.
 
 // Decoder for progressive JPEG images
 class ProgressiveJPEGDecoder extends InterlacedDecoder {
-  static bool isProgressiveJPEG(BytesBuilder? buffer) {
-    if (buffer == null) return false;
+  /// Returns true if the buffer is a progressive JPEG image
+  /// Returns false if the buffer is not a progressive JPEG image
+  /// Returns null if the buffer is not enough to determine if it is a progressive JPEG image
+  static bool? isProgressiveJPEG(BytesBuilder? buffer) {
+    if (buffer == null) return null;
 
     final data = buffer.toBytes();
 
-    if (data.length < 4) return false;
+    if (data.length < 4) return null;
 
     // Check for the SOI (Start of Image)
-    if (data[0] == 0xFF && data[1] == 0xD8) {
-      // Check for the first SOF marker
-      for (int i = 2; i < data.length - 1; i++) {
-        if (data[i] == 0xFF && data[i + 1] >= 0xC0 && data[i + 1] <= 0xCF) {
-          return data[i + 1] == 0xC2;
-        }
+    if (data[0] != 0xFF || data[1] != 0xD8) {
+      return false;
+    }
+
+    // Check for the first SOF marker
+    for (int i = 2; i < data.length - 1; i++) {
+      if (data[i] == 0xFF && data[i + 1] >= 0xC0 && data[i + 1] <= 0xCF) {
+        return data[i + 1] == 0xC2;
       }
     }
 
-    return false;
+    return null;
   }
 
   // List of valid offsets
