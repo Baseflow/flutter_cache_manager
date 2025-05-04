@@ -41,6 +41,18 @@ void main() {
       await repository.open();
     });
 
+    test('Open repository should not throw when file is empty', () async {
+      final tempFile = File('${Directory.systemTemp.path}/test_empty.json');
+      await tempFile.create();
+      expect(await tempFile.length(), 0);
+
+      final repository = JsonCacheInfoRepository.withFile(tempFile);
+      await repository.open();
+
+      expect(await repository.getAllObjects(), isEmpty);
+      await tempFile.delete();
+    });
+
     test('An open repository can be closed', () async {
       var repository = await JsonRepoHelpers.createRepository();
       var isClosed = await repository.close();
