@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,7 +42,13 @@ void main() {
       await repository.open();
     });
 
-    test('Open repository should not throw when file is empty', () async {
+    test('Open repository should not report error when file is empty',
+        () async {
+      var originalOnError = FlutterError.onError;
+      FlutterError.onError = (FlutterErrorDetails details) {
+        throw details.exception;
+      };
+
       final tempFile = File('${Directory.systemTemp.path}/test_empty.json');
       await tempFile.create();
       expect(await tempFile.length(), 0);
@@ -51,6 +58,7 @@ void main() {
 
       expect(await repository.getAllObjects(), isEmpty);
       await tempFile.delete();
+      FlutterError.onError = originalOnError;
     });
 
     test('An open repository can be closed', () async {
