@@ -6,18 +6,18 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  baseflow_plugin_template: ^2.1.2
+  baseflow_plugin_template: ^2.2.0
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
   flutter_cache_manager:
     path: ../
-  url_launcher: ^6.2.1
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.2
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true

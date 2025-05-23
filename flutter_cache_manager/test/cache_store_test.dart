@@ -402,6 +402,24 @@ void main() {
       verify(config.mockRepo
           .deleteAll(argThat(containsAll([co1.id, co2.id, co3.id])))).called(1);
     });
+
+    test('Store should delete file when remove cached file', () async {
+      var config = createTestConfig();
+      var store = CacheStore(config);
+
+      await config.returnsFile(fileName);
+      config.returnsCacheObject(fileUrl, fileName, validTill, id: 1);
+
+      var cacheObject = await store.retrieveCacheData(fileUrl);
+
+      expect(cacheObject, isNotNull);
+      var fileInfo = await store.getFile(cacheObject!.key);
+      expect(await fileInfo?.file.exists(), isTrue);
+
+      await store.removeCachedFile(cacheObject);
+
+      expect(await fileInfo?.file.exists(), isFalse);
+    });
   });
 }
 

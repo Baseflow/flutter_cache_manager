@@ -21,8 +21,8 @@ The more basic usage is explained here. See the complete docs for more info.
 The cache manager can be used to get a file on various ways
 The easiest way to get a single file is call `.getSingleFile`.
 
-```
-    var file = await DefaultCacheManager().getSingleFile(url);
+```dart
+var file = await DefaultCacheManager().getSingleFile(url);
 ```
 `getFileStream(url)` returns a stream with the first result being the cached file and later optionally the downloaded file.
 
@@ -43,7 +43,7 @@ The easiest way to get a single file is call `.getSingleFile`.
 If you use the ImageCacheManager mixin on the CacheManager (which is already done on the DefaultCacheManager) you 
 get the following `getImageFile` method for free:
 
-```
+```dart
 Stream<FileResponse> getImageFile(String url, {
     String key,
     Map<String, String> headers,
@@ -66,7 +66,7 @@ The cache manager is customizable by creating a new CacheManager. It is very imp
 Below is an example with other settings for the maximum age of files, maximum number of objects
 and a custom FileService. The key parameter in the constructor is mandatory, all other variables are optional.
 
-```
+```dart
 class CustomCacheManager {
   static const key = 'customCacheKey';
   static CacheManager instance = CacheManager(

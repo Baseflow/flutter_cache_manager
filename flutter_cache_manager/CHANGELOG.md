@@ -1,3 +1,7 @@
+## [3.4.1] - 2024-08-13
+
+* Target js_interop for Wasm support
+
 ## [3.4.0] - 2024-08-01
 
 * [Bugfix] For a previously cached file that got removed on the server, now evicts that file on 404 and notifies listeners.

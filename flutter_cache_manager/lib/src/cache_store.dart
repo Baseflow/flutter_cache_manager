@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'dart:io' as io;
 
 ///Flutter Cache Manager
 ///Copyright (c) 2019 Rene Floor
@@ -154,9 +153,11 @@ class CacheStore {
     final provider = await _cacheInfoRepository;
     final toRemove = <int>[];
     final allObjects = await provider.getAllObjects();
+    var futures = <Future>[];
     for (final cacheObject in allObjects) {
-      _removeCachedFile(cacheObject, toRemove);
+      futures.add(_removeCachedFile(cacheObject, toRemove));
     }
+    await Future.wait(futures);
     await provider.deleteAll(toRemove);
   }
 
@@ -180,9 +181,9 @@ class CacheStore {
       _memCache.remove(cacheObject.key);
     }
     if (_futureCache.containsKey(cacheObject.key)) {
-      _futureCache.remove(cacheObject.key);
+      await _futureCache.remove(cacheObject.key);
     }
-    final file = io.File(cacheObject.relativePath);
+    final file = await fileSystem.createFile(cacheObject.relativePath);
 
     if (file.existsSync()) {
       try {
