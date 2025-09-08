@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_cache_manager: ^3.4.1
-  firebase_storage: '13.0.0'
+  firebase_storage: ^13.0.0
   path_provider: ^2.1.4
   path: ^1.9.0
   retry: ^3.1.2
