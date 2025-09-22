@@ -84,6 +84,9 @@ class CacheStore {
         }
         completer.complete(cacheObject);
         _futureCache.remove(key);
+      }).catchError((err) {
+        completer.completeError(err);
+        _futureCache.remove(key);
       });
       _futureCache[key] = completer.future;
     }
