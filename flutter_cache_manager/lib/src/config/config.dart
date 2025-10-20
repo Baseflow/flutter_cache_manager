@@ -10,6 +10,8 @@ abstract class Config {
   /// [stalePeriod] is the time duration in which a cache object is
   /// considered 'stale'. When a file is cached but not being used for a
   /// certain time the file will be deleted.
+  /// [durationOnMaxAgeZero] is the time duration a fetched API response is
+  /// considered up-to-date if the server responds with "max-age=0"
   /// [maxNrOfCacheObjects] defines how large the cache is allowed to be. If
   /// there are more files the files that haven't been used for the longest
   /// time will be removed.
@@ -23,6 +25,7 @@ abstract class Config {
   factory Config(
     String cacheKey, {
     Duration stalePeriod,
+    Duration durationOnMaxAgeZero,
     int maxNrOfCacheObjects,
     CacheInfoRepository repo,
     FileSystem fileSystem,
@@ -32,6 +35,8 @@ abstract class Config {
   String get cacheKey;
 
   Duration get stalePeriod;
+
+  Duration get durationOnMaxAgeZero;
 
   int get maxNrOfCacheObjects;
 

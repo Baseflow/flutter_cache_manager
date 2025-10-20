@@ -18,9 +18,8 @@ const statusCodesNewFile = [HttpStatus.ok, HttpStatus.accepted];
 const statusCodesFileNotChanged = [HttpStatus.notModified];
 
 class WebHelper {
-  WebHelper(this._store, FileService? fileFetcher)
-      : _memCache = {},
-        fileFetcher = fileFetcher ?? HttpFileService();
+  WebHelper(this._store, this.fileFetcher)
+      : _memCache = {};
 
   final CacheStore _store;
   @visibleForTesting

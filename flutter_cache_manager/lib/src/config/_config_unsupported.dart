@@ -11,6 +11,8 @@ class Config implements def.Config {
     //ignore: avoid_unused_constructor_parameters
     Duration? stalePeriod,
     //ignore: avoid_unused_constructor_parameters
+    Duration? durationOnMaxAgeZero,
+    //ignore: avoid_unused_constructor_parameters
     int? maxNrOfCacheObjects,
     //ignore: avoid_unused_constructor_parameters
     CacheInfoRepository? repo,
@@ -33,6 +35,9 @@ class Config implements def.Config {
 
   @override
   Duration get stalePeriod => throw UnimplementedError();
+
+  @override
+  Duration get durationOnMaxAgeZero => throw UnimplementedError();
 
   @override
   int get maxNrOfCacheObjects => throw UnimplementedError();

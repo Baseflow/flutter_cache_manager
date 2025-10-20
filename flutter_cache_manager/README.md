@@ -60,7 +60,7 @@ you call this method with other height/width parameters.
 When your files are stored on Firebase Storage you can use [flutter_cache_manager_firebase](https://pub.dev/packages/flutter_cache_manager_firebase).
 
 ## Customize
-The cache manager is customizable by creating a new CacheManager. It is very important to not create more than 1
+The cache manager is customizable by creating a new CacheManager. It is very important to not create more than one
  CacheManager instance with the same key as these bite each other. In the example down here the manager is created as a 
  Singleton, but you could also use for example Provider to Provide a CacheManager on the top level of your app.
 Below is an example with other settings for the maximum age of files, maximum number of objects
@@ -85,6 +85,7 @@ class CustomCacheManager {
 - [How are the cache files stored?](#how-are-the-cache-files-stored)
 - [When are the cached files updated?](#when-are-the-cached-files-updated)
 - [When are cached files removed?](#when-are-cached-files-removed)
+- [Why are cached files kept even though the server sends max-age=0?](#why-are-cached-files-kept-even-though-the-server-sends-max-age0)
 
 
 ### How are the cache files stored?
@@ -113,6 +114,20 @@ The cache knows when files have been used latest. When cleaning the cache (which
 deletes files when there are too many, ordered by last use, and when files just haven't been used for longer than
 the stale period.
 
+### Why are cached files kept even though the server sends max-age=0?
+
+The case when a web server responds with `Cache-Control: max-age=0` is kind of an edge case.
+It could either mean, that the content expires really fast (then `Cache-Control: no-cache` might
+be a better response) or it could be that the server has some misconfiguration in place.
+
+There where some confusions among users of this library because of the second case (see also
+[this issue](https://github.com/Baseflow/flutter_cache_manager/issues/283) so as a default
+behaviour this library ignores `max-age=0` and instead sets the validity of the downloaded file
+to `Duration(days: 7)`.
+
+If you want to treat `max-age=0` the same as `no-cache` (or something less rigid like 30 seconds), then
+set the `Config` parameter `durationOnMaxAgeZero` to `Duration(seconds: 0)` or `30` or whatever you
+think is appropriate.
 
 ## Breaking changes in v2
 - There is no longer a need to extend on BaseCacheManager, you can directly call the constructor. The BaseCacheManager
