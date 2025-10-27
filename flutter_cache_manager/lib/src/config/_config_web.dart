@@ -1,7 +1,8 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/config/config.dart' as def;
-
-import '../storage/file_system/file_system.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/indexed_db_cache_info_repository.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/indexed_db_file_system.dart';
 
 class Config implements def.Config {
   Config(
