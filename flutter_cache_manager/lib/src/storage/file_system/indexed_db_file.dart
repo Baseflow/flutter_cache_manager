@@ -58,8 +58,10 @@ class IndexedDbFile implements File {
         if (result != null) {
           final obj = result as JSObject;
           final dataField = obj['data'.toJS];
-          if (dataField != null && dataField is JSUint8Array) {
-            completer.complete(dataField.toDart);
+
+          if (dataField != null && dataField.isA<JSUint8Array>()) {
+            final data = dataField as JSUint8Array;
+            completer.complete(data.toDart);
           } else {
             completer.complete(Uint8List(0));
           }

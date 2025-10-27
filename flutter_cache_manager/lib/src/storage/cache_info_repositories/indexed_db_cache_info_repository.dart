@@ -326,25 +326,26 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     final keys = keysArray.toDart;
 
     for (var i = 0; i < keys.length; i++) {
-      final keyJs = keys[i] as String;
-      final value = obj[keyJs.toJS];
+      final keyJs = keys[i] as JSString;
+      final key = keyJs.toDart;
+      final value = obj[keyJs];
 
       if (value == null) {
-        map[keyJs] = null;
+        map[key] = null;
       } else if (value.typeofEquals('string')) {
-        map[keyJs] = (value as JSString).toDart;
+        map[key] = (value as JSString).toDart;
       } else if (value.typeofEquals('number')) {
         final num = (value as JSNumber).toDartDouble;
         // Check if it's an integer
         if (num == num.truncateToDouble()) {
-          map[keyJs] = num.toInt();
+          map[key] = num.toInt();
         } else {
-          map[keyJs] = num;
+          map[key] = num;
         }
       } else if (value.typeofEquals('boolean')) {
-        map[keyJs] = (value as JSBoolean).toDart;
+        map[key] = (value as JSBoolean).toDart;
       } else {
-        map[keyJs] = value;
+        map[key] = value;
       }
     }
 
