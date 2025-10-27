@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:js_interop';
 
+import 'package:flutter_cache_manager/src/logger.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/indexed_db_connection_pool.dart';
@@ -125,6 +126,47 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     }
   }
 
+  /// Checks if an error is a quota exceeded error.
+  bool _isQuotaExceededError(Object error) {
+    final errorString = error.toString().toLowerCase();
+    return errorString.contains('quota') ||
+        errorString.contains('quotaexceedederror') ||
+        errorString.contains('exceeded') && errorString.contains('storage');
+  }
+
+  /// Handles quota exceeded errors by attempting to free up space.
+  Future<void> _handleQuotaExceeded() async {
+    cacheLogger.log(
+      'CacheManager: Quota exceeded, attempting to free up space',
+      CacheManagerLogLevel.warning,
+    );
+
+    try {
+      // Get the oldest 10% of objects and delete them
+      final allObjects = await getAllObjects();
+      if (allObjects.isEmpty) {
+        return;
+      }
+
+      allObjects.sort((a, b) => a.touched!.compareTo(b.touched!));
+      final toRemoveCount = (allObjects.length * 0.1).ceil().clamp(1, 50);
+      final toRemove =
+          allObjects.take(toRemoveCount).map((e) => e.id!).toList();
+
+      await deleteAll(toRemove);
+
+      cacheLogger.log(
+        'CacheManager: Freed up space by removing $toRemoveCount old cache entries',
+        CacheManagerLogLevel.verbose,
+      );
+    } catch (e) {
+      cacheLogger.log(
+        'CacheManager: Failed to free up space: $e',
+        CacheManagerLogLevel.warning,
+      );
+    }
+  }
+
   @override
   Future<CacheObject?> get(String key) async {
     final db = await _getDatabase();
@@ -195,6 +237,24 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
       throw ArgumentError("Inserted objects shouldn't have an existing id.");
     }
 
+    try {
+      return await _insertWithRetry(cacheObject, setTouchedToNow, retries: 1);
+    } catch (e) {
+      if (_isQuotaExceededError(e)) {
+        cacheLogger.log(
+          'CacheManager: Insert failed due to quota exceeded',
+          CacheManagerLogLevel.warning,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<CacheObject> _insertWithRetry(
+    CacheObject cacheObject,
+    bool setTouchedToNow, {
+    required int retries,
+  }) async {
     final db = await _getDatabase();
     final completer = Completer<CacheObject>();
 
@@ -218,7 +278,17 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
       );
     }.toJS;
 
-    return completer.future;
+    try {
+      return await completer.future;
+    } catch (e) {
+      if (_isQuotaExceededError(e) && retries > 0) {
+        // Try to free up space and retry once
+        await _handleQuotaExceeded();
+        return await _insertWithRetry(cacheObject, setTouchedToNow,
+            retries: retries - 1);
+      }
+      rethrow;
+    }
   }
 
   @override
