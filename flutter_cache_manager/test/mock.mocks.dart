@@ -8,6 +8,8 @@ import 'dart:async' as _i4;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart' as _i3;
 import 'package:flutter_cache_manager/src/cache_store.dart' as _i5;
 import 'package:flutter_cache_manager/src/storage/cache_object.dart' as _i2;
+import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart'
+    as _i3;
 import 'package:flutter_cache_manager/src/web/web_helper.dart' as _i7;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
