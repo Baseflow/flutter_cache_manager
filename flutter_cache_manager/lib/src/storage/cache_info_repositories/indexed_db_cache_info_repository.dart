@@ -30,8 +30,9 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     request.onupgradeneeded = (web.IDBVersionChangeEvent e) {
       final db = request.result as web.IDBDatabase;
 
-      final hasStore = db.objectStoreNames.contains(_metadataStoreName);
-      if (!hasStore) {
+      // Create cache_metadata object store if it doesn't exist
+      final hasMetadataStore = db.objectStoreNames.contains(_metadataStoreName);
+      if (!hasMetadataStore) {
         final objectStore = db.createObjectStore(
           _metadataStoreName,
           web.IDBObjectStoreParameters(
@@ -44,6 +45,17 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
           _keyIndexName,
           CacheObject.columnKey.toJS,
           web.IDBIndexParameters(unique: true),
+        );
+      }
+
+      // Also create cache_files object store if it doesn't exist
+      // This ensures both stores are created in the same upgrade transaction
+      const fileStoreName = 'cache_files';
+      final hasFileStore = db.objectStoreNames.contains(fileStoreName);
+      if (!hasFileStore) {
+        db.createObjectStore(
+          fileStoreName,
+          web.IDBObjectStoreParameters(keyPath: 'path'.toJS),
         );
       }
     }.toJS;

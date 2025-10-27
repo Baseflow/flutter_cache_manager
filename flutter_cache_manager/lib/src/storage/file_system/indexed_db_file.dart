@@ -24,10 +24,33 @@ class IndexedDbFile implements File {
 
     request.onupgradeneeded = (web.IDBVersionChangeEvent e) {
       final db = request.result as web.IDBDatabase;
-      final hasStore = db.objectStoreNames.contains(_fileStoreName);
-      if (!hasStore) {
+
+      // Create cache_files object store if it doesn't exist
+      final hasFileStore = db.objectStoreNames.contains(_fileStoreName);
+      if (!hasFileStore) {
         db.createObjectStore(
             _fileStoreName, web.IDBObjectStoreParameters(keyPath: 'path'.toJS));
+      }
+
+      // Also create cache_metadata object store if it doesn't exist
+      // This ensures both stores are created in the same upgrade transaction
+      const metadataStoreName = 'cache_metadata';
+      const keyIndexName = 'key_index';
+      final hasMetadataStore = db.objectStoreNames.contains(metadataStoreName);
+      if (!hasMetadataStore) {
+        final metadataStore = db.createObjectStore(
+          metadataStoreName,
+          web.IDBObjectStoreParameters(
+            keyPath: '_id'.toJS,
+            autoIncrement: true,
+          ),
+        );
+        // Create index on key field for fast lookups
+        metadataStore.createIndex(
+          keyIndexName,
+          'key'.toJS,
+          web.IDBIndexParameters(unique: true),
+        );
       }
     }.toJS;
 
