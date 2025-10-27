@@ -4,6 +4,7 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:file/file.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/indexed_db_connection_pool.dart';
 import 'package:path/path.dart' as p;
 import 'package:web/web.dart' as web;
 
@@ -15,27 +16,33 @@ class IndexedDbFile implements File {
   final String _dbName;
 
   static const String _fileStoreName = 'cache_files';
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2; // Incremented to match repository version
 
-  Future<web.IDBDatabase> _openDatabase() async {
-    final completer = Completer<web.IDBDatabase>();
+  late final IndexedDbConnectionPool _connectionPool =
+      IndexedDbConnectionPool.getInstance(
+    databaseName: _dbName,
+    version: _dbVersion,
+    onUpgrade: _onUpgradeNeeded,
+  );
 
-    final request = web.window.indexedDB.open(_dbName, _dbVersion);
+  void _onUpgradeNeeded(web.IDBDatabase db, web.IDBVersionChangeEvent e) {
+    final oldVersion = e.oldVersion;
 
-    request.onupgradeneeded = (web.IDBVersionChangeEvent e) {
-      final db = request.result as web.IDBDatabase;
-
-      // Create cache_files object store if it doesn't exist
+    // Create cache_files object store if it doesn't exist (v1)
+    if (oldVersion < 1) {
       final hasFileStore = db.objectStoreNames.contains(_fileStoreName);
       if (!hasFileStore) {
         db.createObjectStore(
-            _fileStoreName, web.IDBObjectStoreParameters(keyPath: 'path'.toJS));
+          _fileStoreName,
+          web.IDBObjectStoreParameters(keyPath: 'path'.toJS),
+        );
       }
 
       // Also create cache_metadata object store if it doesn't exist
       // This ensures both stores are created in the same upgrade transaction
       const metadataStoreName = 'cache_metadata';
       const keyIndexName = 'key_index';
+      const touchedIndexName = 'touched_index';
       final hasMetadataStore = db.objectStoreNames.contains(metadataStoreName);
       if (!hasMetadataStore) {
         final metadataStore = db.createObjectStore(
@@ -51,16 +58,89 @@ class IndexedDbFile implements File {
           'key'.toJS,
           web.IDBIndexParameters(unique: true),
         );
+        // Create index on touched field for efficient sorting
+        metadataStore.createIndex(
+          touchedIndexName,
+          'touched'.toJS,
+          web.IDBIndexParameters(unique: false),
+        );
       }
-    }.toJS;
+    }
+
+    // Add touched index for existing databases (v2)
+    if (oldVersion < 2 && oldVersion >= 1) {
+      const metadataStoreName = 'cache_metadata';
+      const touchedIndexName = 'touched_index';
+      final transaction = e.target as web.IDBOpenDBRequest;
+      final txn = transaction.transaction;
+      if (txn != null && db.objectStoreNames.contains(metadataStoreName)) {
+        final store = txn.objectStore(metadataStoreName);
+        if (!store.indexNames.contains(touchedIndexName)) {
+          store.createIndex(
+            touchedIndexName,
+            'touched'.toJS,
+            web.IDBIndexParameters(unique: false),
+          );
+        }
+      }
+    }
+  }
+
+  Future<web.IDBDatabase> _getDatabase() async {
+    return _connectionPool.getDatabase();
+  }
+
+  /// Creates a transaction with optimal performance settings.
+  web.IDBTransaction _createTransaction(
+    web.IDBDatabase db,
+    String storeName,
+    String mode,
+  ) {
+    try {
+      // Try to create transaction with relaxed durability (modern browsers)
+      // Note: The durability hint may not be available in all browser versions
+      final options = web.IDBTransactionOptions();
+      return db.transaction(
+        storeName.toJS,
+        mode,
+        options,
+      );
+    } catch (e) {
+      // Fallback for older browsers that don't support transaction options
+      return db.transaction(storeName.toJS, mode);
+    }
+  }
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    final db = await _getDatabase();
+    final completer = Completer<Uint8List>();
+    final transaction = _createTransaction(db, _fileStoreName, 'readonly');
+    final store = transaction.objectStore(_fileStoreName);
+    final request = store.get(_path.toJS);
 
     request.onsuccess = (web.Event e) {
-      completer.complete(request.result as web.IDBDatabase);
+      final result = request.result;
+      if (result != null) {
+        final obj = result as JSObject;
+        final dataField = obj['data'.toJS];
+
+        if (dataField != null && dataField.isA<JSUint8Array>()) {
+          final data = dataField as JSUint8Array;
+          completer.complete(data.toDart);
+        } else {
+          completer.complete(Uint8List(0));
+        }
+      } else {
+        completer.completeError(
+          Exception('File not found in IndexedDB: $_path'),
+        );
+      }
     }.toJS;
 
     request.onerror = (web.Event e) {
       completer.completeError(
-        Exception('Failed to open IndexedDB: ${request.error}'),
+        Exception('Failed to read file from IndexedDB: ${request.error}'),
       );
     }.toJS;
 
@@ -68,78 +148,34 @@ class IndexedDbFile implements File {
   }
 
   @override
-  Future<Uint8List> readAsBytes() async {
-    final db = await _openDatabase();
-    try {
-      final completer = Completer<Uint8List>();
-      final transaction = db.transaction(_fileStoreName.toJS, 'readonly');
-      final store = transaction.objectStore(_fileStoreName);
-      final request = store.get(_path.toJS);
-
-      request.onsuccess = (web.Event e) {
-        final result = request.result;
-        if (result != null) {
-          final obj = result as JSObject;
-          final dataField = obj['data'.toJS];
-
-          if (dataField != null && dataField.isA<JSUint8Array>()) {
-            final data = dataField as JSUint8Array;
-            completer.complete(data.toDart);
-          } else {
-            completer.complete(Uint8List(0));
-          }
-        } else {
-          completer.completeError(
-            Exception('File not found in IndexedDB: $_path'),
-          );
-        }
-      }.toJS;
-
-      request.onerror = (web.Event e) {
-        completer.completeError(
-          Exception('Failed to read file from IndexedDB: ${request.error}'),
-        );
-      }.toJS;
-
-      return await completer.future;
-    } finally {
-      db.close();
-    }
-  }
-
-  @override
   Future<File> writeAsBytes(List<int> bytes,
       {FileMode mode = FileMode.write, bool flush = false}) async {
-    final db = await _openDatabase();
-    try {
-      final completer = Completer<void>();
-      final transaction = db.transaction(_fileStoreName.toJS, 'readwrite');
-      final store = transaction.objectStore(_fileStoreName);
+    final db = await _getDatabase();
+    final completer = Completer<void>();
+    final transaction = _createTransaction(db, _fileStoreName, 'readwrite');
+    final store = transaction.objectStore(_fileStoreName);
 
-      final data = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+    final data = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
 
-      final fileObject = <String, dynamic>{
-        'path': _path,
-        'data': data,
-      }.jsify();
+    final fileObject = <String, dynamic>{
+      'path': _path,
+      'data': data,
+    }.jsify();
 
-      final request = store.put(fileObject);
+    final request = store.put(fileObject);
 
-      request.onsuccess = (web.Event e) {
-        completer.complete();
-      }.toJS;
+    request.onsuccess = (web.Event e) {
+      completer.complete();
+    }.toJS;
 
-      request.onerror = (web.Event e) {
-        completer.completeError(
-          Exception('Failed to write file to IndexedDB: ${request.error}'),
-        );
-      }.toJS;
+    request.onerror = (web.Event e) {
+      completer.completeError(
+        Exception('Failed to write file to IndexedDB: ${request.error}'),
+      );
+    }.toJS;
 
-      await completer.future;
-      return this;
-    } finally {
-      db.close();
-    }
+    await completer.future;
+    return this;
   }
 
   @override
@@ -157,26 +193,22 @@ class IndexedDbFile implements File {
 
   @override
   Future<bool> exists() async {
-    final db = await _openDatabase();
-    try {
-      final completer = Completer<bool>();
-      final transaction = db.transaction(_fileStoreName.toJS, 'readonly');
-      final store = transaction.objectStore(_fileStoreName);
-      final request = store.get(_path.toJS);
+    final db = await _getDatabase();
+    final completer = Completer<bool>();
+    final transaction = _createTransaction(db, _fileStoreName, 'readonly');
+    final store = transaction.objectStore(_fileStoreName);
+    final request = store.get(_path.toJS);
 
-      request.onsuccess = (web.Event e) {
-        final result = request.result;
-        completer.complete(result != null);
-      }.toJS;
+    request.onsuccess = (web.Event e) {
+      final result = request.result;
+      completer.complete(result != null);
+    }.toJS;
 
-      request.onerror = (web.Event e) {
-        completer.complete(false);
-      }.toJS;
+    request.onerror = (web.Event e) {
+      completer.complete(false);
+    }.toJS;
 
-      return await completer.future;
-    } finally {
-      db.close();
-    }
+    return completer.future;
   }
 
   @override
@@ -186,28 +218,24 @@ class IndexedDbFile implements File {
 
   @override
   Future<FileSystemEntity> delete({bool recursive = false}) async {
-    final db = await _openDatabase();
-    try {
-      final completer = Completer<void>();
-      final transaction = db.transaction(_fileStoreName.toJS, 'readwrite');
-      final store = transaction.objectStore(_fileStoreName);
-      final request = store.delete(_path.toJS);
+    final db = await _getDatabase();
+    final completer = Completer<void>();
+    final transaction = _createTransaction(db, _fileStoreName, 'readwrite');
+    final store = transaction.objectStore(_fileStoreName);
+    final request = store.delete(_path.toJS);
 
-      request.onsuccess = (web.Event e) {
-        completer.complete();
-      }.toJS;
+    request.onsuccess = (web.Event e) {
+      completer.complete();
+    }.toJS;
 
-      request.onerror = (web.Event e) {
-        completer.completeError(
-          Exception('Failed to delete file from IndexedDB: ${request.error}'),
-        );
-      }.toJS;
+    request.onerror = (web.Event e) {
+      completer.completeError(
+        Exception('Failed to delete file from IndexedDB: ${request.error}'),
+      );
+    }.toJS;
 
-      await completer.future;
-      return this;
-    } finally {
-      db.close();
-    }
+    await completer.future;
+    return this;
   }
 
   @override

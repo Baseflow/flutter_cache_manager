@@ -157,7 +157,6 @@ class _IndexedDBTestPageState extends State<IndexedDBTestPage> {
     });
 
     try {
-      final file = await DefaultCacheManager().getSingleFile(testUrl);
       final info = await DefaultCacheManager().getFileFromCache(testUrl);
 
       setState(() {
