@@ -60,9 +60,10 @@ abstract class FileService {
 /// [HttpFileService] is the most common file service and the default for
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
 class HttpFileService extends FileService {
-  final http.Client? _httpClient;
+  final http.Client _httpClient;
 
-  HttpFileService({http.Client? httpClient}) : _httpClient = httpClient;
+  HttpFileService({http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client();
 
   @override
   Future<FileServiceResponse> get(
@@ -74,31 +75,26 @@ class HttpFileService extends FileService {
       throw CancelledException();
     }
 
-    final req = http.Request('GET', Uri.parse(url));
+    final http.BaseRequest req;
+    if (cancellationToken != null) {
+      req = http.AbortableRequest(
+        'GET',
+        Uri.parse(url),
+        abortTrigger: cancellationToken.whenCancelled,
+      );
+    } else {
+      req = http.Request('GET', Uri.parse(url));
+    }
+
     if (headers != null) {
       req.headers.addAll(headers);
     }
 
-    // Use dedicated client for cancellable requests, or shared client
-    final client = cancellationToken != null
-        ? http.Client()
-        : (_httpClient ?? http.Client());
-
-    if (cancellationToken != null) {
-      cancellationToken.whenCancelled.then((_) => client.close());
-    }
-
     try {
-      final httpResponse = await client.send(req);
-      if (cancellationToken?.isCancelled ?? false) {
-        throw CancelledException();
-      }
+      final httpResponse = await _httpClient.send(req);
       return HttpGetResponse(httpResponse);
-    } catch (e) {
-      if (cancellationToken?.isCancelled ?? false) {
-        throw CancelledException();
-      }
-      rethrow;
+    } on http.RequestAbortedException {
+      throw CancelledException();
     }
   }
 }
