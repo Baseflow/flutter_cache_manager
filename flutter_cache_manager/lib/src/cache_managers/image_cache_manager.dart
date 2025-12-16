@@ -24,6 +24,7 @@ mixin ImageCacheManager on BaseCacheManager {
     bool withProgress = false,
     int? maxHeight,
     int? maxWidth,
+    CancellationToken? cancellationToken,
   }) async* {
     if (maxHeight == null && maxWidth == null) {
       yield* getFileStream(
@@ -31,6 +32,7 @@ mixin ImageCacheManager on BaseCacheManager {
         key: key,
         headers: headers,
         withProgress: withProgress,
+        cancellationToken: cancellationToken,
       );
       return;
     }
@@ -56,6 +58,7 @@ mixin ImageCacheManager on BaseCacheManager {
         resizedKey,
         headers,
         withProgress,
+        cancellationToken: cancellationToken,
         maxWidth: maxWidth,
         maxHeight: maxHeight,
       ).asBroadcastStream();
@@ -130,12 +133,14 @@ mixin ImageCacheManager on BaseCacheManager {
     bool withProgress, {
     int? maxWidth,
     int? maxHeight,
+    CancellationToken? cancellationToken,
   }) async* {
     await for (final response in getFileStream(
       url,
       key: originalKey,
       headers: headers,
       withProgress: withProgress,
+      cancellationToken: cancellationToken,
     )) {
       if (response is DownloadProgress) {
         yield response;
