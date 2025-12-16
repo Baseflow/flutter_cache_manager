@@ -3,16 +3,16 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i5;
 
-import 'package:flutter_cache_manager/flutter_cache_manager.dart' as _i3;
-import 'package:flutter_cache_manager/src/cache_store.dart' as _i5;
+import 'package:flutter_cache_manager/flutter_cache_manager.dart' as _i4;
+import 'package:flutter_cache_manager/src/cache_store.dart' as _i6;
 import 'package:flutter_cache_manager/src/storage/cache_object.dart' as _i2;
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart'
     as _i3;
-import 'package:flutter_cache_manager/src/web/web_helper.dart' as _i7;
+import 'package:flutter_cache_manager/src/web/web_helper.dart' as _i8;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i6;
+import 'package:mockito/src/dummies.dart' as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -50,12 +50,12 @@ class _FakeDateTime_3 extends _i1.SmartFake implements DateTime {
 }
 
 class _FakeFileServiceResponse_4 extends _i1.SmartFake
-    implements _i3.FileServiceResponse {
+    implements _i4.FileServiceResponse {
   _FakeFileServiceResponse_4(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeFileService_5 extends _i1.SmartFake implements _i3.FileService {
+class _FakeFileService_5 extends _i1.SmartFake implements _i4.FileService {
   _FakeFileService_5(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
@@ -64,37 +64,37 @@ class _FakeFileService_5 extends _i1.SmartFake implements _i3.FileService {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockCacheInfoRepositoryBase extends _i1.Mock
-    implements _i3.CacheInfoRepository {
+    implements _i4.CacheInfoRepository {
   MockCacheInfoRepositoryBase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<bool> exists() =>
+  _i5.Future<bool> exists() =>
       (super.noSuchMethod(
             Invocation.method(#exists, []),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<bool> open() =>
+  _i5.Future<bool> open() =>
       (super.noSuchMethod(
             Invocation.method(#open, []),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<dynamic> updateOrInsert(_i2.CacheObject? cacheObject) =>
+  _i5.Future<dynamic> updateOrInsert(_i2.CacheObject? cacheObject) =>
       (super.noSuchMethod(
             Invocation.method(#updateOrInsert, [cacheObject]),
-            returnValue: _i4.Future<dynamic>.value(),
+            returnValue: _i5.Future<dynamic>.value(),
           )
-          as _i4.Future<dynamic>);
+          as _i5.Future<dynamic>);
 
   @override
-  _i4.Future<_i2.CacheObject> insert(
+  _i5.Future<_i2.CacheObject> insert(
     _i2.CacheObject? cacheObject, {
     bool? setTouchedToNow = true,
   }) =>
@@ -104,7 +104,7 @@ class MockCacheInfoRepositoryBase extends _i1.Mock
               [cacheObject],
               {#setTouchedToNow: setTouchedToNow},
             ),
-            returnValue: _i4.Future<_i2.CacheObject>.value(
+            returnValue: _i5.Future<_i2.CacheObject>.value(
               _FakeCacheObject_0(
                 this,
                 Invocation.method(
@@ -115,34 +115,34 @@ class MockCacheInfoRepositoryBase extends _i1.Mock
               ),
             ),
           )
-          as _i4.Future<_i2.CacheObject>);
+          as _i5.Future<_i2.CacheObject>);
 
   @override
-  _i4.Future<_i2.CacheObject?> get(String? key) =>
+  _i5.Future<_i2.CacheObject?> get(String? key) =>
       (super.noSuchMethod(
             Invocation.method(#get, [key]),
-            returnValue: _i4.Future<_i2.CacheObject?>.value(),
+            returnValue: _i5.Future<_i2.CacheObject?>.value(),
           )
-          as _i4.Future<_i2.CacheObject?>);
+          as _i5.Future<_i2.CacheObject?>);
 
   @override
-  _i4.Future<int> delete(int? id) =>
+  _i5.Future<int> delete(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#delete, [id]),
-            returnValue: _i4.Future<int>.value(0),
+            returnValue: _i5.Future<int>.value(0),
           )
-          as _i4.Future<int>);
+          as _i5.Future<int>);
 
   @override
-  _i4.Future<int> deleteAll(Iterable<int>? ids) =>
+  _i5.Future<int> deleteAll(Iterable<int>? ids) =>
       (super.noSuchMethod(
             Invocation.method(#deleteAll, [ids]),
-            returnValue: _i4.Future<int>.value(0),
+            returnValue: _i5.Future<int>.value(0),
           )
-          as _i4.Future<int>);
+          as _i5.Future<int>);
 
   @override
-  _i4.Future<int> update(
+  _i5.Future<int> update(
     _i2.CacheObject? cacheObject, {
     bool? setTouchedToNow = true,
   }) =>
@@ -152,62 +152,62 @@ class MockCacheInfoRepositoryBase extends _i1.Mock
               [cacheObject],
               {#setTouchedToNow: setTouchedToNow},
             ),
-            returnValue: _i4.Future<int>.value(0),
+            returnValue: _i5.Future<int>.value(0),
           )
-          as _i4.Future<int>);
+          as _i5.Future<int>);
 
   @override
-  _i4.Future<List<_i2.CacheObject>> getAllObjects() =>
+  _i5.Future<List<_i2.CacheObject>> getAllObjects() =>
       (super.noSuchMethod(
             Invocation.method(#getAllObjects, []),
-            returnValue: _i4.Future<List<_i2.CacheObject>>.value(
+            returnValue: _i5.Future<List<_i2.CacheObject>>.value(
               <_i2.CacheObject>[],
             ),
           )
-          as _i4.Future<List<_i2.CacheObject>>);
+          as _i5.Future<List<_i2.CacheObject>>);
 
   @override
-  _i4.Future<List<_i2.CacheObject>> getObjectsOverCapacity(int? capacity) =>
+  _i5.Future<List<_i2.CacheObject>> getObjectsOverCapacity(int? capacity) =>
       (super.noSuchMethod(
             Invocation.method(#getObjectsOverCapacity, [capacity]),
-            returnValue: _i4.Future<List<_i2.CacheObject>>.value(
+            returnValue: _i5.Future<List<_i2.CacheObject>>.value(
               <_i2.CacheObject>[],
             ),
           )
-          as _i4.Future<List<_i2.CacheObject>>);
+          as _i5.Future<List<_i2.CacheObject>>);
 
   @override
-  _i4.Future<List<_i2.CacheObject>> getOldObjects(Duration? maxAge) =>
+  _i5.Future<List<_i2.CacheObject>> getOldObjects(Duration? maxAge) =>
       (super.noSuchMethod(
             Invocation.method(#getOldObjects, [maxAge]),
-            returnValue: _i4.Future<List<_i2.CacheObject>>.value(
+            returnValue: _i5.Future<List<_i2.CacheObject>>.value(
               <_i2.CacheObject>[],
             ),
           )
-          as _i4.Future<List<_i2.CacheObject>>);
+          as _i5.Future<List<_i2.CacheObject>>);
 
   @override
-  _i4.Future<bool> close() =>
+  _i5.Future<bool> close() =>
       (super.noSuchMethod(
             Invocation.method(#close, []),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<void> deleteDataFile() =>
+  _i5.Future<void> deleteDataFile() =>
       (super.noSuchMethod(
             Invocation.method(#deleteDataFile, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 }
 
 /// A class which mocks [CacheStore].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
+class MockCacheStoreBase extends _i1.Mock implements _i6.CacheStore {
   MockCacheStoreBase() {
     _i1.throwOnMissingStub(this);
   }
@@ -238,7 +238,7 @@ class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
   String get storeKey =>
       (super.noSuchMethod(
             Invocation.getter(#storeKey),
-            returnValue: _i6.dummyValue<String>(
+            returnValue: _i7.dummyValue<String>(
               this,
               Invocation.getter(#storeKey),
             ),
@@ -275,7 +275,7 @@ class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
   );
 
   @override
-  _i4.Future<_i3.FileInfo?> getFile(
+  _i5.Future<_i4.FileInfo?> getFile(
     String? key, {
     bool? ignoreMemCache = false,
   }) =>
@@ -285,21 +285,21 @@ class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
               [key],
               {#ignoreMemCache: ignoreMemCache},
             ),
-            returnValue: _i4.Future<_i3.FileInfo?>.value(),
+            returnValue: _i5.Future<_i4.FileInfo?>.value(),
           )
-          as _i4.Future<_i3.FileInfo?>);
+          as _i5.Future<_i4.FileInfo?>);
 
   @override
-  _i4.Future<void> putFile(_i2.CacheObject? cacheObject) =>
+  _i5.Future<void> putFile(_i2.CacheObject? cacheObject) =>
       (super.noSuchMethod(
             Invocation.method(#putFile, [cacheObject]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<_i2.CacheObject?> retrieveCacheData(
+  _i5.Future<_i2.CacheObject?> retrieveCacheData(
     String? key, {
     bool? ignoreMemCache = false,
   }) =>
@@ -309,26 +309,26 @@ class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
               [key],
               {#ignoreMemCache: ignoreMemCache},
             ),
-            returnValue: _i4.Future<_i2.CacheObject?>.value(),
+            returnValue: _i5.Future<_i2.CacheObject?>.value(),
           )
-          as _i4.Future<_i2.CacheObject?>);
+          as _i5.Future<_i2.CacheObject?>);
 
   @override
-  _i4.Future<_i3.FileInfo?> getFileFromMemory(String? key) =>
+  _i5.Future<_i4.FileInfo?> getFileFromMemory(String? key) =>
       (super.noSuchMethod(
             Invocation.method(#getFileFromMemory, [key]),
-            returnValue: _i4.Future<_i3.FileInfo?>.value(),
+            returnValue: _i5.Future<_i4.FileInfo?>.value(),
           )
-          as _i4.Future<_i3.FileInfo?>);
+          as _i5.Future<_i4.FileInfo?>);
 
   @override
-  _i4.Future<void> emptyCache() =>
+  _i5.Future<void> emptyCache() =>
       (super.noSuchMethod(
             Invocation.method(#emptyCache, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
   void emptyMemoryCache() => super.noSuchMethod(
@@ -337,13 +337,13 @@ class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
   );
 
   @override
-  _i4.Future<void> removeCachedFile(_i2.CacheObject? cacheObject) =>
+  _i5.Future<void> removeCachedFile(_i2.CacheObject? cacheObject) =>
       (super.noSuchMethod(
             Invocation.method(#removeCachedFile, [cacheObject]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
   bool memoryCacheContainsKey(String? key) =>
@@ -354,27 +354,27 @@ class MockCacheStoreBase extends _i1.Mock implements _i5.CacheStore {
           as bool);
 
   @override
-  _i4.Future<void> dispose() =>
+  _i5.Future<void> dispose() =>
       (super.noSuchMethod(
             Invocation.method(#dispose, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<int> getCacheSize() =>
+  _i5.Future<int> getCacheSize() =>
       (super.noSuchMethod(
             Invocation.method(#getCacheSize, []),
-            returnValue: _i4.Future<int>.value(0),
+            returnValue: _i5.Future<int>.value(0),
           )
-          as _i4.Future<int>);
+          as _i5.Future<int>);
 }
 
 /// A class which mocks [FileService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockFileServiceBase extends _i1.Mock implements _i3.FileService {
+class MockFileServiceBase extends _i1.Mock implements _i4.FileService {
   MockFileServiceBase() {
     _i1.throwOnMissingStub(this);
   }
@@ -391,32 +391,41 @@ class MockFileServiceBase extends _i1.Mock implements _i3.FileService {
   );
 
   @override
-  _i4.Future<_i3.FileServiceResponse> get(
+  _i5.Future<_i4.FileServiceResponse> get(
     String? url, {
     Map<String, String>? headers,
+    _i4.CancellationToken? cancellationToken,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(#get, [url], {#headers: headers}),
-            returnValue: _i4.Future<_i3.FileServiceResponse>.value(
+            Invocation.method(
+              #get,
+              [url],
+              {#headers: headers, #cancellationToken: cancellationToken},
+            ),
+            returnValue: _i5.Future<_i4.FileServiceResponse>.value(
               _FakeFileServiceResponse_4(
                 this,
-                Invocation.method(#get, [url], {#headers: headers}),
+                Invocation.method(
+                  #get,
+                  [url],
+                  {#headers: headers, #cancellationToken: cancellationToken},
+                ),
               ),
             ),
           )
-          as _i4.Future<_i3.FileServiceResponse>);
+          as _i5.Future<_i4.FileServiceResponse>);
 }
 
 /// A class which mocks [WebHelper].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockWebHelper extends _i1.Mock implements _i7.WebHelper {
+class MockWebHelper extends _i1.Mock implements _i8.WebHelper {
   MockWebHelper() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.FileService get fileFetcher =>
+  _i4.FileService get fileFetcher =>
       (super.noSuchMethod(
             Invocation.getter(#fileFetcher),
             returnValue: _FakeFileService_5(
@@ -424,7 +433,7 @@ class MockWebHelper extends _i1.Mock implements _i7.WebHelper {
               Invocation.getter(#fileFetcher),
             ),
           )
-          as _i3.FileService);
+          as _i4.FileService);
 
   @override
   int get concurrentCalls =>
@@ -438,11 +447,12 @@ class MockWebHelper extends _i1.Mock implements _i7.WebHelper {
   );
 
   @override
-  _i4.Stream<_i3.FileResponse> downloadFile(
+  _i5.Stream<_i4.FileResponse> downloadFile(
     String? url, {
     String? key,
     Map<String, String>? authHeaders,
     bool? ignoreMemCache = false,
+    _i4.CancellationToken? cancellationToken,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
@@ -452,9 +462,10 @@ class MockWebHelper extends _i1.Mock implements _i7.WebHelper {
                 #key: key,
                 #authHeaders: authHeaders,
                 #ignoreMemCache: ignoreMemCache,
+                #cancellationToken: cancellationToken,
               },
             ),
-            returnValue: _i4.Stream<_i3.FileResponse>.empty(),
+            returnValue: _i5.Stream<_i4.FileResponse>.empty(),
           )
-          as _i4.Stream<_i3.FileResponse>);
+          as _i5.Stream<_i4.FileResponse>);
 }
