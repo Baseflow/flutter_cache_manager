@@ -9,6 +9,40 @@ import 'package:http/http.dart' as http;
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
+/// Token that can be used to cancel an in-flight request.
+class CancellationToken {
+  bool _isCancelled = false;
+  Completer<void>? _completer;
+
+  /// Whether this token has been cancelled.
+  bool get isCancelled => _isCancelled;
+
+  /// Cancel the request associated with this token.
+  void cancel() {
+    _isCancelled = true;
+    _completer?.complete();
+  }
+
+  /// A future that completes when this token is cancelled.
+  Future<void> get whenCancelled {
+    _completer ??= Completer<void>();
+    if (_isCancelled) _completer!.complete();
+    return _completer!.future;
+  }
+}
+
+/// Exception thrown when a request is cancelled.
+class CancelledException implements Exception {
+  /// Creates a new [CancelledException] with an optional message.
+  CancelledException([this.message = 'Request was cancelled']);
+
+  /// The error message.
+  final String message;
+
+  @override
+  String toString() => 'CancelledException: $message';
+}
+
 /// Defines the interface for a file service.
 /// Most common file service will be an [HttpFileService], however one can
 /// also make something more specialized. For example you could fetch files
@@ -16,29 +50,56 @@ import 'package:http/http.dart' as http;
 abstract class FileService {
   int concurrentFetches = 10;
 
-  Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
+  Future<FileServiceResponse> get(
+    String url, {
+    Map<String, String>? headers,
+    CancellationToken? cancellationToken,
+  });
 }
 
 /// [HttpFileService] is the most common file service and the default for
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
 class HttpFileService extends FileService {
-  final http.Client _httpClient;
+  final http.Client? _httpClient;
 
-  HttpFileService({http.Client? httpClient})
-    : _httpClient = httpClient ?? http.Client();
+  HttpFileService({http.Client? httpClient}) : _httpClient = httpClient;
 
   @override
   Future<FileServiceResponse> get(
     String url, {
     Map<String, String>? headers,
+    CancellationToken? cancellationToken,
   }) async {
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
     final req = http.Request('GET', Uri.parse(url));
     if (headers != null) {
       req.headers.addAll(headers);
     }
-    final httpResponse = await _httpClient.send(req);
 
-    return HttpGetResponse(httpResponse);
+    // Use dedicated client for cancellable requests, or shared client
+    final client = cancellationToken != null
+        ? http.Client()
+        : (_httpClient ?? http.Client());
+
+    if (cancellationToken != null) {
+      cancellationToken.whenCancelled.then((_) => client.close());
+    }
+
+    try {
+      final httpResponse = await client.send(req);
+      if (cancellationToken?.isCancelled ?? false) {
+        throw CancelledException();
+      }
+      return HttpGetResponse(httpResponse);
+    } catch (e) {
+      if (cancellationToken?.isCancelled ?? false) {
+        throw CancelledException();
+      }
+      rethrow;
+    }
   }
 }
 

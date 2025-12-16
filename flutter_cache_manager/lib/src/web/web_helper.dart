@@ -34,13 +34,14 @@ class WebHelper {
     String? key,
     Map<String, String>? authHeaders,
     bool ignoreMemCache = false,
+    CancellationToken? cancellationToken,
   }) {
     key ??= url;
     var subject = _memCache[key];
     if (subject == null || ignoreMemCache) {
       subject = BehaviorSubject<FileResponse>();
       _memCache[key] = subject;
-      _downloadOrAddToQueue(url, key, authHeaders);
+      _downloadOrAddToQueue(url, key, authHeaders, cancellationToken);
     }
     return subject.stream;
   }
@@ -51,10 +52,11 @@ class WebHelper {
     String url,
     String key,
     Map<String, String>? authHeaders,
+    CancellationToken? cancellationToken,
   ) async {
     //Add to queue if there are too many calls.
     if (concurrentCalls >= fileFetcher.concurrentFetches) {
-      _queue.add(QueueItem(url, key, authHeaders));
+      _queue.add(QueueItem(url, key, authHeaders, cancellationToken));
       return;
     }
     cacheLogger.log(
@@ -69,6 +71,7 @@ class WebHelper {
         url,
         key,
         authHeaders: authHeaders,
+        cancellationToken: cancellationToken,
       )) {
         subject.add(result);
       }
@@ -85,7 +88,12 @@ class WebHelper {
   void _checkQueue() {
     if (_queue.isEmpty) return;
     final next = _queue.removeFirst();
-    _downloadOrAddToQueue(next.url, next.key, next.headers);
+    _downloadOrAddToQueue(
+      next.url,
+      next.key,
+      next.headers,
+      next.cancellationToken,
+    );
   }
 
   ///Download the file from the url
@@ -93,6 +101,7 @@ class WebHelper {
     String url,
     String key, {
     Map<String, String>? authHeaders,
+    CancellationToken? cancellationToken,
   }) async* {
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject = cacheObject == null
@@ -103,13 +112,18 @@ class WebHelper {
             relativePath: '${const Uuid().v1()}.file',
           )
         : cacheObject.copyWith(url: url);
-    final response = await _download(cacheObject, authHeaders);
+    final response = await _download(
+      cacheObject,
+      authHeaders,
+      cancellationToken,
+    );
     yield* _manageResponse(cacheObject, response);
   }
 
   Future<FileServiceResponse> _download(
     CacheObject cacheObject,
     Map<String, String>? authHeaders,
+    CancellationToken? cancellationToken,
   ) {
     final headers = <String, String>{};
 
@@ -124,7 +138,11 @@ class WebHelper {
       headers.addAll(authHeaders);
     }
 
-    return fileFetcher.get(cacheObject.url, headers: headers);
+    return fileFetcher.get(
+      cacheObject.url,
+      headers: headers,
+      cancellationToken: cancellationToken,
+    );
   }
 
   Stream<FileResponse> _manageResponse(
