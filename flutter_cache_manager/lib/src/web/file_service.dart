@@ -19,14 +19,21 @@ class CancellationToken {
 
   /// Cancel the request associated with this token.
   void cancel() {
+    if (_isCancelled) return;
     _isCancelled = true;
-    _completer?.complete();
+    if (_completer != null && !_completer!.isCompleted) {
+      _completer!.complete();
+    }
   }
 
   /// A future that completes when this token is cancelled.
   Future<void> get whenCancelled {
-    _completer ??= Completer<void>();
-    if (_isCancelled) _completer!.complete();
+    if (_completer == null) {
+      _completer = Completer<void>();
+      if (_isCancelled) {
+        _completer!.complete();
+      }
+    }
     return _completer!.future;
   }
 }

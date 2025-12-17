@@ -54,6 +54,17 @@ class WebHelper {
     Map<String, String>? authHeaders,
     CancellationToken? cancellationToken,
   ) async {
+    // Check if already cancelled before starting
+    if (cancellationToken?.isCancelled ?? false) {
+      final subject = _memCache[key];
+      if (subject != null) {
+        subject.addError(CancelledException());
+        await subject.close();
+        _memCache.remove(key);
+      }
+      return;
+    }
+
     //Add to queue if there are too many calls.
     if (concurrentCalls >= fileFetcher.concurrentFetches) {
       _queue.add(QueueItem(url, key, authHeaders, cancellationToken));
@@ -88,6 +99,19 @@ class WebHelper {
   void _checkQueue() {
     if (_queue.isEmpty) return;
     final next = _queue.removeFirst();
+    // Skip cancelled items
+    if (next.cancellationToken?.isCancelled ?? false) {
+      // Clean up the subject for this cancelled request
+      final subject = _memCache[next.key];
+      if (subject != null) {
+        subject.addError(CancelledException());
+        subject.close();
+        _memCache.remove(next.key);
+      }
+      // Check the next item in queue
+      _checkQueue();
+      return;
+    }
     _downloadOrAddToQueue(
       next.url,
       next.key,
