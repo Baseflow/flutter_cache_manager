@@ -168,7 +168,7 @@ class WebHelper {
         _removeOldFile(filePath);
       }
       // Store new file on different path
-      filePath = '${const Uuid().v1()}$fileExtension';
+      filePath = '${const Uuid().v1()}.$fileExtension';
     }
     return cacheObject.copyWith(
       relativePath: filePath,
