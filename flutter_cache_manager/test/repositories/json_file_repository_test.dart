@@ -99,7 +99,7 @@ void main() {
 
     test('getObjectsOverCapacity should return oldest objects', () async {
       var repo = await JsonRepoHelpers.createRepository();
-      var result = await repo.getObjectsOverCapacity(1);
+      var result = await repo.getObjectsOverCapacity(1, maxAge: Duration.zero);
       expect(result.length, 2);
       expectIdInList(result, 1);
       expectIdInList(result, 3);

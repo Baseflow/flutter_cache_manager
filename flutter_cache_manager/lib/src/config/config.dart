@@ -27,6 +27,7 @@ abstract class Config {
     CacheInfoRepository repo,
     FileSystem fileSystem,
     FileService fileService,
+    Duration? maxCapacityAgeFilterDuration,
   }) = impl.Config;
 
   String get cacheKey;
@@ -40,4 +41,6 @@ abstract class Config {
   FileSystem get fileSystem;
 
   FileService get fileService;
+
+  Duration? get maxCapacityAgeFilterDuration;
 }

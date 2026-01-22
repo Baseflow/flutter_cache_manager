@@ -36,8 +36,9 @@ abstract class CacheInfoRepository {
   /// Gets the list of [CacheObject] that can be removed if the repository is over capacity.
   ///
   /// The exact implementation is up to the repository, but implementations should
-  /// return a preferred list of items. For example, the least recently accessed
-  Future<List<CacheObject>> getObjectsOverCapacity(int capacity);
+  /// return a preferred list of items. For example, the least recently accessed.
+  /// [maxAge] filters objects older than the given duration (defaults to 1 day).
+  Future<List<CacheObject>> getObjectsOverCapacity(int capacity, {Duration? maxAge});
 
   /// Returns a list of [CacheObject] that are older than [maxAge]
   Future<List<CacheObject>> getOldObjects(Duration maxAge);
