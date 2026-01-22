@@ -87,11 +87,14 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   }
 
   @override
-  Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
-    final allSorted = _cacheObjects.values.toList()
+  Future<List<CacheObject>> getObjectsOverCapacity(int capacity, {Duration? maxAge}) async {
+    final threshold = DateTime.now().subtract(maxAge ?? const Duration(days: 1));
+    final filtered = _cacheObjects.values
+        .where((c) => c.touched!.isBefore(threshold))
+        .toList()
       ..sort((c1, c2) => c1.touched!.compareTo(c2.touched!));
-    if (allSorted.length <= capacity) return [];
-    return allSorted.getRange(0, allSorted.length - capacity).toList();
+    if (filtered.length <= capacity) return [];
+    return filtered.getRange(0, filtered.length - capacity).toList();
   }
 
   @override
