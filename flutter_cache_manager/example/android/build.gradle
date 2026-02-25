@@ -11,6 +11,9 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << "-Xlint:-deprecation"
+    }
 }
 
 tasks.register("clean", Delete) {
