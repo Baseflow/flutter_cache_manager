@@ -23,9 +23,11 @@ abstract class FileService {
 /// [WebHelper]. One can easily adapt it to use dio or any other http client.
 class HttpFileService extends FileService {
   final http.Client _httpClient;
+  final Duration _durationOnMaxAgeZero;
 
-  HttpFileService({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+  HttpFileService({http.Client? httpClient, Duration? durationOnMaxAgeZero})
+      : _httpClient = httpClient ?? http.Client(),
+        _durationOnMaxAgeZero = durationOnMaxAgeZero ?? Duration(days: 7);
 
   @override
   Future<FileServiceResponse> get(String url,
@@ -36,7 +38,7 @@ class HttpFileService extends FileService {
     }
     final httpResponse = await _httpClient.send(req);
 
-    return HttpGetResponse(httpResponse);
+    return HttpGetResponse(httpResponse, _durationOnMaxAgeZero);
   }
 }
 
@@ -64,11 +66,13 @@ abstract class FileServiceResponse {
 
 /// Basic implementation of a [FileServiceResponse] for http requests.
 class HttpGetResponse implements FileServiceResponse {
-  HttpGetResponse(this._response);
+  HttpGetResponse(this._response, this._durationOnMaxAgeZero);
 
   final DateTime _receivedTime = clock.now();
 
   final http.StreamedResponse _response;
+
+  final Duration _durationOnMaxAgeZero;
 
   @override
   int get statusCode => _response.statusCode;
@@ -86,7 +90,7 @@ class HttpGetResponse implements FileServiceResponse {
   @override
   DateTime get validTill {
     // Without a cache-control header we keep the file for a week
-    var ageDuration = const Duration(days: 7);
+    var ageDuration = _durationOnMaxAgeZero;
     final controlHeader = _header(HttpHeaders.cacheControlHeader);
     if (controlHeader != null) {
       final controlSettings = controlHeader.split(',');

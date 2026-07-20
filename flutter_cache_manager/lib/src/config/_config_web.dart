@@ -8,15 +8,21 @@ class Config implements def.Config {
   Config(
     this.cacheKey, {
     Duration? stalePeriod,
+    Duration? durationOnMaxAgeZero,
     int? maxNrOfCacheObjects,
     CacheInfoRepository? repo,
     FileSystem? fileSystem,
     FileService? fileService,
   })  : stalePeriod = stalePeriod ?? const Duration(days: 30),
+        durationOnMaxAgeZero = durationOnMaxAgeZero ?? const Duration(days: 7),
         maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
         repo = repo ?? NonStoringObjectProvider(),
         fileSystem = fileSystem ?? MemoryCacheSystem(),
-        fileService = fileService ?? HttpFileService();
+        fileService = fileService ??
+            HttpFileService(
+                durationOnMaxAgeZero: durationOnMaxAgeZero ??
+                Duration(days: 7),
+            );
 
   @override
   final CacheInfoRepository repo;
@@ -29,6 +35,9 @@ class Config implements def.Config {
 
   @override
   final Duration stalePeriod;
+
+  @override
+  final Duration durationOnMaxAgeZero;
 
   @override
   final int maxNrOfCacheObjects;
