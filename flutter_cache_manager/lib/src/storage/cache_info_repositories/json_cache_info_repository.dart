@@ -21,7 +21,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   /// If the path is provider it should end with '{databaseName}.json',
   /// for example: /data/user/0/com.example.example/databases/imageCache.json
   JsonCacheInfoRepository({this.path, this.databaseName})
-      : assert(path == null || databaseName == null);
+    : assert(path == null || databaseName == null);
 
   /// The directory and the databaseName should both the provided. The database
   /// is stored as {databaseName}.json in the directory,
@@ -98,9 +98,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
     final oldestTimestamp = DateTime.now().subtract(maxAge);
     return _cacheObjects.values
-        .where(
-          (element) => element.touched!.isBefore(oldestTimestamp),
-        )
+        .where((element) => element.touched!.isBefore(oldestTimestamp))
         .toList();
   }
 
@@ -149,15 +147,17 @@ class JsonCacheInfoRepository extends CacheInfoRepository
           _cacheObjects[cacheObject.key] = cacheObject;
         }
       } on Object catch (e, stacktrace) {
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: e,
-          stack: stacktrace,
-          library: 'flutter cache manager',
-          context: ErrorDescription(
-            'Thrown when reading the file containing cache info. '
-            'The cached files cannot be used by the cache manager anymore.',
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: stacktrace,
+            library: 'flutter cache manager',
+            context: ErrorDescription(
+              'Thrown when reading the file containing cache info. '
+              'The cached files cannot be used by the cache manager anymore.',
+            ),
           ),
-        ));
+        );
       }
     }
   }

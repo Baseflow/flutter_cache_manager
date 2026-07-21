@@ -51,10 +51,7 @@ class NonStoringObjectProvider implements CacheInfoRepository {
   }
 
   @override
-  Future<int> update(
-    CacheObject cacheObject, {
-    bool setTouchedToNow = true,
-  }) {
+  Future<int> update(CacheObject cacheObject, {bool setTouchedToNow = true}) {
     return Future.value(0);
   }
 

@@ -10,6 +10,8 @@
 .history
 .svn/
 devtools_options.yaml
+.fvmrc
+.fvm/
 
 # Environment files
 ios/Flutter/Dart-Defines.xcconfig

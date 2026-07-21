@@ -8,8 +8,11 @@ import 'package:http/http.dart' as http;
 ///Released under MIT License.
 
 /// Deprecated FileFetcher function
-typedef FileFetcher = Future<FileFetcherResponse> Function(String url,
-    {Map<String, String>? headers});
+typedef FileFetcher =
+    Future<FileFetcherResponse> Function(
+      String url, {
+      Map<String, String>? headers,
+    });
 
 abstract class FileFetcherResponse {
   Object get statusCode;

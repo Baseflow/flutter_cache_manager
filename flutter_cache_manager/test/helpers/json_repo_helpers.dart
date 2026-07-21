@@ -15,8 +15,9 @@ const String testurl3 = 'www.baseflow.com/test3.png';
 const String testurl4 = 'www.baseflow.com/test4.png';
 
 class JsonRepoHelpers {
-  static Future<JsonCacheInfoRepository> createRepository(
-      {bool open = true}) async {
+  static Future<JsonCacheInfoRepository> createRepository({
+    bool open = true,
+  }) async {
     var directory = await _createDirectory();
     var file = await _createFile(directory);
     var repository = JsonCacheInfoRepository.withFile(file);
@@ -25,8 +26,9 @@ class JsonRepoHelpers {
   }
 
   static Future<Directory> _createDirectory() async {
-    var testDir =
-        await MemoryFileSystem().systemTempDirectory.createTemp('testFolder');
+    var testDir = await MemoryFileSystem().systemTempDirectory.createTemp(
+      'testFolder',
+    );
     await testDir.create(recursive: true);
     return testDir;
   }

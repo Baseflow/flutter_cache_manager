@@ -19,15 +19,15 @@ void main() {
       expect(repository, isNotNull);
     });
 
-    test('Create repository with path and databaseName throws assertion error',
-        () {
-      expect(
-          () => JsonCacheInfoRepository(
-                path: path,
-                databaseName: databaseName,
-              ),
-          throwsAssertionError);
-    });
+    test(
+      'Create repository with path and databaseName throws assertion error',
+      () {
+        expect(
+          () => JsonCacheInfoRepository(path: path, databaseName: databaseName),
+          throwsAssertionError,
+        );
+      },
+    );
 
     test('Create repository with directory is successful', () {
       var repository = JsonCacheInfoRepository.withFile(File(path));
@@ -122,8 +122,9 @@ void main() {
       expect(insertedObject.touched, isNotNull);
 
       var allObjects = await repo.getAllObjects();
-      var newObject =
-          allObjects.where((element) => element.id == insertedObject.id);
+      var newObject = allObjects.where(
+        (element) => element.id == insertedObject.id,
+      );
       expect(newObject, isNotNull);
     });
 
@@ -162,15 +163,17 @@ void main() {
     test('updateOrInsert inserts new item', () async {
       var repo = await JsonRepoHelpers.createRepository();
       var objectToInsert = JsonRepoHelpers.extraCacheObject;
-      var insertedObject =
-          await repo.updateOrInsert(JsonRepoHelpers.extraCacheObject);
+      var insertedObject = await repo.updateOrInsert(
+        JsonRepoHelpers.extraCacheObject,
+      );
       expect(insertedObject.id, JsonRepoHelpers.startCacheObjects.length + 1);
       expect(insertedObject.url, objectToInsert.url);
       expect(insertedObject.touched, isNotNull);
 
       var allObjects = await repo.getAllObjects();
-      var newObject =
-          allObjects.where((element) => element.id == insertedObject.id);
+      var newObject = allObjects.where(
+        (element) => element.id == insertedObject.id,
+      );
       expect(newObject, isNotNull);
     });
   });
@@ -193,11 +196,14 @@ void main() {
       var deleted = await repo.deleteAll(removedIds);
       expect(deleted, 2);
       var objects = await repo.getAllObjects();
-      var removedObject =
-          objects.where((element) => removedIds.contains(element.id));
+      var removedObject = objects.where(
+        (element) => removedIds.contains(element.id),
+      );
       expect(removedObject.length, 0);
-      expect(objects.length,
-          JsonRepoHelpers.startCacheObjects.length - removedIds.length);
+      expect(
+        objects.length,
+        JsonRepoHelpers.startCacheObjects.length - removedIds.length,
+      );
     });
 
     test('delete does not remove non-existing items', () async {
@@ -219,8 +225,10 @@ void main() {
       await repo.open();
 
       var allObjectsAfterOpen = await repo.getAllObjects();
-      expect(allObjectsAfterOpen.length,
-          JsonRepoHelpers.startCacheObjects.length + 1);
+      expect(
+        allObjectsAfterOpen.length,
+        JsonRepoHelpers.startCacheObjects.length + 1,
+      );
     });
   });
 }

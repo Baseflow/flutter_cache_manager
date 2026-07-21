@@ -54,7 +54,7 @@ void main() {
         columnPath: 'test.png',
         columnETag: 'test1',
         columnValidTill: validMillis,
-        columnTouched: now.millisecondsSinceEpoch
+        columnTouched: now.millisecondsSinceEpoch,
       };
       var object = CacheObject.fromMap(map);
       expect(object.id, 3);
@@ -73,7 +73,7 @@ void main() {
         columnPath: 'test.png',
         columnETag: 'test1',
         columnValidTill: validMillis,
-        columnTouched: now.millisecondsSinceEpoch
+        columnTouched: now.millisecondsSinceEpoch,
       };
       var object = CacheObject.fromMap(map);
       expect(object.id, 3);
