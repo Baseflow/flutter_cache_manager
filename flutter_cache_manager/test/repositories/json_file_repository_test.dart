@@ -57,6 +57,26 @@ void main() {
     });
   });
 
+  test('Open repository should not report error when file is empty',
+          () async {
+        final originalOnError = FlutterError.onError;
+        FlutterError.onError = (FlutterErrorDetails details) {
+          throw details.exception;
+        };
+
+        final tempFile = File('${Directory.systemTemp.path}/test_empty.json');
+        await tempFile.create();
+        expect(await tempFile.length(), 0);
+
+        final repository = JsonCacheInfoRepository.withFile(tempFile);
+        await repository.open();
+
+        expect(await repository.getAllObjects(), isEmpty);
+
+        await tempFile.delete();
+        FlutterError.onError = originalOnError;
+  });
+
   group('Exist and delete', () {
     test('New repository does not exist', () async {
       var repository = JsonCacheInfoRepository.withFile(File(path));
