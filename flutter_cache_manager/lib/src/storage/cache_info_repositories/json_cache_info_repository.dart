@@ -135,7 +135,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   Future<void> _readFile(File file) async {
     _cacheObjects.clear();
     _jsonCache.clear();
-    if (await file.exists()) {
+    if (await file.exists() && await file.length() > 0) {
       try {
         final jsonString = await file.readAsString();
         final json = jsonDecode(jsonString) as List<dynamic>;
