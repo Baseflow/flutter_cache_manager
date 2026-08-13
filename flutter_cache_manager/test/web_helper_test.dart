@@ -248,6 +248,40 @@ void main() {
       verify(store.putFile(any)).called(1);
     });
 
+    test('downloadFile waits for persist before yielding FileInfo', () async {
+      const imageUrl = 'baseflow.com/testimage';
+
+      var persistDone = false;
+      var config = createTestConfig();
+      var store = _createStore(config);
+      when(store.putFile(any)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        persistDone = true;
+      });
+
+      final fileService = MockFileService();
+      when(fileService.get(imageUrl, headers: anyNamed('headers'))).thenAnswer((
+        _,
+      ) {
+        return Future.value(
+          MockFileFetcherResponse(
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now(),
+          ),
+        );
+      });
+
+      var webHelper = WebHelper(store, fileService);
+      await webHelper
+          .downloadFile(imageUrl)
+          .firstWhere((r) => r is FileInfo, orElse: null);
+      expect(persistDone, isTrue);
+    });
+
     test('File should be removed if extension changed', () async {
       const imageUrl = 'baseflow.com/testimage';
       var imageName = 'image.png';

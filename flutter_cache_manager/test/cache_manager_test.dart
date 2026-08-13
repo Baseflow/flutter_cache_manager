@@ -424,6 +424,35 @@ void main() {
       expect(arg.key, fileKey);
       expect(arg.url, fileUrl);
     });
+
+    test('putFile waits for store persist before returning', () async {
+      var persistDone = false;
+      var store = MockCacheStore();
+      when(store.putFile(any)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        persistDone = true;
+      });
+
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
+      await cacheManager.putFile('baseflow.com/test', Uint8List(8));
+      expect(persistDone, isTrue);
+    });
+
+    test('putFileStream waits for store persist before returning', () async {
+      var persistDone = false;
+      var store = MockCacheStore();
+      when(store.putFile(any)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        persistDone = true;
+      });
+
+      var cacheManager = TestCacheManager(createTestConfig(), store: store);
+      await cacheManager.putFileStream(
+        'baseflow.com/test',
+        Stream<List<int>>.value([1, 2, 3]),
+      );
+      expect(persistDone, isTrue);
+    });
   });
 
   group('Testing remove files from cache', () {
