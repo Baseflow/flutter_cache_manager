@@ -231,8 +231,13 @@ class WebHelper {
   Future<void> _removeOldFile(String? relativePath) async {
     if (relativePath == null) return;
     final file = await _store.fileSystem.createFile(relativePath);
-    if (await file.exists()) {
-      await file.delete();
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on FileSystemException {
+      // Already deleted (see #184) or not deletable. The cache info no longer
+      // points at this path, so there is nothing to recover here.
     }
   }
 }

@@ -251,13 +251,10 @@ void main() {
     test('downloadFile waits for persist before yielding FileInfo', () async {
       const imageUrl = 'baseflow.com/testimage';
 
-      var persistDone = false;
+      final persisted = Completer<void>();
       var config = createTestConfig();
       var store = _createStore(config);
-      when(store.putFile(any)).thenAnswer((_) async {
-        await Future<void>.delayed(const Duration(milliseconds: 40));
-        persistDone = true;
-      });
+      when(store.putFile(any)).thenAnswer((_) => persisted.future);
 
       final fileService = MockFileService();
       when(fileService.get(imageUrl, headers: anyNamed('headers'))).thenAnswer((
@@ -275,11 +272,20 @@ void main() {
         );
       });
 
-      var webHelper = WebHelper(store, fileService);
-      await webHelper
+      final webHelper = WebHelper(store, fileService);
+      var yielded = false;
+      final download = webHelper
           .downloadFile(imageUrl)
-          .firstWhere((r) => r is FileInfo, orElse: null);
-      expect(persistDone, isTrue);
+          .firstWhere((r) => r is FileInfo, orElse: null)
+        ..whenComplete(() => yielded = true);
+      await pumpEventQueue();
+      expect(
+        yielded,
+        isFalse,
+        reason: 'downloadFile yielded FileInfo before the store persisted',
+      );
+      persisted.complete();
+      await download;
     });
 
     test('File should be removed if extension changed', () async {
