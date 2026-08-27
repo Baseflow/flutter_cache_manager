@@ -163,14 +163,27 @@ Future<ui.Image> _decodeImage(
           allowUpscaling: allowUpscaling,
         )
       : fileImage as ImageProvider;
+
   final completer = Completer<ui.Image>();
-  image
-      .resolve(ImageConfiguration.empty)
-      .addListener(
-        ImageStreamListener((info, _) {
-          completer.complete(info.image);
-          image.evict();
-        }),
-      );
+  final stream = image.resolve(ImageConfiguration.empty);
+
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (info, _) {
+      if (completer.isCompleted) return;
+
+      stream.removeListener(listener);
+      image.evict();
+      completer.complete(info.image);
+    },
+    onError: (Object error, StackTrace? stackTrace) {
+      if (completer.isCompleted) return;
+
+      stream.removeListener(listener);
+      completer.completeError(error, stackTrace);
+    },
+  );
+
+  stream.addListener(listener);
   return completer.future;
 }
