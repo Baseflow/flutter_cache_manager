@@ -12,14 +12,16 @@ class Config implements def.Config {
     CacheInfoRepository? repo,
     FileSystem? fileSystem,
     FileService? fileService,
-  })  : stalePeriod = stalePeriod ?? const Duration(days: 30),
-        maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
-        repo = repo ??
-            IndexedDbCacheInfoRepository(
-                databaseName: 'flutter_cache_manager_$cacheKey'),
-        fileSystem = fileSystem ??
-            IndexedDbFileSystem('flutter_cache_manager_$cacheKey'),
-        fileService = fileService ?? HttpFileService();
+  }) : stalePeriod = stalePeriod ?? const Duration(days: 30),
+       maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
+       repo =
+           repo ??
+           IndexedDbCacheInfoRepository(
+             databaseName: 'flutter_cache_manager_$cacheKey',
+           ),
+       fileSystem =
+           fileSystem ?? IndexedDbFileSystem('flutter_cache_manager_$cacheKey'),
+       fileService = fileService ?? HttpFileService();
 
   @override
   final CacheInfoRepository repo;

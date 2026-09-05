@@ -3,21 +3,26 @@ description: A project that showcases usage of flutter_cache_manager
 publish_to: none
 version: 1.0.0+1
 environment:
-  sdk: ">=3.6.0 <4.0.0"
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
-  baseflow_plugin_template: ^2.2.0
+  baseflow_plugin_template: ^2.2.1
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
   flutter_cache_manager:
     path: ../
-  url_launcher: ^6.3.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
+# path_provider_android 2.3.x pulls jni/jni_flutter, which still break under AGP 9
+# with Flutter's temporary builtInKotlin=false opt-out. Pin until those plugins ship a fix.
+dependency_overrides:
+  path_provider_android: 2.2.22
 
 flutter:
   uses-material-design: true

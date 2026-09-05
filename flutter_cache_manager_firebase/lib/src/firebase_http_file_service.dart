@@ -8,20 +8,20 @@ import 'package:retry/retry.dart';
 class FirebaseHttpFileService extends HttpFileService {
   final RetryOptions? retryOptions;
 
-  FirebaseHttpFileService({
-    this.retryOptions,
-    this.bucket,
-  }) : super();
+  FirebaseHttpFileService({this.retryOptions, this.bucket}) : super();
 
   final String? bucket;
 
   @override
-  Future<FileServiceResponse> get(String url,
-      {Map<String, String>? headers}) async {
+  Future<FileServiceResponse> get(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
     late Reference ref;
     if (bucket != null) {
-      ref =
-          FirebaseStorage.instanceFor(bucket: "gs://$bucket").ref().child(url);
+      ref = FirebaseStorage.instanceFor(
+        bucket: "gs://$bucket",
+      ).ref().child(url);
     } else {
       ref = FirebaseStorage.instance.ref().child(url);
     }
