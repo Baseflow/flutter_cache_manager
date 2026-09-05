@@ -1,3 +1,18 @@
+## [Unreleased]
+
+* Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.44.4, Dependabot for actions)
+* Adds a smoke unit test so CI `flutter test` no longer exits with “No tests were found”
+
+## [2.1.3] - 2026-07-21
+
+* Raises minimum Dart SDK to 3.10.0
+* Updates dependencies
+* Supports firebase_storage 13.x (constraint widened to `<14.0.0`)
+
+## [2.1.2] - 2026-07-21
+
+* Fixes `bucket` and `retryOptions` being ignored due to variable shadowing.
+
 ## [2.1.1] - 2024-08-13
 
 * Target js_interop for Wasm support

@@ -50,9 +50,10 @@ class IndexedDbFile implements File {
       Stream<List<int>>.error(_unsupportedError());
 
   @override
-  IOSink openWrite(
-          {FileMode mode = FileMode.write, Encoding encoding = utf8}) =>
-      _throw();
+  IOSink openWrite({
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+  }) => _throw();
 
   @override
   Directory get parent => _throw();
@@ -125,33 +126,40 @@ class IndexedDbFile implements File {
   String get dirname => _throw();
 
   @override
-  Stream<FileSystemEvent> watch(
-          {int events = FileSystemEvent.all, bool recursive = false}) =>
-      Stream<FileSystemEvent>.error(_unsupportedError());
+  Stream<FileSystemEvent> watch({
+    int events = FileSystemEvent.all,
+    bool recursive = false,
+  }) => Stream<FileSystemEvent>.error(_unsupportedError());
 
   @override
-  Future<File> writeAsBytes(List<int> bytes,
-          {FileMode mode = FileMode.write, bool flush = false}) =>
-      _unsupported();
+  Future<File> writeAsBytes(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) => _unsupported();
 
   @override
-  void writeAsBytesSync(List<int> bytes,
-          {FileMode mode = FileMode.write, bool flush = false}) =>
-      _throw();
+  void writeAsBytesSync(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) => _throw();
 
   @override
-  Future<File> writeAsString(String contents,
-          {FileMode mode = FileMode.write,
-          Encoding encoding = utf8,
-          bool flush = false}) =>
-      _unsupported();
+  Future<File> writeAsString(
+    String contents, {
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+    bool flush = false,
+  }) => _unsupported();
 
   @override
-  void writeAsStringSync(String contents,
-          {FileMode mode = FileMode.write,
-          Encoding encoding = utf8,
-          bool flush = false}) =>
-      _throw();
+  void writeAsStringSync(
+    String contents, {
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+    bool flush = false,
+  }) => _throw();
 
   @override
   void setLastAccessedSync(DateTime time) => _throw();

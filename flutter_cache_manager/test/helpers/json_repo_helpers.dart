@@ -15,18 +15,24 @@ const String testurl3 = 'www.baseflow.com/test3.png';
 const String testurl4 = 'www.baseflow.com/test4.png';
 
 class JsonRepoHelpers {
-  static Future<JsonCacheInfoRepository> createRepository(
-      {bool open = true}) async {
-    var directory = await _createDirectory();
-    var file = await _createFile(directory);
+  static Future<JsonCacheInfoRepository> createRepository({
+    bool open = true,
+  }) async {
+    var file = await createDatabaseFile();
     var repository = JsonCacheInfoRepository.withFile(file);
     if (open) await repository.open();
     return repository;
   }
 
+  static Future<File> createDatabaseFile() async {
+    var directory = await _createDirectory();
+    return _createFile(directory);
+  }
+
   static Future<Directory> _createDirectory() async {
-    var testDir =
-        await MemoryFileSystem().systemTempDirectory.createTemp('testFolder');
+    var testDir = await MemoryFileSystem().systemTempDirectory.createTemp(
+      'testFolder',
+    );
     await testDir.create(recursive: true);
     return testDir;
   }

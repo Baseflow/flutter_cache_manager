@@ -7,9 +7,9 @@ class MockCacheStore extends MockCacheStoreBase {
 
   factory MockCacheStore() {
     final store = MockCacheStore._();
-    when(store.retrieveCacheData(any,
-            ignoreMemCache: anyNamed('ignoreMemCache')))
-        .thenAnswer((_) => Future.value(null));
+    when(
+      store.retrieveCacheData(any, ignoreMemCache: anyNamed('ignoreMemCache')),
+    ).thenAnswer((_) => Future.value(null));
     return store;
   }
 }
