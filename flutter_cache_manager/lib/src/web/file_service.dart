@@ -70,7 +70,7 @@ class HttpFileService extends FileService {
   final http.Client _httpClient;
 
   HttpFileService({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+    : _httpClient = httpClient ?? http.Client();
 
   @override
   Future<FileServiceResponse> get(

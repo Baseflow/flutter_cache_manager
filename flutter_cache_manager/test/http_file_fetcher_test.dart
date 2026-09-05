@@ -137,60 +137,67 @@ void main() {
     });
 
     test(
-        'CancellationToken whenCancelled completes immediately if already cancelled',
-        () async {
-      final token = CancellationToken();
-      token.cancel();
+      'CancellationToken whenCancelled completes immediately if already cancelled',
+      () async {
+        final token = CancellationToken();
+        token.cancel();
 
-      final future = token.whenCancelled;
-      await future;
-      expect(token.isCancelled, true);
-    });
-
-    test(
-        'HttpFileService throws CancelledException when token is cancelled before request',
-        () async {
-      final token = CancellationToken();
-      token.cancel();
-
-      final client = MockClient((request) async {
-        return Response.bytes(Uint8List(16), 200);
-      });
-
-      final httpFileFetcher = HttpFileService(httpClient: client);
-
-      expect(
-        () => httpFileFetcher.get('test.com/image', cancellationToken: token),
-        throwsA(isA<CancelledException>()),
-      );
-    });
+        final future = token.whenCancelled;
+        await future;
+        expect(token.isCancelled, true);
+      },
+    );
 
     test(
-        'HttpFileService completes normally if cancelled after response received',
-        () async {
-      final token = CancellationToken();
+      'HttpFileService throws CancelledException when token is cancelled before request',
+      () async {
+        final token = CancellationToken();
+        token.cancel();
 
-      final client = MockClient((request) async {
-        return Response.bytes(Uint8List(16), 200);
-      });
+        final client = MockClient((request) async {
+          return Response.bytes(Uint8List(16), 200);
+        });
 
-      final httpFileFetcher = HttpFileService(httpClient: client);
+        final httpFileFetcher = HttpFileService(httpClient: client);
 
-      // Complete the request first
-      final response = await httpFileFetcher.get('http://test.com/image',
-          cancellationToken: token);
+        expect(
+          () => httpFileFetcher.get('test.com/image', cancellationToken: token),
+          throwsA(isA<CancelledException>()),
+        );
+      },
+    );
 
-      // Cancelling after response is received has no effect
-      token.cancel();
+    test(
+      'HttpFileService completes normally if cancelled after response received',
+      () async {
+        final token = CancellationToken();
 
-      expect(response.statusCode, 200);
-    });
+        final client = MockClient((request) async {
+          return Response.bytes(Uint8List(16), 200);
+        });
+
+        final httpFileFetcher = HttpFileService(httpClient: client);
+
+        // Complete the request first
+        final response = await httpFileFetcher.get(
+          'http://test.com/image',
+          cancellationToken: token,
+        );
+
+        // Cancelling after response is received has no effect
+        token.cancel();
+
+        expect(response.statusCode, 200);
+      },
+    );
 
     test('HttpFileService works normally without cancellation token', () async {
       final client = MockClient((request) async {
-        return Response.bytes(Uint8List(16), 200, headers: {
-          'content-type': 'image/jpeg',
-        });
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'image/jpeg'},
+        );
       });
 
       final httpFileFetcher = HttpFileService(httpClient: client);
