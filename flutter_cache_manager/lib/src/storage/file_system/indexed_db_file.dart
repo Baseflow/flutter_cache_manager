@@ -20,10 +20,10 @@ class IndexedDbFile implements File {
 
   late final IndexedDbConnectionPool _connectionPool =
       IndexedDbConnectionPool.getInstance(
-    databaseName: _dbName,
-    version: _dbVersion,
-    onUpgrade: _onUpgradeNeeded,
-  );
+        databaseName: _dbName,
+        version: _dbVersion,
+        onUpgrade: _onUpgradeNeeded,
+      );
 
   void _onUpgradeNeeded(web.IDBDatabase db, web.IDBVersionChangeEvent e) {
     final oldVersion = e.oldVersion;
@@ -100,11 +100,7 @@ class IndexedDbFile implements File {
       // Try to create transaction with relaxed durability (modern browsers)
       // Note: The durability hint may not be available in all browser versions
       final options = web.IDBTransactionOptions();
-      return db.transaction(
-        storeName.toJS,
-        mode,
-        options,
-      );
+      return db.transaction(storeName.toJS, mode, options);
     } catch (e) {
       // Fallback for older browsers that don't support transaction options
       return db.transaction(storeName.toJS, mode);
@@ -148,8 +144,11 @@ class IndexedDbFile implements File {
   }
 
   @override
-  Future<File> writeAsBytes(List<int> bytes,
-      {FileMode mode = FileMode.write, bool flush = false}) async {
+  Future<File> writeAsBytes(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) async {
     final db = await _getDatabase();
     final completer = Completer<void>();
     final transaction = _createTransaction(db, _fileStoreName, 'readwrite');
@@ -157,10 +156,7 @@ class IndexedDbFile implements File {
 
     final data = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
 
-    final fileObject = <String, dynamic>{
-      'path': _path,
-      'data': data,
-    }.jsify();
+    final fileObject = <String, dynamic>{'path': _path, 'data': data}.jsify();
 
     final request = store.put(fileObject);
 
@@ -329,8 +325,10 @@ class IndexedDbFile implements File {
   }
 
   @override
-  Stream<FileSystemEvent> watch(
-      {int events = FileSystemEvent.all, bool recursive = false}) {
+  Stream<FileSystemEvent> watch({
+    int events = FileSystemEvent.all,
+    bool recursive = false,
+  }) {
     throw UnsupportedError('watch is not supported for IndexedDbFile');
   }
 
@@ -372,25 +370,32 @@ class IndexedDbFile implements File {
   }
 
   @override
-  Future<File> writeAsString(String contents,
-      {FileMode mode = FileMode.write,
-      Encoding encoding = utf8,
-      bool flush = false}) async {
+  Future<File> writeAsString(
+    String contents, {
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+    bool flush = false,
+  }) async {
     final bytes = encoding.encode(contents);
     return writeAsBytes(bytes, mode: mode, flush: flush);
   }
 
   @override
-  void writeAsStringSync(String contents,
-      {FileMode mode = FileMode.write,
-      Encoding encoding = utf8,
-      bool flush = false}) {
+  void writeAsStringSync(
+    String contents, {
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+    bool flush = false,
+  }) {
     throw UnsupportedError('writeAsStringSync is not supported on web');
   }
 
   @override
-  void writeAsBytesSync(List<int> bytes,
-      {FileMode mode = FileMode.write, bool flush = false}) {
+  void writeAsBytesSync(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) {
     throw UnsupportedError('writeAsBytesSync is not supported on web');
   }
 
@@ -417,7 +422,8 @@ class IndexedDbFile implements File {
   @override
   Future<File> setLastAccessed(DateTime time) {
     throw UnsupportedError(
-        'setLastAccessed is not supported for IndexedDbFile');
+      'setLastAccessed is not supported for IndexedDbFile',
+    );
   }
 
   @override
@@ -428,7 +434,8 @@ class IndexedDbFile implements File {
   @override
   Future<File> setLastModified(DateTime time) {
     throw UnsupportedError(
-        'setLastModified is not supported for IndexedDbFile');
+      'setLastModified is not supported for IndexedDbFile',
+    );
   }
 
   @override

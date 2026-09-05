@@ -115,11 +115,7 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
       // Try to create transaction with relaxed durability (modern browsers)
       // Note: The durability hint may not be available in all browser versions
       final options = web.IDBTransactionOptions();
-      return db.transaction(
-        storeName.toJS,
-        mode,
-        options,
-      );
+      return db.transaction(storeName.toJS, mode, options);
     } catch (e) {
       // Fallback for older browsers that don't support transaction options
       return db.transaction(storeName.toJS, mode);
@@ -150,8 +146,10 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
 
       allObjects.sort((a, b) => a.touched!.compareTo(b.touched!));
       final toRemoveCount = (allObjects.length * 0.1).ceil().clamp(1, 50);
-      final toRemove =
-          allObjects.take(toRemoveCount).map((e) => e.id!).toList();
+      final toRemove = allObjects
+          .take(toRemoveCount)
+          .map((e) => e.id!)
+          .toList();
 
       await deleteAll(toRemove);
 
@@ -284,8 +282,11 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
       if (_isQuotaExceededError(e) && retries > 0) {
         // Try to free up space and retry once
         await _handleQuotaExceeded();
-        return await _insertWithRetry(cacheObject, setTouchedToNow,
-            retries: retries - 1);
+        return await _insertWithRetry(
+          cacheObject,
+          setTouchedToNow,
+          retries: retries - 1,
+        );
       }
       rethrow;
     }
@@ -333,8 +334,11 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     final completer = Completer<List<CacheObject>>();
 
     try {
-      final transaction =
-          _createTransaction(db, _metadataStoreName, 'readonly');
+      final transaction = _createTransaction(
+        db,
+        _metadataStoreName,
+        'readonly',
+      );
       final store = transaction.objectStore(_metadataStoreName);
 
       // First, get the count to determine if we're over capacity
@@ -406,8 +410,11 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     final completer = Completer<List<CacheObject>>();
 
     try {
-      final transaction =
-          _createTransaction(db, _metadataStoreName, 'readonly');
+      final transaction = _createTransaction(
+        db,
+        _metadataStoreName,
+        'readonly',
+      );
       final store = transaction.objectStore(_metadataStoreName);
 
       // Use the touched index to efficiently find old objects
@@ -485,8 +492,11 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     final completer = Completer<int>();
 
     try {
-      final transaction =
-          _createTransaction(db, _metadataStoreName, 'readwrite');
+      final transaction = _createTransaction(
+        db,
+        _metadataStoreName,
+        'readwrite',
+      );
       final store = transaction.objectStore(_metadataStoreName);
 
       // Queue all delete operations in the transaction
@@ -555,8 +565,7 @@ class IndexedDbCacheInfoRepository extends CacheInfoRepository
     request.onblocked = (web.Event e) {
       // Database deletion is blocked by open connections
       // This shouldn't happen as we closed the connection above
-    }
-        .toJS;
+    }.toJS;
 
     return completer.future;
   }

@@ -94,8 +94,7 @@ class IndexedDbConnectionPool {
       request.onblocked = (web.Event e) {
         // Another connection is blocking the upgrade
         // This is usually because another tab has an older version open
-      }
-          .toJS;
+      }.toJS;
 
       return await _openingCompleter!.future;
     } catch (e) {

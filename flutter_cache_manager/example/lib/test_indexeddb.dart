@@ -11,10 +11,7 @@ void main() {
 
 class IndexedDBTestApp extends MaterialApp {
   const IndexedDBTestApp({super.key})
-      : super(
-          home: const IndexedDBTestPage(),
-          title: 'IndexedDB Cache Test',
-        );
+    : super(home: const IndexedDBTestPage(), title: 'IndexedDB Cache Test');
 }
 
 class IndexedDBTestPage extends StatefulWidget {
@@ -62,9 +59,7 @@ class _IndexedDBTestPageState extends State<IndexedDBTestPage> {
                     testUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Text('Failed to load image'),
-                      );
+                      return const Center(child: Text('Failed to load image'));
                     },
                   ),
                 ),
