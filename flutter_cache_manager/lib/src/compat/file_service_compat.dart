@@ -13,8 +13,15 @@ class FileServiceCompat extends FileService {
   Future<FileServiceResponse> get(
     String url, {
     Map<String, String>? headers,
+    CancellationToken? cancellationToken,
   }) async {
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
     final legacyResponse = await fileFetcher(url, headers: headers);
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
     return CompatFileServiceGetResponse(legacyResponse);
   }
 }
