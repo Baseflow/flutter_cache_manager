@@ -1,8 +1,8 @@
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/config/config.dart' as def;
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
-import 'package:flutter_cache_manager/src/storage/cache_info_repositories/non_storing_object_provider.dart';
+import 'package:flutter_cache_manager/src/storage/cache_info_repositories/indexed_db_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart';
-import 'package:flutter_cache_manager/src/web/file_service.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/indexed_db_file_system.dart';
 
 class Config implements def.Config {
   Config(
@@ -14,8 +14,13 @@ class Config implements def.Config {
     FileService? fileService,
   }) : stalePeriod = stalePeriod ?? const Duration(days: 30),
        maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
-       repo = repo ?? NonStoringObjectProvider(),
-       fileSystem = fileSystem ?? MemoryCacheSystem(),
+       repo =
+           repo ??
+           IndexedDbCacheInfoRepository(
+             databaseName: 'flutter_cache_manager_$cacheKey',
+           ),
+       fileSystem =
+           fileSystem ?? IndexedDbFileSystem('flutter_cache_manager_$cacheKey'),
        fileService = fileService ?? HttpFileService();
 
   @override
