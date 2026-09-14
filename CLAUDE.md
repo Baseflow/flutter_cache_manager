@@ -25,11 +25,9 @@ so other agents and human contributors pick it up too.
 
 ### Commits and PRs
 
-- `AGENTS.md` is intentionally git-ignored (see `.gitignore`), so it is a local file. It
-  won't be present in a fresh clone or in CI, and the `@AGENTS.md` import above will be a
-  no-op there.
-- Follow the forking + PR workflow in `AGENTS.md`; don't push to `Baseflow/flutter_cache_manager`
-  branches directly unless the maintainer asks for it in that session.
+- Follow the forking + PR workflow in `AGENTS.md`; don't push to
+  `Baseflow/flutter_cache_manager` branches directly unless the maintainer asks for it in
+  that session.
 - End commit messages with:
 
   ```

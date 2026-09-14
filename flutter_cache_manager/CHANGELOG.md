@@ -5,7 +5,8 @@
 * Updates example Android project to AGP 9.0.1 / Gradle 9.1 / Kotlin 2.3.20
 * Migrates example Android app to built-in Kotlin
 * Pins example `path_provider_android` to 2.2.22 to avoid transitive `jni` / `jni_flutter` AGP 9 issues
-* Adds a root `CLAUDE.md` that imports the local `AGENTS.md` and holds Claude Code-specific contributor notes
+* Adds a root `CLAUDE.md` that imports `AGENTS.md` and holds Claude Code-specific contributor notes
+* Publishes `AGENTS.md` (previously git-ignored) and trims it to technical content: architecture, directory map, fork workflow, commands, testing, and PR checklist
 
 ## [3.4.2]
 
