@@ -156,11 +156,10 @@ class WebHelper {
       newCacheObject = newCacheObject.copyWith(length: savedBytes);
     }
 
-    _store.putFile(newCacheObject).then((_) {
-      if (newCacheObject.relativePath != oldCacheObject.relativePath) {
-        _removeOldFile(oldCacheObject.relativePath);
-      }
-    });
+    await _store.putFile(newCacheObject);
+    if (newCacheObject.relativePath != oldCacheObject.relativePath) {
+      await _removeOldFile(oldCacheObject.relativePath);
+    }
 
     final file = await _store.fileSystem.createFile(
       newCacheObject.relativePath,
@@ -232,8 +231,13 @@ class WebHelper {
   Future<void> _removeOldFile(String? relativePath) async {
     if (relativePath == null) return;
     final file = await _store.fileSystem.createFile(relativePath);
-    if (await file.exists()) {
-      await file.delete();
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on FileSystemException {
+      // Already deleted (see #184) or not deletable. The cache info no longer
+      // points at this path, so there is nothing to recover here.
     }
   }
 }
