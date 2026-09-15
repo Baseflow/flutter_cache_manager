@@ -16,7 +16,7 @@ Conduct](CODE_OF_CONDUCT.md) (report unacceptable behavior to
 ### Prerequisites
 
 - Basic Dart and Flutter knowledge
-- A working Flutter SDK installation (stable channel, matching CI — currently Flutter **3.44.4** in workflows)
+- A working Flutter SDK installation (stable channel, matching CI — currently Flutter **3.47.4** in workflows)
 - Comfort with filesystem / HTTP caching concepts helps, but is not required to start
 - For running or building the example on iOS/macOS, access to a Mac is required
 - Android example builds require JDK 17
