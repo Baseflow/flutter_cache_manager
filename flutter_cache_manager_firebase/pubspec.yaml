@@ -19,3 +19,10 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+
+# This package tracks flutter_cache_manager in the same repository. The
+# cancellation API it implements is not on pub.dev yet, so resolve the sibling
+# package from source. Overrides are ignored by consumers of this package.
+dependency_overrides:
+  flutter_cache_manager:
+    path: ../flutter_cache_manager

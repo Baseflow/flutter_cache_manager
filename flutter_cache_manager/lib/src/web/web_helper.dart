@@ -34,13 +34,14 @@ class WebHelper {
     String? key,
     Map<String, String>? authHeaders,
     bool ignoreMemCache = false,
+    CancellationToken? cancellationToken,
   }) {
     key ??= url;
     var subject = _memCache[key];
     if (subject == null || ignoreMemCache) {
       subject = BehaviorSubject<FileResponse>();
       _memCache[key] = subject;
-      _downloadOrAddToQueue(url, key, authHeaders);
+      _downloadOrAddToQueue(url, key, authHeaders, cancellationToken);
     }
     return subject.stream;
   }
@@ -51,10 +52,22 @@ class WebHelper {
     String url,
     String key,
     Map<String, String>? authHeaders,
+    CancellationToken? cancellationToken,
   ) async {
+    // Check if already cancelled before starting
+    if (cancellationToken?.isCancelled ?? false) {
+      final subject = _memCache[key];
+      if (subject != null) {
+        subject.addError(CancelledException());
+        await subject.close();
+        _memCache.remove(key);
+      }
+      return;
+    }
+
     //Add to queue if there are too many calls.
     if (concurrentCalls >= fileFetcher.concurrentFetches) {
-      _queue.add(QueueItem(url, key, authHeaders));
+      _queue.add(QueueItem(url, key, authHeaders, cancellationToken));
       return;
     }
     cacheLogger.log(
@@ -69,6 +82,7 @@ class WebHelper {
         url,
         key,
         authHeaders: authHeaders,
+        cancellationToken: cancellationToken,
       )) {
         subject.add(result);
       }
@@ -85,7 +99,25 @@ class WebHelper {
   void _checkQueue() {
     if (_queue.isEmpty) return;
     final next = _queue.removeFirst();
-    _downloadOrAddToQueue(next.url, next.key, next.headers);
+    // Skip cancelled items
+    if (next.cancellationToken?.isCancelled ?? false) {
+      // Clean up the subject for this cancelled request
+      final subject = _memCache[next.key];
+      if (subject != null) {
+        subject.addError(CancelledException());
+        subject.close();
+        _memCache.remove(next.key);
+      }
+      // Check the next item in queue
+      _checkQueue();
+      return;
+    }
+    _downloadOrAddToQueue(
+      next.url,
+      next.key,
+      next.headers,
+      next.cancellationToken,
+    );
   }
 
   ///Download the file from the url
@@ -93,8 +125,20 @@ class WebHelper {
     String url,
     String key, {
     Map<String, String>? authHeaders,
+    CancellationToken? cancellationToken,
   }) async* {
+    // Check cancellation before any work
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
     var cacheObject = await _store.retrieveCacheData(key);
+
+    // Check cancellation after async work
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
     cacheObject = cacheObject == null
         ? CacheObject(
             url,
@@ -103,13 +147,24 @@ class WebHelper {
             relativePath: '${const Uuid().v1()}.file',
           )
         : cacheObject.copyWith(url: url);
-    final response = await _download(cacheObject, authHeaders);
-    yield* _manageResponse(cacheObject, response);
+    final response = await _download(
+      cacheObject,
+      authHeaders,
+      cancellationToken,
+    );
+
+    // Check cancellation after download
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
+    yield* _manageResponse(cacheObject, response, cancellationToken);
   }
 
   Future<FileServiceResponse> _download(
     CacheObject cacheObject,
     Map<String, String>? authHeaders,
+    CancellationToken? cancellationToken,
   ) {
     final headers = <String, String>{};
 
@@ -124,13 +179,23 @@ class WebHelper {
       headers.addAll(authHeaders);
     }
 
-    return fileFetcher.get(cacheObject.url, headers: headers);
+    return fileFetcher.get(
+      cacheObject.url,
+      headers: headers,
+      cancellationToken: cancellationToken,
+    );
   }
 
   Stream<FileResponse> _manageResponse(
     CacheObject cacheObject,
     FileServiceResponse response,
+    CancellationToken? cancellationToken,
   ) async* {
+    // Check cancellation at start
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
     final hasNewFile = statusCodesNewFile.contains(response.statusCode);
     final keepOldFile = statusCodesFileNotChanged.contains(response.statusCode);
     if (!hasNewFile && !keepOldFile) {
@@ -145,7 +210,15 @@ class WebHelper {
     var newCacheObject = _setDataFromHeaders(cacheObject, response);
     if (statusCodesNewFile.contains(response.statusCode)) {
       var savedBytes = 0;
-      await for (final progress in _saveFile(newCacheObject, response)) {
+      await for (final progress in _saveFile(
+        newCacheObject,
+        response,
+        cancellationToken,
+      )) {
+        // Check cancellation during file save
+        if (cancellationToken?.isCancelled ?? false) {
+          throw CancelledException();
+        }
         savedBytes = progress;
         yield DownloadProgress(
           cacheObject.url,
@@ -154,6 +227,11 @@ class WebHelper {
         );
       }
       newCacheObject = newCacheObject.copyWith(length: savedBytes);
+    }
+
+    // Check cancellation before storing
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
     }
 
     _store.putFile(newCacheObject).then((_) {
@@ -196,12 +274,17 @@ class WebHelper {
     );
   }
 
-  Stream<int> _saveFile(CacheObject cacheObject, FileServiceResponse response) {
+  Stream<int> _saveFile(
+    CacheObject cacheObject,
+    FileServiceResponse response,
+    CancellationToken? cancellationToken,
+  ) {
     final receivedBytesResultController = StreamController<int>();
     _saveFileAndPostUpdates(
       receivedBytesResultController,
       cacheObject,
       response,
+      cancellationToken,
     );
     return receivedBytesResultController.stream;
   }
@@ -210,19 +293,26 @@ class WebHelper {
     StreamController<int> receivedBytesResultController,
     CacheObject cacheObject,
     FileServiceResponse response,
+    CancellationToken? cancellationToken,
   ) async {
     final file = await _store.fileSystem.createFile(cacheObject.relativePath);
 
     try {
       var receivedBytes = 0;
       final sink = file.openWrite();
-      await response.content
-          .map((s) {
-            receivedBytes += s.length;
-            receivedBytesResultController.add(receivedBytes);
-            return s;
-          })
-          .pipe(sink);
+      await for (final chunk in response.content) {
+        // Check cancellation while receiving data
+        if (cancellationToken?.isCancelled ?? false) {
+          await sink.close();
+          receivedBytesResultController.addError(CancelledException());
+          await receivedBytesResultController.close();
+          return;
+        }
+        receivedBytes += chunk.length;
+        receivedBytesResultController.add(receivedBytes);
+        sink.add(chunk);
+      }
+      await sink.close();
     } on Object catch (e, stacktrace) {
       receivedBytesResultController.addError(e, stacktrace);
     }
@@ -239,8 +329,7 @@ class WebHelper {
 }
 
 class HttpExceptionWithStatus extends HttpException {
-  const HttpExceptionWithStatus(this.statusCode, String message, {Uri? uri})
-    : super(message, uri: uri);
+  const HttpExceptionWithStatus(this.statusCode, super.message, {super.uri});
 
   final int statusCode;
 }

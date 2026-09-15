@@ -117,4 +117,94 @@ void main() {
       });
     });
   });
+
+  group('Cancellation', () {
+    test('CancellationToken basic functionality', () {
+      final token = CancellationToken();
+      expect(token.isCancelled, false);
+
+      token.cancel();
+      expect(token.isCancelled, true);
+    });
+
+    test('CancellationToken whenCancelled completes after cancel', () async {
+      final token = CancellationToken();
+      final future = token.whenCancelled;
+
+      token.cancel();
+      await future;
+      expect(token.isCancelled, true);
+    });
+
+    test(
+      'CancellationToken whenCancelled completes immediately if already cancelled',
+      () async {
+        final token = CancellationToken();
+        token.cancel();
+
+        final future = token.whenCancelled;
+        await future;
+        expect(token.isCancelled, true);
+      },
+    );
+
+    test(
+      'HttpFileService throws CancelledException when token is cancelled before request',
+      () async {
+        final token = CancellationToken();
+        token.cancel();
+
+        final client = MockClient((request) async {
+          return Response.bytes(Uint8List(16), 200);
+        });
+
+        final httpFileFetcher = HttpFileService(httpClient: client);
+
+        expect(
+          () => httpFileFetcher.get('test.com/image', cancellationToken: token),
+          throwsA(isA<CancelledException>()),
+        );
+      },
+    );
+
+    test(
+      'HttpFileService completes normally if cancelled after response received',
+      () async {
+        final token = CancellationToken();
+
+        final client = MockClient((request) async {
+          return Response.bytes(Uint8List(16), 200);
+        });
+
+        final httpFileFetcher = HttpFileService(httpClient: client);
+
+        // Complete the request first
+        final response = await httpFileFetcher.get(
+          'http://test.com/image',
+          cancellationToken: token,
+        );
+
+        // Cancelling after response is received has no effect
+        token.cancel();
+
+        expect(response.statusCode, 200);
+      },
+    );
+
+    test('HttpFileService works normally without cancellation token', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'image/jpeg'},
+        );
+      });
+
+      final httpFileFetcher = HttpFileService(httpClient: client);
+      final response = await httpFileFetcher.get('test.com/image');
+
+      expect(response.statusCode, 200);
+      expect(response.contentLength, 16);
+    });
+  });
 }
