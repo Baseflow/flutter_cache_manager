@@ -11,7 +11,7 @@ Conduct](CODE_OF_CONDUCT.md) (report unacceptable behavior to
 
 - This repo is the **Flutter Cache Manager** monorepo maintained by [Baseflow](https://baseflow.com).
 - It contains two Dart packages (not a federated plugin). Work inside the **specific package** you are changing; there is no Melos or root pub workspace, and neither should be added unless the team decides to.
-- Run Flutter and Dart commands with the same tooling CI uses (`flutter`, `dart`). If you pin SDK versions locally with [fvm](https://fvm.app), prefix commands with `fvm` (this checkout typically uses `fvm`).
+- Run Flutter and Dart commands with the same tooling CI uses (`flutter`, `dart`). Nothing in this repo requires anything else. If you happen to manage SDK versions locally with [fvm](https://fvm.app), prefix commands with `fvm`; that is a personal setup choice and is never checked in.
 
 ### Prerequisites
 
@@ -118,17 +118,17 @@ upstream  git@github.com:Baseflow/flutter_cache_manager.git      # official repo
 
 ## Commands
 
-Run from the package you are editing (prefix with `fvm` when using FVM locally):
+Run from the package you are editing:
 
 ```bash
 cd flutter_cache_manager   # or flutter_cache_manager_firebase
-fvm flutter pub get
-fvm dart format .
-fvm flutter analyze
-fvm flutter test
+flutter pub get
+dart format .
+flutter analyze
+flutter test
 ```
 
-CI equivalents (no `fvm` on GitHub Actions):
+CI runs the same commands with stricter flags:
 
 ```bash
 dart format --set-exit-if-changed .
@@ -140,7 +140,7 @@ Run the example app:
 
 ```bash
 cd flutter_cache_manager/example
-fvm flutter run
+flutter run
 ```
 
 Before finishing work, run the same checks CI runs for that package (format, analyze, test; example builds are covered in `build.yaml` for the main package).
@@ -167,7 +167,7 @@ This repo uses the **forking workflow**: contributors work on their own fork and
 
 1. Apply changes on a branch based on `upstream/develop`.
 2. Verify locally (from the changed package):
-   - `dart format .` (or `fvm dart format .`)
+   - `dart format .`
    - `flutter analyze`
    - `flutter test`
 3. Push to your fork: `git push origin <name_of_your_branch>`

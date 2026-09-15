@@ -8,8 +8,10 @@ so other agents and human contributors pick it up too.
 
 ### Tooling in this checkout
 
-- Always drive Flutter/Dart through FVM: `fvm flutter ...` / `fvm dart ...`. A bare
-  `flutter` may resolve to a different SDK than CI (`.fvmrc` pins the `stable` channel).
+- Use the plain `flutter` / `dart` commands in `AGENTS.md`. They are what CI runs and
+  what a contributor will have. If this checkout happens to carry a local fvm pin
+  (`.fvmrc` is gitignored, so it may or may not) prefix with `fvm`. Do not add one,
+  and do not tell anyone they need fvm to work on this repo.
 - `flutter run` for `flutter_cache_manager/example/` is long-running — ask before starting
   it and don't leave it running in the background.
 
