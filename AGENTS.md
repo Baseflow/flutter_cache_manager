@@ -175,6 +175,15 @@ This repo uses the **forking workflow**: contributors work on their own fork and
 
 Keep public API changes additive and non-breaking where possible; breaking changes need a clear major-version plan and README/CHANGELOG callouts.
 
+### PR description style
+
+Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md), but keep each section tight:
+
+- State what changed and why. Don't narrate your own editing process or explain why one obvious, in-scope edit was made alongside another (e.g. "also updated X because it references Y") — that's a given fact of the PR, not something a reviewer needs spelled out.
+- Don't repeat file paths in prose; the diff already shows them.
+- Answer yes/no questions with a plain yes/no; add a sentence only when the answer is non-obvious. "Does this introduce a breaking change?" is the exception: answer "No" alone when it's not, but when it is, give a short explanation of what breaks and for whom.
+- Keep "Recommendations for testing" to what a reviewer needs to act on: what ran, what didn't and why, and what to check on CI — one or two sentences, not a full incident writeup.
+
 ### PR checklist
 
 - [ ] Project builds for the changed package(s)
