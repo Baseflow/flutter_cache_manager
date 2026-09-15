@@ -274,10 +274,10 @@ void main() {
 
       final webHelper = WebHelper(store, fileService);
       var yielded = false;
-      final download = webHelper
-          .downloadFile(imageUrl)
-          .firstWhere((r) => r is FileInfo, orElse: null)
-        ..whenComplete(() => yielded = true);
+      final download = webHelper.downloadFile(imageUrl).firstWhere(
+        (r) => r is FileInfo,
+        orElse: null,
+      )..whenComplete(() => yielded = true);
       await pumpEventQueue();
       expect(
         yielded,

@@ -8,8 +8,6 @@ import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
-import 'package:flutter_cache_manager/src/config/config.dart';
-
 import 'helpers/config_extensions.dart';
 import 'helpers/json_repo_helpers.dart';
 import 'helpers/mock_cache_store.dart';
@@ -437,7 +435,11 @@ void main() {
       final put = cacheManager.putFile('baseflow.com/test', Uint8List(8))
         ..whenComplete(() => returned = true);
       await pumpEventQueue();
-      expect(returned, isFalse, reason: 'putFile returned before the store persisted');
+      expect(
+        returned,
+        isFalse,
+        reason: 'putFile returned before the store persisted',
+      );
       persisted.complete();
       await put;
     });
