@@ -177,6 +177,15 @@ Keep public API changes additive and non-breaking where possible; breaking chang
 
 ### PR description style
 
+**Hard requirement**: use the [PR template](.github/PULL_REQUEST_TEMPLATE.md)'s actual
+section headings verbatim — `What kind of change does this PR introduce?`, `What is the
+current behavior?`, `What is the new behavior (if this is a feature change)?`, `Does this
+PR introduce a breaking change?`, `Recommendations for testing`, `Links to relevant
+issues/docs`, and the `Checklist before submitting` with its exact four items. Do not
+substitute a different structure (e.g. a generic "Description" / "Type of change" layout)
+even for small or maintainer-authored PRs like release/version-bump PRs — every PR must
+be created from the template file's own headings.
+
 Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md), but keep each section tight:
 
 - State what changed and why. Don't narrate your own editing process or explain why one obvious, in-scope edit was made alongside another (e.g. "also updated X because it references Y") — that's a given fact of the PR, not something a reviewer needs spelled out.
