@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [3.4.3] - 2026-09-15
+
 * Fixes `JsonCacheInfoRepository` losing metadata when the app exits within 3 seconds of a cache change by writing through promptly with serialized, atomic file writes ([#491](https://github.com/Baseflow/flutter_cache_manager/issues/491))
 * Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.47.4, Dependabot for actions)
 * Adopts super parameters in `HttpExceptionWithStatus` to satisfy the stricter `use_super_parameters` lint in Dart 3.13 (no API or behavior change)
@@ -9,7 +11,7 @@
 * Adds a root `CLAUDE.md` that imports `AGENTS.md` and holds Claude Code-specific contributor notes
 * Publishes `AGENTS.md` (previously git-ignored) and trims it to technical content: architecture, directory map, fork workflow, commands, testing, and PR checklist
 
-## [3.4.2]
+## [3.4.2] - 2026-07-21
 
 * Fixes `removeFile` deleting from the wrong path
 * Raises minimum Dart SDK to 3.8.0 and update dependencies
