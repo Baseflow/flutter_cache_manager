@@ -26,9 +26,9 @@ to generate an SSH key.
 
 We really appreciate contributions via GitHub pull requests. To contribute take the following steps:
 
-- Make sure you are up to date with the latest code on develop:
+- Make sure you are up to date with the latest code on main:
   - `git fetch upstream`
-  - `git checkout upstream/develop -b <name_of_your_branch>`
+  - `git checkout upstream/main -b <name_of_your_branch>`
 - Apply your changes
 - Verify your changes and fix potential warnings/ errors (run from the package you changed):
   - Check formatting: `dart format .`

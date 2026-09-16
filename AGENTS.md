@@ -102,11 +102,11 @@ Per [CONTRIBUTING.md](CONTRIBUTING.md) and Baseflow's open-source forking workfl
 git remote add upstream git@github.com:Baseflow/flutter_cache_manager.git
 ```
 
-4. Branch from latest `develop`:
+4. Branch from latest `main`:
 
 ```bash
 git fetch upstream
-git checkout upstream/develop -b <name_of_your_branch>
+git checkout upstream/main -b <name_of_your_branch>
 ```
 
 Expected remotes after setup:
@@ -163,9 +163,15 @@ Prefer `MemoryFileSystem` / mocks over real disk or network in unit tests. When 
 
 ## Pull request workflow
 
+**Hard requirement — `main` is the only long-lived branch.** Branch from `upstream/main`, open
+every PR against `main`, and rebase onto `main`. There is no `develop` branch: do not create one,
+do not target one, and do not reintroduce a two-branch (`develop` → `main`) flow. A repository
+ruleset blocks creation of any branch named `develop`, so attempts to push one will be rejected.
+PRs land as squash merges, so each PR becomes a single commit on `main`.
+
 This repo uses the **forking workflow**: contributors work on their own fork and open PRs to the main repository. Maintainers review and merge — do not push directly to `Baseflow/flutter_cache_manager`.
 
-1. Apply changes on a branch based on `upstream/develop`.
+1. Apply changes on a branch based on `upstream/main`.
 2. Verify locally (from the changed package):
    - `dart format .`
    - `flutter analyze`
@@ -199,8 +205,28 @@ Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md), but keep each sect
 - [ ] This PR only changes one package (or documents why an exception is needed)
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]` in the changed package, following the [Flutter changelog style](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style) — no version heading until maintainers cut a release
 - [ ] Public API documented with `///` doc comments where applicable
-- [ ] Rebased onto `develop`
+- [ ] Rebased onto `main`
 - [ ] New tests added where applicable; all tests pass
 - [ ] `dart format .` and `flutter analyze` pass with no errors, no warnings left unfixed
 - [ ] Relevant README / docs updated for user-facing changes
 - [ ] Full [PR template](.github/PULL_REQUEST_TEMPLATE.md) filled in
+
+## Releases
+
+Each package is versioned and released independently. Only maintainers cut releases.
+
+1. Open a release PR against `main` for **one package**: move that package's `## [Unreleased]`
+   CHANGELOG entries under a new dated `## [x.y.z] - YYYY-MM-DD` heading (leaving `[Unreleased]`
+   empty at the top) and bump `version:` in its `pubspec.yaml`.
+2. Verify from that package directory: `dart format --set-exit-if-changed .`, `flutter analyze`,
+   `flutter test`, and `dart pub publish --dry-run`.
+3. Merge once CI is green, then tag the resulting commit on `main`:
+   - `flutter_cache_manager` → `vX.Y.Z`
+   - `flutter_cache_manager_firebase` → `firebase-vX.Y.Z`
+4. Push the tag. **Pushing the tag is what publishes**: `build.yaml` / `build-firebase.yaml` run
+   `dart pub publish` via pub.dev OIDC trusted publishing, gated on `github.ref_type == 'tag'`.
+   Never run `dart pub publish` by hand, and never bump a version without a tag to match.
+
+The workflows publish whatever is committed at the tagged commit — they do not bump versions or
+edit changelogs. Keep branch names out of URLs in `pubspec.yaml` and docs; published versions are
+immutable, so a branch-specific link becomes a permanent dead link once that branch is gone.

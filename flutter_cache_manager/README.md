@@ -7,7 +7,7 @@ CacheManager v2 introduced some breaking changes when configuring a custom Cache
 
 [![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
 [![build](https://github.com/Baseflow/flutter_cache_manager/actions/workflows/build.yaml/badge.svg)](https://github.com/Baseflow/flutter_cache_manager/actions/workflows/build.yaml)
-[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/master/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
+[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/main/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
 
 A CacheManager to download and cache files in the cache directory of the app. Various settings on how long to keep a file can be changed.
 

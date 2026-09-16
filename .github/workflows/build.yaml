@@ -6,12 +6,12 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
-    branches: [develop, main]
+    branches: [main]
     paths:
       - "flutter_cache_manager/**"
       - ".github/workflows/build.yaml"
   pull_request:
-    branches: [develop, main]
+    branches: [main]
     paths:
       - "flutter_cache_manager/**"
       - ".github/workflows/build.yaml"
