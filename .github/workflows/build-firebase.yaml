@@ -75,8 +75,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
       - name: Publish package
-        run: dart pub publish -v -f
+        run: flutter pub publish -f
