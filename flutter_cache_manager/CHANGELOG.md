@@ -10,6 +10,7 @@
 * Pins example `path_provider_android` to 2.2.22 to avoid transitive `jni` / `jni_flutter` AGP 9 issues
 * Adds a root `CLAUDE.md` that imports `AGENTS.md` and holds Claude Code-specific contributor notes
 * Publishes `AGENTS.md` (previously git-ignored) and trims it to technical content: architecture, directory map, fork workflow, commands, testing, and PR checklist
+* Points `homepage` at the repository root instead of a branch-specific URL
 
 ## [3.4.2] - 2026-07-21
 

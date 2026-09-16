@@ -6,12 +6,12 @@ on:
   push:
     tags:
       - "firebase-v[0-9]+.[0-9]+.[0-9]+*"
-    branches: [develop, main]
+    branches: [main]
     paths:
       - "flutter_cache_manager_firebase/**"
       - ".github/workflows/build-firebase.yaml"
   pull_request:
-    branches: [develop, main]
+    branches: [main]
     paths:
       - "flutter_cache_manager_firebase/**"
       - ".github/workflows/build-firebase.yaml"
