@@ -83,4 +83,4 @@ jobs:
           cache: true
 
       - name: Publish package
-        run: flutter pub publish -f
+        run: dart pub publish -v -f
