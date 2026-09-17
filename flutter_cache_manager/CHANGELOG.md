@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [3.4.4] - 2026-09-16
+
+* Awaits cache-info persist in `putFile`, `putFileStream`, and downloads so the stored object has an id before those calls return ([#492](https://github.com/Baseflow/flutter_cache_manager/issues/492)). A failed repository write now throws from `putFile`/`putFileStream` and errors the download stream instead of returning a usable file with no cache-info row.
+
 ## [3.4.3] - 2026-09-15
 
 * Fixes `JsonCacheInfoRepository` losing metadata when the app exits within 3 seconds of a cache change by writing through promptly with serialized, atomic file writes ([#491](https://github.com/Baseflow/flutter_cache_manager/issues/491))
