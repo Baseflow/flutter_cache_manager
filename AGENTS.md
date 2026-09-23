@@ -247,6 +247,10 @@ edit changelogs.
 
 `CHANGELOG.md` uses `## [x.y.z] - YYYY-MM-DD` headings with `*` bullets and has no
 `## [Unreleased]` section. Match that format and do not add an `[Unreleased]` section.
+For a release with a breaking change, you may split the entry into `### Breaking
+changes` and `### Other changes` subsections instead of a flat list —
+`cached_network_image` 4.0.0 is the worked example. Not required for an ordinary
+release.
 
 Keep branch names out of URLs in `pubspec.yaml` and docs; published versions are immutable, so a
 branch-specific link becomes a permanent dead link once that branch is gone.
