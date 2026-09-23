@@ -171,13 +171,25 @@ PRs land as squash merges, so each PR becomes a single commit on `main`.
 
 This repo uses the **forking workflow**: contributors work on their own fork and open PRs to the main repository. Maintainers review and merge — do not push directly to `Baseflow/flutter_cache_manager`.
 
-1. Apply changes on a branch based on `upstream/main`.
-2. Verify locally (from the changed package):
+1. Apply changes on a branch based on `upstream/main`, scoped to one package.
+2. Bump that package's `version:` in `pubspec.yaml` following semver, and add a matching
+   `## [x.y.z] - YYYY-MM-DD` `CHANGELOG.md` entry describing the change (format: see
+   [Releases](#releases)). Date it with the day you open the PR; a maintainer will correct it if
+   it slips before tagging.
+3. Verify locally (from the changed package):
    - `dart format .`
    - `flutter analyze`
    - `flutter test`
-3. Push to your fork: `git push origin <name_of_your_branch>`
-4. Open a PR against `Baseflow/flutter_cache_manager` and fill out the full [PR template](.github/PULL_REQUEST_TEMPLATE.md).
+4. Push to your fork: `git push origin <name_of_your_branch>`
+5. Open a PR against `Baseflow/flutter_cache_manager` and fill out the full [PR template](.github/PULL_REQUEST_TEMPLATE.md).
+
+Docs-only and CI-only PRs (for example `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, or
+`.github/` changes that ship nothing to pub.dev) do not bump the version and do not add a
+`CHANGELOG.md` entry.
+
+If two PRs claim the same next version, the one merged second rebases and takes the next number;
+this shows up as a conflict in `pubspec.yaml`. If a contributor's PR is missing the bump, the
+maintainer adds the bump and the dated entry when merging rather than sending it back.
 
 Keep public API changes additive and non-breaking where possible; breaking changes need a clear major-version plan and README/CHANGELOG callouts.
 
@@ -187,7 +199,7 @@ Keep public API changes additive and non-breaking where possible; breaking chang
 section headings verbatim — `What kind of change does this PR introduce?`, `What is the
 current behavior?`, `What is the new behavior (if this is a feature change)?`, `Does this
 PR introduce a breaking change?`, `Recommendations for testing`, `Links to relevant
-issues/docs`, and the `Checklist before submitting` with its exact four items. Do not
+issues/docs`, and the `Checklist before submitting` with its exact five items. Do not
 substitute a different structure (e.g. a generic "Description" / "Type of change" layout)
 even for small or maintainer-authored PRs like release/version-bump PRs — every PR must
 be created from the template file's own headings.
@@ -203,7 +215,7 @@ Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md), but keep each sect
 
 - [ ] Project builds for the changed package(s)
 - [ ] This PR only changes one package (or documents why an exception is needed)
-- [ ] `CHANGELOG.md` updated under `## [Unreleased]` in the changed package, following the [Flutter changelog style](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style) — no version heading until maintainers cut a release
+- [ ] `pubspec.yaml` version bumped and a dated `## [x.y.z] - YYYY-MM-DD` `CHANGELOG.md` entry added in the changed package, following the [Flutter changelog style](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style) (skip for docs-only and CI-only PRs)
 - [ ] Public API documented with `///` doc comments where applicable
 - [ ] Rebased onto `main`
 - [ ] New tests added where applicable; all tests pass
@@ -215,12 +227,15 @@ Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md), but keep each sect
 
 Each package is versioned and released independently. Only maintainers cut releases.
 
-1. Open a release PR against `main` for **one package**: move that package's `## [Unreleased]`
-   CHANGELOG entries under a new dated `## [x.y.z] - YYYY-MM-DD` heading (leaving `[Unreleased]`
-   empty at the top) and bump `version:` in its `pubspec.yaml`.
+Releasing is tagging. Every merged PR already bumped its own package's `version:` and added its
+`CHANGELOG.md` entry (see [Pull request workflow](#pull-request-workflow)), so there is no
+separate release-prep PR.
+
+1. Confirm the merge commit on `main` carries the version you mean to release, and that its
+   `CHANGELOG.md` date is still correct; if the date slipped, fix it in a docs-only PR first.
 2. Verify from that package directory: `dart format --set-exit-if-changed .`, `flutter analyze`,
    `flutter test`, and `dart pub publish --dry-run`.
-3. Merge once CI is green, then tag the resulting commit on `main`:
+3. Tag that merge commit on `main`:
    - `flutter_cache_manager` → `vX.Y.Z`
    - `flutter_cache_manager_firebase` → `firebase-vX.Y.Z`
 4. Push the tag. **Pushing the tag is what publishes**: `build.yaml` / `build-firebase.yaml` run
@@ -228,5 +243,10 @@ Each package is versioned and released independently. Only maintainers cut relea
    Never run `dart pub publish` by hand, and never bump a version without a tag to match.
 
 The workflows publish whatever is committed at the tagged commit — they do not bump versions or
-edit changelogs. Keep branch names out of URLs in `pubspec.yaml` and docs; published versions are
-immutable, so a branch-specific link becomes a permanent dead link once that branch is gone.
+edit changelogs.
+
+`CHANGELOG.md` uses `## [x.y.z] - YYYY-MM-DD` headings with `*` bullets and has no
+`## [Unreleased]` section. Match that format and do not add an `[Unreleased]` section.
+
+Keep branch names out of URLs in `pubspec.yaml` and docs; published versions are immutable, so a
+branch-specific link becomes a permanent dead link once that branch is gone.

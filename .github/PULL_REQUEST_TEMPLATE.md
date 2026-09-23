@@ -22,3 +22,4 @@
 - [ ] Follows style guide lines ([code style guide](https://github.com/Baseflow/flutter_cache_manager/blob/main/CONTRIBUTING.md))
 - [ ] Relevant documentation was updated
 - [ ] Rebased onto current main
+- [ ] Version bumped and dated CHANGELOG entry added

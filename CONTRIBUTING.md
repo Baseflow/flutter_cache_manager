@@ -48,5 +48,5 @@ Send us your pull request:
 Each pull request should follow these conventions:
 
 - **One package per PR** — keep changes confined to a single package directory (`flutter_cache_manager/`, `flutter_cache_manager_firebase/`). Cross-package changes require maintainer coordination and are usually split into separate PRs.
-- **Add CHANGELOG entry to [Unreleased]** — for your change, add one or more entries under the "Unreleased" section of that package's `CHANGELOG.md`. Entries should follow the style conventions also used by Flutter which can be found in their [CHANGELOG style guide](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style).
+- **Bump the version and add a dated CHANGELOG entry** — bump that package's `version:` in `pubspec.yaml` following [semver](https://dart.dev/tools/pub/versioning), and add a matching `## [x.y.z] - YYYY-MM-DD` section to its `CHANGELOG.md`, dated the day you open the pull request. Docs-only and CI-only pull requests skip this step. Entries should follow the style conventions also used by Flutter which can be found in their [CHANGELOG style guide](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style).
 
