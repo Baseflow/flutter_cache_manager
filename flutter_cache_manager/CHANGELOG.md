@@ -1,6 +1,6 @@
 ## [3.4.5] - 2026-09-18
 
-* * Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
+* Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
 
 ## [3.4.4] - 2026-09-16
 
