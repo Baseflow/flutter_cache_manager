@@ -1,3 +1,7 @@
+## [3.4.6] - 2026-09-28
+
+* Allows failed resized-image downloads to be retried by clearing completed resize streams ([#439](https://github.com/Baseflow/flutter_cache_manager/issues/439)).
+
 ## [3.4.5] - 2026-09-18
 
 * Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
