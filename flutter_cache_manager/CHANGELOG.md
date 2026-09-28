@@ -1,3 +1,7 @@
+## [3.4.7] - 2026-10-27
+
+* Allows failed resized-image downloads to be retried by clearing completed resize streams ([#439](https://github.com/Baseflow/flutter_cache_manager/issues/439)).
+
 ## [3.4.6] - 2026-10-27
 
 * Catches unhandled asynchronous errors when updating cache-hit metadata and during scheduled cleanup in `CacheStore` ([#535](https://github.com/Baseflow/flutter_cache_manager/issues/535)).
