@@ -15,8 +15,10 @@ abstract class CacheInfoRepository {
   Future<dynamic> updateOrInsert(CacheObject cacheObject);
 
   /// Inserts [cacheObject] into the repository
-  Future<CacheObject> insert(CacheObject cacheObject,
-      {bool setTouchedToNow = true});
+  Future<CacheObject> insert(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  });
 
   /// Gets a [CacheObject] by [key]
   Future<CacheObject?> get(String key);
@@ -60,8 +62,10 @@ extension MigrationExtension on CacheInfoRepository {
     await _putAll(cacheObjects);
     final isClosed = await previousRepository.close();
     if (!isClosed) {
-      cacheLogger.log('Deleting an open repository while migrating.',
-          CacheManagerLogLevel.warning);
+      cacheLogger.log(
+        'Deleting an open repository while migrating.',
+        CacheManagerLogLevel.warning,
+      );
     }
     await previousRepository.deleteDataFile();
   }

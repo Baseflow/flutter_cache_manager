@@ -7,7 +7,7 @@ CacheManager v2 introduced some breaking changes when configuring a custom Cache
 
 [![pub package](https://img.shields.io/pub/v/flutter_cache_manager.svg)](https://pub.dartlang.org/packages/flutter_cache_manager)
 [![build](https://github.com/Baseflow/flutter_cache_manager/actions/workflows/build.yaml/badge.svg)](https://github.com/Baseflow/flutter_cache_manager/actions/workflows/build.yaml)
-[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/master/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
+[![codecov](https://codecov.io/gh/Baseflow/flutter_cache_manager/branch/main/graph/badge.svg)](https://codecov.io/gh/Baseflow/flutter_cache_manager)
 
 A CacheManager to download and cache files in the cache directory of the app. Various settings on how long to keep a file can be changed.
 
@@ -21,8 +21,8 @@ The more basic usage is explained here. See the complete docs for more info.
 The cache manager can be used to get a file on various ways
 The easiest way to get a single file is call `.getSingleFile`.
 
-```
-    var file = await DefaultCacheManager().getSingleFile(url);
+```dart
+var file = await DefaultCacheManager().getSingleFile(url);
 ```
 `getFileStream(url)` returns a stream with the first result being the cached file and later optionally the downloaded file.
 
@@ -43,7 +43,7 @@ The easiest way to get a single file is call `.getSingleFile`.
 If you use the ImageCacheManager mixin on the CacheManager (which is already done on the DefaultCacheManager) you 
 get the following `getImageFile` method for free:
 
-```
+```dart
 Stream<FileResponse> getImageFile(String url, {
     String key,
     Map<String, String> headers,
@@ -66,7 +66,7 @@ The cache manager is customizable by creating a new CacheManager. It is very imp
 Below is an example with other settings for the maximum age of files, maximum number of objects
 and a custom FileService. The key parameter in the constructor is mandatory, all other variables are optional.
 
-```
+```dart
 class CustomCacheManager {
   static const key = 'customCacheKey';
   static CacheManager instance = CacheManager(

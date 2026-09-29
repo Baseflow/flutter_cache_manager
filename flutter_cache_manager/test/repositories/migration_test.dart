@@ -56,8 +56,10 @@ MockCacheInfoRepository setupMockRepo(bool returnObjects) {
     );
     return Future.value(cacheObject);
   });
-  when(mockRepo.insert(any)).thenAnswer((realInvocation) =>
-      Future.value(realInvocation.positionalArguments.first as CacheObject));
+  when(mockRepo.insert(any)).thenAnswer(
+    (realInvocation) =>
+        Future.value(realInvocation.positionalArguments.first as CacheObject),
+  );
   return mockRepo;
 }
 
@@ -77,7 +79,8 @@ class CacheObjectMatcher extends Matcher {
   bool matches(item, Map matchState) {
     var isMatch = false;
     if (item is CacheObject) {
-      isMatch = item.key == value.key &&
+      isMatch =
+          item.key == value.key &&
           item.url == value.url &&
           item.relativePath == value.relativePath &&
           item.length == value.length &&
