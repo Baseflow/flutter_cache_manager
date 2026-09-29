@@ -24,25 +24,30 @@ class CacheStore {
 
   Duration get _maxAge => _config.stalePeriod;
 
-  Duration get _maxCapacityAgeFilterDuration => _config.maxCapacityAgeFilterDuration ?? const Duration(days: 1);
+  Duration get _maxCapacityAgeFilterDuration =>
+      _config.maxCapacityAgeFilterDuration ?? const Duration(days: 1);
 
   DateTime lastCleanupRun = DateTime.now();
   Timer? _scheduledCleanup;
 
   CacheStore(Config config)
-      : _config = config,
-        fileSystem = config.fileSystem,
-        _cacheInfoRepository = config.repo.open().then((value) => config.repo);
+    : _config = config,
+      fileSystem = config.fileSystem,
+      _cacheInfoRepository = config.repo.open().then((value) => config.repo);
 
   Future<FileInfo?> getFile(String key, {bool ignoreMemCache = false}) async {
-    final cacheObject =
-        await retrieveCacheData(key, ignoreMemCache: ignoreMemCache);
+    final cacheObject = await retrieveCacheData(
+      key,
+      ignoreMemCache: ignoreMemCache,
+    );
     if (cacheObject == null) {
       return null;
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
     cacheLogger.log(
-        'CacheManager: Loaded $key from cache', CacheManagerLogLevel.verbose);
+      'CacheManager: Loaded $key from cache',
+      CacheManagerLogLevel.verbose,
+    );
 
     return FileInfo(
       file,
@@ -62,8 +67,10 @@ class CacheStore {
     }
   }
 
-  Future<CacheObject?> retrieveCacheData(String key,
-      {bool ignoreMemCache = false}) async {
+  Future<CacheObject?> retrieveCacheData(
+    String key, {
+    bool ignoreMemCache = false,
+  }) async {
     if (!ignoreMemCache && _memCache.containsKey(key)) {
       if (await _fileExists(_memCache[key])) {
         return _memCache[key];
@@ -98,7 +105,11 @@ class CacheStore {
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
     return FileInfo(
-        file, FileSource.Cache, cacheObject.validTill, cacheObject.url);
+      file,
+      FileSource.Cache,
+      cacheObject.validTill,
+      cacheObject.url,
+    );
   }
 
   Future<bool> _fileExists(CacheObject? cacheObject) async {
@@ -138,7 +149,10 @@ class CacheStore {
     final toRemove = <int>[];
     final provider = await _cacheInfoRepository;
 
-    final overCapacity = await provider.getObjectsOverCapacity(_capacity, maxAge: _maxCapacityAgeFilterDuration);
+    final overCapacity = await provider.getObjectsOverCapacity(
+      _capacity,
+      maxAge: _maxCapacityAgeFilterDuration,
+    );
     for (final cacheObject in overCapacity) {
       _removeCachedFile(cacheObject, toRemove);
     }
@@ -175,7 +189,9 @@ class CacheStore {
   }
 
   Future<void> _removeCachedFile(
-      CacheObject cacheObject, List<int> toRemove) async {
+    CacheObject cacheObject,
+    List<int> toRemove,
+  ) async {
     if (toRemove.contains(cacheObject.id)) return;
 
     toRemove.add(cacheObject.id!);

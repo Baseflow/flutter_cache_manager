@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,15 +21,15 @@ void main() {
       expect(repository, isNotNull);
     });
 
-    test('Create repository with path and databaseName throws assertion error',
-        () {
-      expect(
-          () => JsonCacheInfoRepository(
-                path: path,
-                databaseName: databaseName,
-              ),
-          throwsAssertionError);
-    });
+    test(
+      'Create repository with path and databaseName throws assertion error',
+      () {
+        expect(
+          () => JsonCacheInfoRepository(path: path, databaseName: databaseName),
+          throwsAssertionError,
+        );
+      },
+    );
 
     test('Create repository with directory is successful', () {
       var repository = JsonCacheInfoRepository.withFile(File(path));
@@ -122,8 +124,9 @@ void main() {
       expect(insertedObject.touched, isNotNull);
 
       var allObjects = await repo.getAllObjects();
-      var newObject =
-          allObjects.where((element) => element.id == insertedObject.id);
+      var newObject = allObjects.where(
+        (element) => element.id == insertedObject.id,
+      );
       expect(newObject, isNotNull);
     });
 
@@ -162,15 +165,17 @@ void main() {
     test('updateOrInsert inserts new item', () async {
       var repo = await JsonRepoHelpers.createRepository();
       var objectToInsert = JsonRepoHelpers.extraCacheObject;
-      var insertedObject =
-          await repo.updateOrInsert(JsonRepoHelpers.extraCacheObject);
+      var insertedObject = await repo.updateOrInsert(
+        JsonRepoHelpers.extraCacheObject,
+      );
       expect(insertedObject.id, JsonRepoHelpers.startCacheObjects.length + 1);
       expect(insertedObject.url, objectToInsert.url);
       expect(insertedObject.touched, isNotNull);
 
       var allObjects = await repo.getAllObjects();
-      var newObject =
-          allObjects.where((element) => element.id == insertedObject.id);
+      var newObject = allObjects.where(
+        (element) => element.id == insertedObject.id,
+      );
       expect(newObject, isNotNull);
     });
   });
@@ -193,11 +198,14 @@ void main() {
       var deleted = await repo.deleteAll(removedIds);
       expect(deleted, 2);
       var objects = await repo.getAllObjects();
-      var removedObject =
-          objects.where((element) => removedIds.contains(element.id));
+      var removedObject = objects.where(
+        (element) => removedIds.contains(element.id),
+      );
       expect(removedObject.length, 0);
-      expect(objects.length,
-          JsonRepoHelpers.startCacheObjects.length - removedIds.length);
+      expect(
+        objects.length,
+        JsonRepoHelpers.startCacheObjects.length - removedIds.length,
+      );
     });
 
     test('delete does not remove non-existing items', () async {
@@ -219,8 +227,60 @@ void main() {
       await repo.open();
 
       var allObjectsAfterOpen = await repo.getAllObjects();
-      expect(allObjectsAfterOpen.length,
-          JsonRepoHelpers.startCacheObjects.length + 1);
+      expect(
+        allObjectsAfterOpen.length,
+        JsonRepoHelpers.startCacheObjects.length + 1,
+      );
+    });
+
+    test('Changes are persisted when the mutating future completes', () async {
+      final file = await JsonRepoHelpers.createDatabaseFile();
+      final repo = JsonCacheInfoRepository.withFile(file);
+      await repo.open();
+      await repo.insert(JsonRepoHelpers.extraCacheObject);
+
+      // New instance reads from disk without closing the first repository.
+      final repo2 = JsonCacheInfoRepository.withFile(file);
+      await repo2.open();
+      final allObjects = await repo2.getAllObjects();
+      expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
+    });
+
+    test('Persist does not leave a temp file', () async {
+      final file = await JsonRepoHelpers.createDatabaseFile();
+      final repo = JsonCacheInfoRepository.withFile(file);
+      await repo.open();
+      await repo.insert(JsonRepoHelpers.extraCacheObject);
+
+      final tempFile = file.fileSystem.file('${file.path}.tmp');
+      expect(await tempFile.exists(), false);
+      expect(await file.exists(), true);
+      expect(jsonDecode(await file.readAsString()), isA<List<dynamic>>());
+    });
+
+    test('A failing write is reported and retried on close', () async {
+      final file = await JsonRepoHelpers.createDatabaseFile();
+      final repo = JsonCacheInfoRepository.withFile(file);
+      await repo.open();
+
+      // Writing is impossible while the containing directory is gone.
+      await file.parent.delete(recursive: true);
+
+      final errors = <FlutterErrorDetails>[];
+      final originalOnError = FlutterError.onError;
+      FlutterError.onError = errors.add;
+      await repo.insert(JsonRepoHelpers.extraCacheObject);
+      FlutterError.onError = originalOnError;
+
+      expect(errors, hasLength(1));
+
+      await file.parent.create(recursive: true);
+      expect(await repo.close(), true);
+
+      final repo2 = JsonCacheInfoRepository.withFile(file);
+      await repo2.open();
+      final allObjects = await repo2.getAllObjects();
+      expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
     });
   });
 }

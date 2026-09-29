@@ -15,8 +15,10 @@ abstract class CacheInfoRepository {
   Future<dynamic> updateOrInsert(CacheObject cacheObject);
 
   /// Inserts [cacheObject] into the repository
-  Future<CacheObject> insert(CacheObject cacheObject,
-      {bool setTouchedToNow = true});
+  Future<CacheObject> insert(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  });
 
   /// Gets a [CacheObject] by [key]
   Future<CacheObject?> get(String key);
@@ -38,7 +40,10 @@ abstract class CacheInfoRepository {
   /// The exact implementation is up to the repository, but implementations should
   /// return a preferred list of items. For example, the least recently accessed.
   /// [maxAge] filters objects older than the given duration (defaults to 1 day).
-  Future<List<CacheObject>> getObjectsOverCapacity(int capacity, {Duration? maxAge});
+  Future<List<CacheObject>> getObjectsOverCapacity(
+    int capacity, {
+    Duration? maxAge,
+  });
 
   /// Returns a list of [CacheObject] that are older than [maxAge]
   Future<List<CacheObject>> getOldObjects(Duration maxAge);
@@ -61,8 +66,10 @@ extension MigrationExtension on CacheInfoRepository {
     await _putAll(cacheObjects);
     final isClosed = await previousRepository.close();
     if (!isClosed) {
-      cacheLogger.log('Deleting an open repository while migrating.',
-          CacheManagerLogLevel.warning);
+      cacheLogger.log(
+        'Deleting an open repository while migrating.',
+        CacheManagerLogLevel.warning,
+      );
     }
     await previousRepository.deleteDataFile();
   }
