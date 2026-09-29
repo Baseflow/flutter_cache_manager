@@ -27,16 +27,16 @@ class CacheObject {
   }) : key = key ?? url;
 
   CacheObject.fromMap(Map<String, dynamic> map)
-      : id = map[columnId] as int,
-        url = map[columnUrl] as String,
-        key = map[columnKey] as String? ?? map[columnUrl] as String,
-        relativePath = map[columnPath] as String,
-        validTill =
-            DateTime.fromMillisecondsSinceEpoch(map[columnValidTill] as int),
-        eTag = map[columnETag] as String?,
-        length = map[columnLength] as int?,
-        touched =
-            DateTime.fromMillisecondsSinceEpoch(map[columnTouched] as int);
+    : id = map[columnId] as int,
+      url = map[columnUrl] as String,
+      key = map[columnKey] as String? ?? map[columnUrl] as String,
+      relativePath = map[columnPath] as String,
+      validTill = DateTime.fromMillisecondsSinceEpoch(
+        map[columnValidTill] as int,
+      ),
+      eTag = map[columnETag] as String?,
+      length = map[columnLength] as int?,
+      touched = DateTime.fromMillisecondsSinceEpoch(map[columnTouched] as int);
 
   /// Internal ID used to represent this cache object
   final int? id;
@@ -73,7 +73,7 @@ class CacheObject {
       columnValidTill: validTill.millisecondsSinceEpoch,
       columnTouched:
           (setTouchedToNow ? clock.now() : touched)?.millisecondsSinceEpoch ??
-              0,
+          0,
       columnLength: length,
       if (id != null) columnId: id,
     };

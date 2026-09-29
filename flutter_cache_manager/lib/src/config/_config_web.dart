@@ -12,11 +12,11 @@ class Config implements def.Config {
     CacheInfoRepository? repo,
     FileSystem? fileSystem,
     FileService? fileService,
-  })  : stalePeriod = stalePeriod ?? const Duration(days: 30),
-        maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
-        repo = repo ?? NonStoringObjectProvider(),
-        fileSystem = fileSystem ?? MemoryCacheSystem(),
-        fileService = fileService ?? HttpFileService();
+  }) : stalePeriod = stalePeriod ?? const Duration(days: 30),
+       maxNrOfCacheObjects = maxNrOfCacheObjects ?? 200,
+       repo = repo ?? NonStoringObjectProvider(),
+       fileSystem = fileSystem ?? MemoryCacheSystem(),
+       fileService = fileService ?? HttpFileService();
 
   @override
   final CacheInfoRepository repo;
