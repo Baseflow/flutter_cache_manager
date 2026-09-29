@@ -28,4 +28,13 @@ class IOFileSystem implements FileSystem {
     }
     return directory.childFile(name);
   }
+
+  @override
+  Future<void> deleteCacheDir() async {
+    final directory = await _fileDir;
+
+    if (await directory.exists()) {
+      await directory.delete(recursive: true);
+    }
+  }
 }
