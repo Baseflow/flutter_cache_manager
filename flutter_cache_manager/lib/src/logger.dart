@@ -5,12 +5,7 @@ CacheLogger cacheLogger = CacheLogger();
 
 /// Log levels of the cache manager. Debug shows failed downloads and verbose
 /// also shows successful downloads and cache retrievals.
-enum CacheManagerLogLevel {
-  none,
-  warning,
-  debug,
-  verbose,
-}
+enum CacheManagerLogLevel { none, warning, debug, verbose }
 
 /// [CacheLogger] which is used by the cache manager to log useful information
 class CacheLogger {

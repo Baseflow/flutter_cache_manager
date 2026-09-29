@@ -47,9 +47,7 @@ class CacheManagerPageState extends State<CacheManagerPage> {
         body: const ListTile(
           title: Text('Tap the floating action button to download.'),
         ),
-        floatingActionButton: Fab(
-          downloadFile: _downloadFile,
-        ),
+        floatingActionButton: Fab(downloadFile: _downloadFile),
       );
     }
     return DownloadPage(
@@ -68,15 +66,18 @@ class CacheManagerPageState extends State<CacheManagerPage> {
   }
 
   void _removeFile() {
-    DefaultCacheManager().removeFile(url).then((value) {
-      if (kDebugMode) {
-        print('File removed');
-      }
-    }).onError((error, stackTrace) {
-      if (kDebugMode) {
-        print(error);
-      }
-    });
+    DefaultCacheManager()
+        .removeFile(url)
+        .then((value) {
+          if (kDebugMode) {
+            print('File removed');
+          }
+        })
+        .onError((error, stackTrace) {
+          if (kDebugMode) {
+            print(error);
+          }
+        });
     setState(() {
       fileStream = null;
     });

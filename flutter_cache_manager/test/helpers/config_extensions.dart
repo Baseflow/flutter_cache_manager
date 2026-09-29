@@ -24,14 +24,15 @@ extension ConfigExtensions on Config {
     String? key,
     int? id,
   }) {
-    when(repo.get(key ?? fileUrl))
-        .thenAnswer((realInvocation) async => CacheObject(
-              fileUrl,
-              relativePath: fileName,
-              validTill: validTill,
-              key: key ?? fileUrl,
-              id: id,
-            ));
+    when(repo.get(key ?? fileUrl)).thenAnswer(
+      (realInvocation) async => CacheObject(
+        fileUrl,
+        relativePath: fileName,
+        validTill: validTill,
+        key: key ?? fileUrl,
+        id: id,
+      ),
+    );
   }
 
   void returnsNoCacheObject(String fileUrl) {
@@ -40,9 +41,7 @@ extension ConfigExtensions on Config {
 
   void verifyNoDownloadCall() {
     verifyNoMoreInteractions(fileService);
-    verifyNever(
-      mockFileService.get(any, headers: anyNamed('headers')),
-    );
+    verifyNever(mockFileService.get(any, headers: anyNamed('headers')));
     verifyNever(mockFileService.get(any));
   }
 
