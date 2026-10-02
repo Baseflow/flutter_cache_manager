@@ -233,7 +233,40 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     final content = jsonEncode(_jsonCache.values.toList());
     final tempFile = _createSiblingFile('${file.path}.tmp');
     await tempFile.writeAsString(content, flush: true);
-    await tempFile.rename(file.path);
+    await _renameOver(tempFile, file.path);
+  }
+
+  /// The pauses between attempts of [_renameOver], about 750ms in all.
+  static const _renameRetryDelays = [
+    Duration(milliseconds: 50),
+    Duration(milliseconds: 100),
+    Duration(milliseconds: 200),
+    Duration(milliseconds: 400),
+  ];
+
+  /// Renames [tempFile] to [path], retrying briefly while another process has
+  /// one of the two files open.
+  ///
+  /// Windows refuses to rename over a file another process holds open without
+  /// delete sharing, failing with ERROR_SHARING_VIOLATION (32) or
+  /// ERROR_ACCESS_DENIED (5). Antivirus and the search indexer routinely open a
+  /// file just after it is written, so the freshly written temp file is often
+  /// held for a moment. Elsewhere a rename never fails with 32 (EPIPE), and 5
+  /// (EIO) is worth the same few retries.
+  Future<void> _renameOver(File tempFile, String path) async {
+    for (var attempt = 0; ; attempt++) {
+      try {
+        await tempFile.rename(path);
+        return;
+      } on FileSystemException catch (e) {
+        final errorCode = e.osError?.errorCode;
+        if (attempt == _renameRetryDelays.length ||
+            (errorCode != 32 && errorCode != 5)) {
+          rethrow;
+        }
+        await Future<void>.delayed(_renameRetryDelays[attempt]);
+      }
+    }
   }
 
   /// Creates a file next to [_file] on the same file system.
