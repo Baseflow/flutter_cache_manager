@@ -1,3 +1,7 @@
+## [3.4.6] - 2026-10-02
+
+* Retries the atomic rename in `JsonCacheInfoRepository` briefly when Windows reports that another process has the cache info file or its temp file open (`ERROR_SHARING_VIOLATION` / `ERROR_ACCESS_DENIED`), as antivirus and the search indexer often do just after a write. The write previously failed and stayed pending until the next change.
+
 ## [3.4.5] - 2026-09-18
 
 * Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).

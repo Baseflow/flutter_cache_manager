@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:file/file.dart' as pf;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
@@ -282,7 +283,129 @@ void main() {
       final allObjects = await repo2.getAllObjects();
       expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
     });
+
+    group('A rename refused by another process', () {
+      Future<(JsonCacheInfoRepository, pf.File, _FlakyRenameFileSystem)>
+      createRepository({required int failures, required int errorCode}) async {
+        final original = await JsonRepoHelpers.createDatabaseFile();
+        final fileSystem = _FlakyRenameFileSystem(
+          original.fileSystem,
+          failures: failures,
+          errorCode: errorCode,
+        );
+        final file = fileSystem.file(original.path);
+        final repo = JsonCacheInfoRepository.withFile(file);
+        await repo.open();
+        return (repo, file, fileSystem);
+      }
+
+      Future<List<FlutterErrorDetails>> insertCollectingErrors(
+        JsonCacheInfoRepository repo,
+      ) async {
+        final errors = <FlutterErrorDetails>[];
+        final originalOnError = FlutterError.onError;
+        FlutterError.onError = errors.add;
+        try {
+          await repo.insert(JsonRepoHelpers.extraCacheObject);
+        } finally {
+          FlutterError.onError = originalOnError;
+        }
+        return errors;
+      }
+
+      test('is retried until it succeeds', () async {
+        final (repo, file, fileSystem) = await createRepository(
+          failures: 2,
+          errorCode: 32,
+        );
+
+        final errors = await insertCollectingErrors(repo);
+
+        expect(errors, isEmpty);
+        expect(fileSystem.renameAttempts, 3);
+        final repo2 = JsonCacheInfoRepository.withFile(file);
+        await repo2.open();
+        final allObjects = await repo2.getAllObjects();
+        expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
+      });
+
+      test('is reported once the retries run out', () async {
+        final (repo, _, fileSystem) = await createRepository(
+          failures: 100,
+          errorCode: 5,
+        );
+
+        final errors = await insertCollectingErrors(repo);
+
+        expect(errors, hasLength(1));
+        expect(fileSystem.renameAttempts, 5);
+      });
+
+      test('is not retried for other errors', () async {
+        final (repo, _, fileSystem) = await createRepository(
+          failures: 1,
+          errorCode: 2,
+        );
+
+        final errors = await insertCollectingErrors(repo);
+
+        expect(errors, hasLength(1));
+        expect(fileSystem.renameAttempts, 1);
+      });
+    });
   });
+}
+
+/// A file system whose renames fail [failures] times, with [errorCode], before
+/// working again.
+class _FlakyRenameFileSystem extends pf.ForwardingFileSystem {
+  _FlakyRenameFileSystem(
+    super.delegate, {
+    required this.failures,
+    required this.errorCode,
+  });
+
+  int failures;
+  final int errorCode;
+  int renameAttempts = 0;
+
+  @override
+  pf.File file(dynamic path) => _FlakyRenameFile(this, delegate.file(path));
+}
+
+class _FlakyRenameFile extends pf.ForwardingFileSystemEntity<pf.File, File>
+    with pf.ForwardingFile {
+  _FlakyRenameFile(this.fileSystem, this.delegate);
+
+  @override
+  final _FlakyRenameFileSystem fileSystem;
+
+  @override
+  final pf.File delegate;
+
+  @override
+  Future<pf.File> rename(String newPath) async {
+    fileSystem.renameAttempts++;
+    if (fileSystem.failures > 0) {
+      fileSystem.failures--;
+      throw FileSystemException(
+        'Cannot rename file to \'$newPath\'',
+        path,
+        OSError('Refused by the test file system', fileSystem.errorCode),
+      );
+    }
+    return wrap(await delegate.rename(newPath));
+  }
+
+  @override
+  pf.File wrapFile(File delegate) =>
+      _FlakyRenameFile(fileSystem, delegate as pf.File);
+
+  @override
+  pf.Directory wrapDirectory(Directory delegate) => delegate as pf.Directory;
+
+  @override
+  pf.Link wrapLink(Link delegate) => delegate as pf.Link;
 }
 
 void expectIdInList(List<CacheObject> cacheObjects, int id) {
