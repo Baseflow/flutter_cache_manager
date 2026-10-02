@@ -99,6 +99,8 @@ class CacheManager implements BaseCacheManager {
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
+  /// [timeout] can be used to specify a timeout for the download, and it will throw
+  /// a [TimeoutException] when the download takes longer than the specified timeout.
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
   ///
@@ -113,11 +115,19 @@ class CacheManager implements BaseCacheManager {
     String url, {
     String? key,
     Map<String, String>? headers,
+    Duration? timeout,
     bool withProgress = false,
   }) {
     key ??= url;
     final streamController = StreamController<FileResponse>();
-    _pushFileToStream(streamController, url, key, headers, withProgress);
+    _pushFileToStream(
+      streamController,
+      url,
+      key,
+      headers,
+      timeout,
+      withProgress,
+    );
     return streamController.stream;
   }
 
@@ -126,6 +136,7 @@ class CacheManager implements BaseCacheManager {
     String url,
     String? key,
     Map<String, String>? headers,
+    Duration? timeout,
     bool withProgress,
   ) async {
     key ??= url;
@@ -148,6 +159,7 @@ class CacheManager implements BaseCacheManager {
           url,
           key: key,
           authHeaders: headers,
+          timeout: timeout,
         )) {
           if (response is DownloadProgress && withProgress) {
             streamController.add(response);
@@ -184,6 +196,7 @@ class CacheManager implements BaseCacheManager {
     String url, {
     String? key,
     Map<String, String>? authHeaders,
+    Duration? timeout,
     bool force = false,
   }) async {
     key ??= url;
@@ -192,6 +205,7 @@ class CacheManager implements BaseCacheManager {
           url,
           key: key,
           authHeaders: authHeaders,
+          timeout: timeout,
           ignoreMemCache: force,
         )
         .firstWhere((r) => r is FileInfo);

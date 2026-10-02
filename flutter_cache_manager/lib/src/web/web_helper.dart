@@ -33,6 +33,7 @@ class WebHelper {
     String url, {
     String? key,
     Map<String, String>? authHeaders,
+    Duration? timeout,
     bool ignoreMemCache = false,
   }) {
     key ??= url;
@@ -40,7 +41,7 @@ class WebHelper {
     if (subject == null || ignoreMemCache) {
       subject = BehaviorSubject<FileResponse>();
       _memCache[key] = subject;
-      _downloadOrAddToQueue(url, key, authHeaders);
+      _downloadOrAddToQueue(url, key, authHeaders, timeout);
     }
     return subject.stream;
   }
@@ -51,6 +52,7 @@ class WebHelper {
     String url,
     String key,
     Map<String, String>? authHeaders,
+    Duration? timeout,
   ) async {
     //Add to queue if there are too many calls.
     if (concurrentCalls >= fileFetcher.concurrentFetches) {
@@ -69,6 +71,7 @@ class WebHelper {
         url,
         key,
         authHeaders: authHeaders,
+        timeout: timeout,
       )) {
         subject.add(result);
       }
@@ -78,14 +81,14 @@ class WebHelper {
       concurrentCalls--;
       await subject.close();
       _memCache.remove(key);
-      _checkQueue();
+      _checkQueue(timeout);
     }
   }
 
-  void _checkQueue() {
+  void _checkQueue(Duration? timeout) {
     if (_queue.isEmpty) return;
     final next = _queue.removeFirst();
-    _downloadOrAddToQueue(next.url, next.key, next.headers);
+    _downloadOrAddToQueue(next.url, next.key, next.headers, timeout);
   }
 
   ///Download the file from the url
@@ -93,6 +96,7 @@ class WebHelper {
     String url,
     String key, {
     Map<String, String>? authHeaders,
+    Duration? timeout,
   }) async* {
     var cacheObject = await _store.retrieveCacheData(key);
     cacheObject = cacheObject == null
@@ -103,13 +107,14 @@ class WebHelper {
             relativePath: '${const Uuid().v1()}.file',
           )
         : cacheObject.copyWith(url: url);
-    final response = await _download(cacheObject, authHeaders);
+    final response = await _download(cacheObject, authHeaders, timeout);
     yield* _manageResponse(cacheObject, response);
   }
 
   Future<FileServiceResponse> _download(
     CacheObject cacheObject,
     Map<String, String>? authHeaders,
+    Duration? timeout,
   ) {
     final headers = <String, String>{};
 
@@ -124,7 +129,7 @@ class WebHelper {
       headers.addAll(authHeaders);
     }
 
-    return fileFetcher.get(cacheObject.url, headers: headers);
+    return fileFetcher.get(cacheObject.url, headers: headers, timeout: timeout);
   }
 
   Stream<FileResponse> _manageResponse(

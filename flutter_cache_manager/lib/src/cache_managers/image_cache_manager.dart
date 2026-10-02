@@ -17,10 +17,15 @@ mixin ImageCacheManager on BaseCacheManager {
   /// When the resized file is not found in the cache the original is fetched
   /// from the cache or online and stored in the cache. Then it is resized
   /// and returned to the caller.
+  ///
+  /// [timeout] can be used to specify a timeout for the download, and it will
+  /// throw a [TimeoutException] when the download takes longer than the
+  /// specified timeout.
   Stream<FileResponse> getImageFile(
     String url, {
     String? key,
     Map<String, String>? headers,
+    Duration? timeout,
     bool withProgress = false,
     int? maxHeight,
     int? maxWidth,
@@ -30,6 +35,7 @@ mixin ImageCacheManager on BaseCacheManager {
         url,
         key: key,
         headers: headers,
+        timeout: timeout,
         withProgress: withProgress,
       );
       return;
@@ -50,6 +56,8 @@ mixin ImageCacheManager on BaseCacheManager {
     }
     var runningResize = _runningResizes[resizedKey];
     if (runningResize == null) {
+      // Only the first caller for a given [resizedKey] creates this stream;
+      // concurrent callers share it and therefore inherit its [timeout].
       runningResize = _fetchedResizedFile(
         url,
         key,
@@ -58,6 +66,7 @@ mixin ImageCacheManager on BaseCacheManager {
         withProgress,
         maxWidth: maxWidth,
         maxHeight: maxHeight,
+        timeout: timeout,
       ).asBroadcastStream();
       _runningResizes[resizedKey] = runningResize;
     }
@@ -130,11 +139,13 @@ mixin ImageCacheManager on BaseCacheManager {
     bool withProgress, {
     int? maxWidth,
     int? maxHeight,
+    Duration? timeout,
   }) async* {
     await for (final response in getFileStream(
       url,
       key: originalKey,
       headers: headers,
+      timeout: timeout,
       withProgress: withProgress,
     )) {
       if (response is DownloadProgress) {

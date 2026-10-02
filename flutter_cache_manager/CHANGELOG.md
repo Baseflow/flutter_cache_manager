@@ -1,3 +1,7 @@
+## [3.5.0] - 2026-10-03
+
+* Adds an optional `timeout` parameter to `getFileStream`, `downloadFile`, `getImageFile`, and `FileService.get`, so a download that exceeds it throws a `TimeoutException` instead of running unchecked.
+
 ## [3.4.5] - 2026-09-18
 
 * Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
