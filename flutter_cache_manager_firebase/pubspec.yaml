@@ -1,6 +1,6 @@
 name: flutter_cache_manager_firebase
 description: CacheManager implementation for firebase_storage. Uses the gs:// as key and translates to https://
-version: 2.1.4
+version: 2.2.0
 homepage: https://github.com/Baseflow/flutter_cache_manager
 
 environment:
@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_cache_manager: ^3.4.2
+  flutter_cache_manager: ^3.5.0
   firebase_storage: '>=12.0.0 <14.0.0'
   path_provider: ^2.1.6
   path: ^1.9.1
