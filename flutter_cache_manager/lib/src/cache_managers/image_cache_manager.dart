@@ -86,8 +86,8 @@ mixin ImageCacheManager on BaseCacheManager {
     final shouldResize = maxWidth != null
         ? image.width > maxWidth
         : false || maxHeight != null
-            ? image.height > maxHeight
-            : false;
+        ? image.height > maxHeight
+        : false;
     if (!shouldResize) return originalFile;
     if (maxWidth != null && maxHeight != null) {
       final resizeFactorWidth = image.width / maxWidth;
@@ -98,12 +98,14 @@ mixin ImageCacheManager on BaseCacheManager {
       maxHeight = (image.height / resizeFactor).round();
     }
 
-    final resized = await _decodeImage(originalFile.file,
-        width: maxWidth, height: maxHeight);
-    final resizedFile =
-        (await resized.toByteData(format: ui.ImageByteFormat.png))!
-            .buffer
-            .asUint8List();
+    final resized = await _decodeImage(
+      originalFile.file,
+      width: maxWidth,
+      height: maxHeight,
+    );
+    final resizedFile = (await resized.toByteData(
+      format: ui.ImageByteFormat.png,
+    ))!.buffer.asUint8List();
     final maxAge = originalFile.validTill.difference(DateTime.now());
 
     final file = await putFile(
@@ -141,31 +143,49 @@ mixin ImageCacheManager on BaseCacheManager {
         yield response;
       }
       if (response is FileInfo) {
-        yield await _resizeImageFile(
-          response,
-          resizedKey,
-          maxWidth,
-          maxHeight,
-        );
+        yield await _resizeImageFile(response, resizedKey, maxWidth, maxHeight);
       }
     }
   }
 }
 
-Future<ui.Image> _decodeImage(File file,
-    {int? width, int? height, bool allowUpscaling = false}) {
+Future<ui.Image> _decodeImage(
+  File file, {
+  int? width,
+  int? height,
+  bool allowUpscaling = false,
+}) {
   final shouldResize = width != null || height != null;
   final fileImage = FileImage(file);
   final image = shouldResize
-      ? ResizeImage(fileImage,
-          width: width, height: height, allowUpscaling: allowUpscaling)
+      ? ResizeImage(
+          fileImage,
+          width: width,
+          height: height,
+          allowUpscaling: allowUpscaling,
+        )
       : fileImage as ImageProvider;
+
   final completer = Completer<ui.Image>();
-  image
-      .resolve(ImageConfiguration.empty)
-      .addListener(ImageStreamListener((info, _) {
-    completer.complete(info.image);
-    image.evict();
-  }));
+  final stream = image.resolve(ImageConfiguration.empty);
+
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (info, _) {
+      if (completer.isCompleted) return;
+
+      stream.removeListener(listener);
+      image.evict();
+      completer.complete(info.image);
+    },
+    onError: (Object error, StackTrace? stackTrace) {
+      if (completer.isCompleted) return;
+
+      stream.removeListener(listener);
+      completer.completeError(error, stackTrace);
+    },
+  );
+
+  stream.addListener(listener);
   return completer.future;
 }

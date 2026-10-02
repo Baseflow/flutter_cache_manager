@@ -10,8 +10,11 @@ class FileServiceCompat extends FileService {
   FileServiceCompat(this.fileFetcher);
 
   @override
-  Future<FileServiceResponse> get(String url,
-      {Map<String, String>? headers, Duration? timeout}) async {
+  Future<FileServiceResponse> get(
+    String url, {
+    Map<String, String>? headers,
+    Duration? timeout,
+  }) async {
     var legacyResponse = fileFetcher(url, headers: headers);
     if (timeout != null) {
       legacyResponse = legacyResponse.timeout(timeout);

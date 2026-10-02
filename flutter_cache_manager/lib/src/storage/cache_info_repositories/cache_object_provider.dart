@@ -27,9 +27,11 @@ class CacheObjectProvider extends CacheInfoRepository
     }
     final path = await _getPath();
     await File(path).parent.create(recursive: true);
-    db = await openDatabase(path, version: 3,
-        onCreate: (Database db, int version) async {
-      await db.execute('''
+    db = await openDatabase(
+      path,
+      version: 3,
+      onCreate: (Database db, int version) async {
+        await db.execute('''
       create table $_tableCacheObject (
         ${CacheObject.columnId} integer primary key,
         ${CacheObject.columnUrl} text,
@@ -43,46 +45,48 @@ class CacheObjectProvider extends CacheInfoRepository
         create unique index $_tableCacheObject${CacheObject.columnKey}
         ON $_tableCacheObject (${CacheObject.columnKey});
       ''');
-    }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
-      // Migration for adding the optional key, does the following:
-      // Adds the new column
-      // Creates a unique index for the column
-      // Migrates over any existing URLs to keys
-      if (oldVersion <= 1) {
-        var alreadyHasKeyColumn = false;
-        try {
-          await db.execute('''
+      },
+      onUpgrade: (Database db, int oldVersion, int newVersion) async {
+        // Migration for adding the optional key, does the following:
+        // Adds the new column
+        // Creates a unique index for the column
+        // Migrates over any existing URLs to keys
+        if (oldVersion <= 1) {
+          var alreadyHasKeyColumn = false;
+          try {
+            await db.execute('''
             alter table $_tableCacheObject
             add ${CacheObject.columnKey} text;
             ''');
-        } on DatabaseException catch (e) {
-          if (!e.isDuplicateColumnError(CacheObject.columnKey)) rethrow;
-          alreadyHasKeyColumn = true;
-        }
-        await db.execute('''
+          } on DatabaseException catch (e) {
+            if (!e.isDuplicateColumnError(CacheObject.columnKey)) rethrow;
+            alreadyHasKeyColumn = true;
+          }
+          await db.execute('''
           update $_tableCacheObject
             set ${CacheObject.columnKey} = ${CacheObject.columnUrl}
             where ${CacheObject.columnKey} is null;
           ''');
 
-        if (!alreadyHasKeyColumn) {
-          await db.execute('''
+          if (!alreadyHasKeyColumn) {
+            await db.execute('''
             create index $_tableCacheObject${CacheObject.columnKey}
               on $_tableCacheObject (${CacheObject.columnKey});
             ''');
+          }
         }
-      }
-      if (oldVersion <= 2) {
-        try {
-          await db.execute('''
+        if (oldVersion <= 2) {
+          try {
+            await db.execute('''
         alter table $_tableCacheObject
         add ${CacheObject.columnLength} integer;
         ''');
-        } on DatabaseException catch (e) {
-          if (!e.isDuplicateColumnError(CacheObject.columnLength)) rethrow;
+          } on DatabaseException catch (e) {
+            if (!e.isDuplicateColumnError(CacheObject.columnLength)) rethrow;
+          }
         }
-      }
-    });
+      },
+    );
     return opened();
   }
 
@@ -96,8 +100,10 @@ class CacheObjectProvider extends CacheInfoRepository
   }
 
   @override
-  Future<CacheObject> insert(CacheObject cacheObject,
-      {bool setTouchedToNow = true}) async {
+  Future<CacheObject> insert(
+    CacheObject cacheObject, {
+    bool setTouchedToNow = true,
+  }) async {
     final id = await db!.insert(
       _tableCacheObject,
       cacheObject.toMap(setTouchedToNow: setTouchedToNow),
@@ -107,8 +113,12 @@ class CacheObjectProvider extends CacheInfoRepository
 
   @override
   Future<CacheObject?> get(String key) async {
-    final List<Map<dynamic, dynamic>> maps = await db!.query(_tableCacheObject,
-        columns: null, where: '${CacheObject.columnKey} = ?', whereArgs: [key]);
+    final List<Map<dynamic, dynamic>> maps = await db!.query(
+      _tableCacheObject,
+      columns: null,
+      where: '${CacheObject.columnKey} = ?',
+      whereArgs: [key],
+    );
     if (maps.isNotEmpty) {
       return CacheObject.fromMap(maps.first.cast<String, dynamic>());
     }
@@ -117,14 +127,19 @@ class CacheObjectProvider extends CacheInfoRepository
 
   @override
   Future<int> delete(int id) {
-    return db!.delete(_tableCacheObject,
-        where: '${CacheObject.columnId} = ?', whereArgs: [id]);
+    return db!.delete(
+      _tableCacheObject,
+      where: '${CacheObject.columnId} = ?',
+      whereArgs: [id],
+    );
   }
 
   @override
   Future<int> deleteAll(Iterable<int> ids) {
-    return db!.delete(_tableCacheObject,
-        where: '${CacheObject.columnId} IN (${ids.join(',')})');
+    return db!.delete(
+      _tableCacheObject,
+      where: '${CacheObject.columnId} IN (${ids.join(',')})',
+    );
   }
 
   @override
@@ -146,28 +161,34 @@ class CacheObjectProvider extends CacheInfoRepository
 
   @override
   Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
-    return CacheObject.fromMapList(await db!.query(
-      _tableCacheObject,
-      columns: null,
-      orderBy: '${CacheObject.columnTouched} DESC',
-      where: '${CacheObject.columnTouched} < ?',
-      whereArgs: [
-        DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch
-      ],
-      limit: 100,
-      offset: capacity,
-    ));
+    return CacheObject.fromMapList(
+      await db!.query(
+        _tableCacheObject,
+        columns: null,
+        orderBy: '${CacheObject.columnTouched} DESC',
+        where: '${CacheObject.columnTouched} < ?',
+        whereArgs: [
+          DateTime.now()
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
+        ],
+        limit: 100,
+        offset: capacity,
+      ),
+    );
   }
 
   @override
   Future<List<CacheObject>> getOldObjects(Duration maxAge) async {
-    return CacheObject.fromMapList(await db!.query(
-      _tableCacheObject,
-      where: '${CacheObject.columnTouched} < ?',
-      columns: null,
-      whereArgs: [DateTime.now().subtract(maxAge).millisecondsSinceEpoch],
-      limit: 100,
-    ));
+    return CacheObject.fromMapList(
+      await db!.query(
+        _tableCacheObject,
+        where: '${CacheObject.columnTouched} < ?',
+        columns: null,
+        whereArgs: [DateTime.now().subtract(maxAge).millisecondsSinceEpoch],
+        limit: 100,
+      ),
+    );
   }
 
   @override

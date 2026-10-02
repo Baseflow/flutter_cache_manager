@@ -23,8 +23,11 @@ abstract class BaseCacheManager {
   /// The files are returned as stream. First the cached file if available, when the
   /// cached file is too old the newly downloaded file is returned afterwards.
   @Deprecated('Prefer to use the new getFileStream method')
-  Stream<FileInfo> getFile(String url,
-      {String key, Map<String, String> headers});
+  Stream<FileInfo> getFile(
+    String url, {
+    String key,
+    Map<String, String> headers,
+  });
 
   /// Get the file from the cache and/or online, depending on availability and age.
   /// Downloaded form [url], [headers] can be used for example for authentication.
@@ -39,18 +42,22 @@ abstract class BaseCacheManager {
   /// set on true and the file is not available in the cache. When the file is
   /// returned from the cache there will be no progress given, although the file
   /// might be outdated and a new file is being downloaded in the background.
-  Stream<FileResponse> getFileStream(String url,
-      {String? key,
-      Map<String, String>? headers,
-      Duration? timeout,
-      bool withProgress});
+  Stream<FileResponse> getFileStream(
+    String url, {
+    String? key,
+    Map<String, String>? headers,
+    Duration? timeout,
+    bool withProgress,
+  });
 
   ///Download the file and add to cache
-  Future<FileInfo> downloadFile(String url,
-      {String? key,
-      Map<String, String>? authHeaders,
-      Duration? timeout,
-      bool force = false});
+  Future<FileInfo> downloadFile(
+    String url, {
+    String? key,
+    Map<String, String>? authHeaders,
+    Duration? timeout,
+    bool force = false,
+  });
 
   /// Get the file from the cache.
   /// Specify [ignoreMemCache] to force a re-read from the database
