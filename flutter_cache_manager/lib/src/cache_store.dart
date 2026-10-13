@@ -197,12 +197,13 @@ class CacheStore {
     }
     final file = await fileSystem.createFile(cacheObject.relativePath);
 
-    if (file.existsSync()) {
+    if (await file.exists()) {
       try {
         await file.delete();
-        // ignore: unused_catch_clause
-      } on PathNotFoundException catch (e) {
-        // File has already been deleted. Do nothing #184
+      } on FileSystemException {
+        // A concurrent removal can delete the file after the existence check.
+        // Ignore the failure only when the file is gone (#184).
+        if (await file.exists()) rethrow;
       }
     }
   }
