@@ -1,3 +1,8 @@
+## [3.4.6] - 2026-10-13
+
+* Uses the asynchronous `exists()` instead of `existsSync()` when removing a cached file, so cache cleanup, `removeFile` and `emptyCache` no longer block the calling isolate on file system I/O. On Android with Flutter 3.29 or later this blocked the platform thread and could cause ANRs.
+* Ignores a failed delete of a cached file when the file no longer exists, because a concurrent removal can delete it after the asynchronous existence check.
+
 ## [3.4.5] - 2026-09-18
 
 * Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).

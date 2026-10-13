@@ -2,12 +2,16 @@ import 'package:clock/clock.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/config/config.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart'
+    as cache_fs;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 import 'helpers/config_extensions.dart';
 import 'helpers/mock_cache_info_repository.dart';
+import 'helpers/mock_file_service.dart';
 import 'helpers/test_configuration.dart';
 
 void main() {
@@ -440,6 +444,34 @@ void main() {
       ).called(1);
     });
 
+    test('Store should not check file existence synchronously when removing '
+        'a cached file', () async {
+      var fileSystem = _AsyncOnlyFileSystem();
+      var config = Config(
+        'test',
+        fileSystem: fileSystem,
+        repo: MockCacheInfoRepository(),
+        fileService: MockFileService(),
+      );
+      var store = CacheStore(config);
+
+      var file = await fileSystem.inner.createFile(fileName);
+      await file.writeAsBytes([1, 3]);
+      var cacheObject = CacheObject(
+        fileUrl,
+        relativePath: fileName,
+        id: 1,
+        validTill: validTill,
+      );
+
+      await store.removeCachedFile(cacheObject);
+
+      expect(await file.exists(), isFalse);
+      verify(
+        config.mockRepo.deleteAll(argThat(contains(cacheObject.id))),
+      ).called(1);
+    });
+
     test('Store should delete file when remove cached file', () async {
       var config = createTestConfig();
       var store = CacheStore(config);
@@ -463,4 +495,32 @@ void main() {
 Future<Directory> createDir() async {
   final fileSystem = MemoryFileSystem();
   return fileSystem.systemTempDirectory.createTemp('test');
+}
+
+/// Wraps the files of [TestFileSystem] so that a synchronous existence check
+/// fails the test.
+class _AsyncOnlyFileSystem extends cache_fs.FileSystem {
+  final inner = TestFileSystem();
+
+  @override
+  Future<File> createFile(String name) async =>
+      _AsyncOnlyFile(await inner.createFile(name));
+}
+
+class _AsyncOnlyFile extends Fake implements File {
+  _AsyncOnlyFile(this._delegate);
+
+  final File _delegate;
+
+  @override
+  bool existsSync() => throw StateError('existsSync() must not be called');
+
+  @override
+  Future<bool> exists() => _delegate.exists();
+
+  @override
+  Future<File> delete({bool recursive = false}) async {
+    await _delegate.delete(recursive: recursive);
+    return this;
+  }
 }
