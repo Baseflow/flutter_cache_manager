@@ -13,14 +13,16 @@ const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
 const _imageSignatures = <List<int>>[
   [0xFF, 0xD8, 0xFF], // jpeg
   [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // png
+  [0x42, 0x4D], // bmp
   [0x00, 0x00, 0x01, 0x00], // ico
   [0x00, 0x00, 0x02, 0x00], // cur
 ];
 
-/// Extensions of the formats that have no signature at the start of the file,
-/// so the only way to recognize them is by their extension. Tga for example
-/// only stores a signature in its footer.
-const _extensionOnlyFormats = ['tga'];
+/// Extensions of the formats that have no usable signature at the start of the
+/// file, so the only way to recognize them is by their extension. Tga only
+/// stores a signature in its footer, and wbmp starts with a two byte header
+/// (`00 00`) that is too generic to match on.
+const _extensionOnlyFormats = ['tga', 'wbmp'];
 
 mixin ImageCacheManager on BaseCacheManager {
   /// Returns a resized image file to fit within maxHeight and maxWidth. It
