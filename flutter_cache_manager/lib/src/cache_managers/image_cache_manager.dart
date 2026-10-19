@@ -11,7 +11,7 @@ const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
 /// Signatures (magic numbers) of the image formats that can be recognized by
 /// the first bytes of the file, instead of by its extension.
 const _imageSignatures = <List<int>>[
-  [0xFF, 0xD8, 0xFF], // jpeg
+  [0xFF, 0xD8], // jpeg
   [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // png
   [0x42, 0x4D], // bmp
   [0x00, 0x00, 0x01, 0x00], // ico
