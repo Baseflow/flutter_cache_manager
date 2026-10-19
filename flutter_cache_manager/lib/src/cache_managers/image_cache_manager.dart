@@ -7,6 +7,21 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
+
+/// Signatures (magic numbers) of the image formats that can be recognized by
+/// the first bytes of the file, instead of by its extension.
+const _imageSignatures = <List<int>>[
+  [0xFF, 0xD8, 0xFF], // jpeg
+  [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // png
+  [0x00, 0x00, 0x01, 0x00], // ico
+  [0x00, 0x00, 0x02, 0x00], // cur
+];
+
+/// Extensions of the formats that have no signature at the start of the file,
+/// so the only way to recognize them is by their extension. Tga for example
+/// only stores a signature in its footer.
+const _extensionOnlyFormats = ['tga'];
+
 mixin ImageCacheManager on BaseCacheManager {
   /// Returns a resized image file to fit within maxHeight and maxWidth. It
   /// tries to keep the aspect ratio. It stores the resized image by adding
@@ -65,30 +80,28 @@ mixin ImageCacheManager on BaseCacheManager {
     _runningResizes.remove(resizedKey);
   }
 
+  /// Whether [file] holds an image that can be decoded and resized, based on
+  /// the content of the file rather than on the extension of its url. A
+  /// response can be served without a file extension, or with an extension
+  /// that does not match the actual content, for example when it is served
+  /// with an incorrect `Content-Type` header.
   Future<bool> _isImage(File file) async {
     if (!await file.exists()) {
-      debugPrint('file is not found: ${file.path}');
       return false;
     }
-    final raf = await file.open();
-    final header = await raf.read(8);
-    await raf.close();
-    final hexString = header
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join('');
-    if (hexString.startsWith('ffd8')) {
-      return true; // JPEG
-    } else if (hexString.startsWith('89504e47')) {
-      return true; // PNG
-    } else if (hexString.startsWith('00000200')) {
-      return true; // TGA
-    } else if (hexString.startsWith('00000100')) {
-      return true; // CUR
-    } else if (hexString.startsWith('00000000')) {
-      return true; // ICO
-    }
 
-    return false;
+    final header = await _readHeader(file);
+    if (_imageSignatures.any((signature) => _startsWith(header, signature))) {
+      return true;
+    }
+    // WebP is a RIFF container: "RIFF" + 4 bytes of length + "WEBP".
+    if (header.length >= 12 &&
+        _startsWith(header, 'RIFF'.codeUnits) &&
+        _startsWith(header.sublist(8), 'WEBP'.codeUnits)) {
+      return true;
+    }
+    final extension = file.path.split('.').last.toLowerCase();
+    return _extensionOnlyFormats.contains(extension);
   }
 
   final Map<String, Stream<FileResponse>> _runningResizes = {};
@@ -99,10 +112,9 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
     int? maxHeight,
   ) async {
-    bool isImage = await _isImage(originalFile.file);
     final originalFileName = originalFile.file.path;
     final fileExtension = originalFileName.split('.').last;
-    if (!isImage) {
+    if (!await _isImage(originalFile.file)) {
       return originalFile;
     }
 
@@ -172,6 +184,30 @@ mixin ImageCacheManager on BaseCacheManager {
       }
     }
   }
+}
+
+/// Reads the first bytes of [file], up to [length] bytes, which is enough to
+/// hold the longest signature that is checked.
+Future<List<int>> _readHeader(File file, {int length = 12}) async {
+  final raf = await file.open();
+  try {
+    return await raf.read(length);
+  } finally {
+    await raf.close();
+  }
+}
+
+/// Whether [bytes] starts with [signature].
+bool _startsWith(List<int> bytes, List<int> signature) {
+  if (bytes.length < signature.length) {
+    return false;
+  }
+  for (var i = 0; i < signature.length; i++) {
+    if (bytes[i] != signature[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 Future<ui.Image> _decodeImage(

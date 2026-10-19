@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -125,6 +126,42 @@ void main() {
       var progress = results.whereType<DownloadProgress>().toList();
       config.verifyDownloadCall();
       expect(progress, isNotEmpty);
+    });
+  });
+
+  group('Test image detection', () {
+    test('Image without file extension should be resized', () async {
+      const urlWithoutExtension = 'baseflow.com/avatar/123456';
+      var config = createTestConfig();
+      await config.returnsFile('avatar', data: await getExampleImage());
+      config.returnsCacheObject(urlWithoutExtension, 'avatar', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager
+                  .getImageFile(urlWithoutExtension, maxWidth: 100)
+                  .last
+              as FileInfo;
+
+      var image = await result.file.readAsBytes();
+      await verifySize(image, 100, 100);
+    });
+
+    test('Non image should not be resized', () async {
+      const urlWithImageExtension = 'baseflow.com/image.png';
+      var payload = utf8.encode('{"message":"not an image"}');
+      var config = createTestConfig();
+      await config.returnsFile('image.png', data: payload);
+      config.returnsCacheObject(urlWithImageExtension, 'image.png', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager
+                  .getImageFile(urlWithImageExtension, maxWidth: 100)
+                  .last
+              as FileInfo;
+
+      expect(await result.file.readAsBytes(), payload);
     });
   });
 }
