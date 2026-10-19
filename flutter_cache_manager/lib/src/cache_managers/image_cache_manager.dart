@@ -114,8 +114,6 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
     int? maxHeight,
   ) async {
-    final originalFileName = originalFile.file.path;
-    final fileExtension = originalFileName.split('.').last;
     if (!await _isImage(originalFile.file)) {
       return originalFile;
     }
@@ -152,7 +150,11 @@ mixin ImageCacheManager on BaseCacheManager {
       resizedFile,
       key: key,
       maxAge: maxAge,
-      fileExtension: fileExtension,
+      // The resized image is always encoded as png. The extension of the
+      // original file cannot be used: it is derived from the url, so it can
+      // be missing, or be the last segment of the path when the url has no
+      // extension at all.
+      fileExtension: 'png',
     );
 
     return FileInfo(

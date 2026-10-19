@@ -1,6 +1,7 @@
 ## [3.4.6] - 2026-10-19
 
 * Detects whether a downloaded file can be resized from its content instead of from the extension of its url, so images served from extension-less urls or with a non-image `Content-Type` are resized, and responses that are no longer images are returned untouched ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
+* Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension of the url — which broke resizing for urls without an extension
 
 ## [3.4.5] - 2026-09-18
 
