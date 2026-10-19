@@ -13,6 +13,12 @@ const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
 ///
 /// Gif is deliberately missing: the resizer re-encodes to png, which would turn
 /// an animation into a single frame.
+///
+/// The ico and cur values overlap with tga, which starts with the same four
+/// bytes when it has no id field and no colour map (byte 2 is then the image
+/// type, 1 for a colour mapped and 2 for a true colour image). Telling them
+/// apart takes more than four bytes, but it does not matter here: all of them
+/// are resizable, and only the answer to "is this an image" is used.
 const _imageSignatures = <List<int>>[
   [0xFF, 0xD8], // jpeg
   [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // png
