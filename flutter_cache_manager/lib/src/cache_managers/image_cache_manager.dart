@@ -10,6 +10,9 @@ const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
 
 /// Signatures (magic numbers) of the image formats that can be recognized by
 /// the first bytes of the file, instead of by its extension.
+///
+/// Gif is deliberately missing: the resizer re-encodes to png, which would turn
+/// an animation into a single frame.
 const _imageSignatures = <List<int>>[
   [0xFF, 0xD8], // jpeg
   [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // png
@@ -87,20 +90,23 @@ mixin ImageCacheManager on BaseCacheManager {
   /// response can be served without a file extension, or with an extension
   /// that does not match the actual content, for example when it is served
   /// with an incorrect `Content-Type` header.
+  ///
+  /// Images that would lose something when they are re-encoded as png, such as
+  /// an animated gif or an animated webp, are not considered an image here, so
+  /// they are passed through untouched.
   Future<bool> _isImage(File file) async {
     if (!await file.exists()) {
       return false;
     }
 
     final header = await _readHeader(file);
-    if (_imageSignatures.any((signature) => _startsWith(header, signature))) {
+    if (_imageSignatures.any((signature) => _matches(header, signature))) {
       return true;
     }
     // WebP is a RIFF container: "RIFF" + 4 bytes of length + "WEBP".
-    if (header.length >= 12 &&
-        _startsWith(header, 'RIFF'.codeUnits) &&
-        _startsWith(header.sublist(8), 'WEBP'.codeUnits)) {
-      return true;
+    if (_matches(header, 'RIFF'.codeUnits) &&
+        _matches(header, 'WEBP'.codeUnits, 8)) {
+      return !_isAnimatedWebp(header);
     }
     final extension = file.path.split('.').last.toLowerCase();
     return _extensionOnlyFormats.contains(extension);
@@ -191,8 +197,8 @@ mixin ImageCacheManager on BaseCacheManager {
 }
 
 /// Reads the first bytes of [file], up to [length] bytes, which is enough to
-/// hold the longest signature that is checked.
-Future<List<int>> _readHeader(File file, {int length = 12}) async {
+/// hold the longest signature that is checked, including the webp flags.
+Future<List<int>> _readHeader(File file, {int length = 30}) async {
   final raf = await file.open();
   try {
     return await raf.read(length);
@@ -201,17 +207,31 @@ Future<List<int>> _readHeader(File file, {int length = 12}) async {
   }
 }
 
-/// Whether [bytes] starts with [signature].
-bool _startsWith(List<int> bytes, List<int> signature) {
-  if (bytes.length < signature.length) {
+/// Whether [bytes] holds [signature] at [offset].
+bool _matches(List<int> bytes, List<int> signature, [int offset = 0]) {
+  if (bytes.length < offset + signature.length) {
     return false;
   }
   for (var i = 0; i < signature.length; i++) {
-    if (bytes[i] != signature[i]) {
+    if (bytes[offset + i] != signature[i]) {
       return false;
     }
   }
   return true;
+}
+
+/// Whether [header] belongs to a webp that contains an animation.
+///
+/// An extended webp starts with a `VP8X` chunk, whose flags byte marks the file
+/// as animated. Resizing re-encodes the image to png, which keeps a single
+/// frame, so an animated webp is left as it is, the same way gif is.
+bool _isAnimatedWebp(List<int> header) {
+  // "RIFF" + size + "WEBP" + "VP8X" + chunk size, the flags follow at 20.
+  const flagsOffset = 20;
+  const animationFlag = 0x02;
+  return header.length > flagsOffset &&
+      _matches(header, 'VP8X'.codeUnits, 12) &&
+      (header[flagsOffset] & animationFlag) != 0;
 }
 
 Future<ui.Image> _decodeImage(

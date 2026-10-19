@@ -2,6 +2,7 @@
 
 * Detects whether a downloaded file can be resized from its content instead of from the extension of its url, so images served from extension-less urls or with a non-image `Content-Type` are resized, and responses that are no longer images are returned untouched ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
 * Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension of the url — which broke resizing for urls without an extension
+* Adds webp, bmp and wbmp to the formats that are resized ([#353](https://github.com/Baseflow/flutter_cache_manager/issues/353)). An animated webp is passed through untouched, since the resized image is always encoded as png and would lose its animation, the same reason gif is not resized
 
 ## [3.4.5] - 2026-09-18
 
