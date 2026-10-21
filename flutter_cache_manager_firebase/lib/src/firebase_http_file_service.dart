@@ -16,6 +16,7 @@ class FirebaseHttpFileService extends HttpFileService {
   Future<FileServiceResponse> get(
     String url, {
     Map<String, String>? headers,
+    CancellationToken? cancellationToken,
   }) async {
     late Reference ref;
     if (bucket != null) {
@@ -35,6 +36,10 @@ class FirebaseHttpFileService extends HttpFileService {
     } else {
       downloadUrl = await ref.getDownloadURL();
     }
-    return super.get(downloadUrl);
+    return super.get(
+      downloadUrl,
+      headers: headers,
+      cancellationToken: cancellationToken,
+    );
   }
 }

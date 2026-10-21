@@ -1,3 +1,7 @@
+## [3.5.1] - 2026-10-21
+
+* Merge upstream 3.4.5 persistence and decoding fixes, retaining cancellation.
+
 ## [3.4.5] - 2026-09-18
 
 * Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
@@ -7,6 +11,16 @@
 * Awaits cache-info persist in `putFile`, `putFileStream`, and downloads so the stored object has an id before those calls return ([#492](https://github.com/Baseflow/flutter_cache_manager/issues/492)). A failed repository write now throws from `putFile`/`putFileStream` and errors the download stream instead of returning a usable file with no cache-info row.
 
 ## [3.4.3] - 2026-09-15
+
+### Fork (Railway-Engineering-Solutions)
+
+* Adds IndexedDB-backed cache info repository and file system for web, replacing the
+  non-persistent `NonStoringObjectProvider` / `MemoryCacheSystem` defaults
+* Syncs with Baseflow upstream `develop` (through 3.4.2 + unreleased changes)
+* Raises dependency floors: `clock` 1.1.3, `path_provider` 2.1.6, `sqflite` 2.4.3,
+  `build_runner` 2.16.1, `mockito` 5.8.1, `web` 1.1.1
+
+### Upstream
 
 * Fixes `JsonCacheInfoRepository` losing metadata when the app exits within 3 seconds of a cache change by writing through promptly with serialized, atomic file writes ([#491](https://github.com/Baseflow/flutter_cache_manager/issues/491))
 * Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.47.4, Dependabot for actions)

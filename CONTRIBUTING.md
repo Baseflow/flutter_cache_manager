@@ -26,9 +26,9 @@ to generate an SSH key.
 
 We really appreciate contributions via GitHub pull requests. To contribute take the following steps:
 
-- Make sure you are up to date with the latest code on main:
+- Make sure you are up to date with the latest code on develop:
   - `git fetch upstream`
-  - `git checkout upstream/main -b <name_of_your_branch>`
+  - `git checkout upstream/develop -b <name_of_your_branch>`
 - Apply your changes
 - Verify your changes and fix potential warnings/ errors (run from the package you changed):
   - Check formatting: `dart format .`
@@ -48,5 +48,5 @@ Send us your pull request:
 Each pull request should follow these conventions:
 
 - **One package per PR** — keep changes confined to a single package directory (`flutter_cache_manager/`, `flutter_cache_manager_firebase/`). Cross-package changes require maintainer coordination and are usually split into separate PRs.
-- **Bump the version and add a dated CHANGELOG entry** — bump that package's `version:` in `pubspec.yaml` following [semver](https://dart.dev/tools/pub/versioning), and add a matching `## [x.y.z] - YYYY-MM-DD` section to its `CHANGELOG.md`, dated the day you open the pull request. Docs-only and CI-only pull requests skip this step. Entries should follow the style conventions also used by Flutter which can be found in their [CHANGELOG style guide](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style).
+- **Add CHANGELOG entry to [Unreleased]** — for your change, add one or more entries under the "Unreleased" section of that package's `CHANGELOG.md`. Entries should follow the style conventions also used by Flutter which can be found in their [CHANGELOG style guide](https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changelog-style).
 

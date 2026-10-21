@@ -9,6 +9,47 @@ import 'package:http/http.dart' as http;
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
+/// Token that can be used to cancel an in-flight request.
+class CancellationToken {
+  bool _isCancelled = false;
+  Completer<void>? _completer;
+
+  /// Whether this token has been cancelled.
+  bool get isCancelled => _isCancelled;
+
+  /// Cancel the request associated with this token.
+  void cancel() {
+    if (_isCancelled) return;
+    _isCancelled = true;
+    if (_completer != null && !_completer!.isCompleted) {
+      _completer!.complete();
+    }
+  }
+
+  /// A future that completes when this token is cancelled.
+  Future<void> get whenCancelled {
+    if (_completer == null) {
+      _completer = Completer<void>();
+      if (_isCancelled) {
+        _completer!.complete();
+      }
+    }
+    return _completer!.future;
+  }
+}
+
+/// Exception thrown when a request is cancelled.
+class CancelledException implements Exception {
+  /// Creates a new [CancelledException] with an optional message.
+  CancelledException([this.message = 'Request was cancelled']);
+
+  /// The error message.
+  final String message;
+
+  @override
+  String toString() => 'CancelledException: $message';
+}
+
 /// Defines the interface for a file service.
 /// Most common file service will be an [HttpFileService], however one can
 /// also make something more specialized. For example you could fetch files
@@ -16,7 +57,11 @@ import 'package:http/http.dart' as http;
 abstract class FileService {
   int concurrentFetches = 10;
 
-  Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
+  Future<FileServiceResponse> get(
+    String url, {
+    Map<String, String>? headers,
+    CancellationToken? cancellationToken,
+  });
 }
 
 /// [HttpFileService] is the most common file service and the default for
@@ -31,14 +76,33 @@ class HttpFileService extends FileService {
   Future<FileServiceResponse> get(
     String url, {
     Map<String, String>? headers,
+    CancellationToken? cancellationToken,
   }) async {
-    final req = http.Request('GET', Uri.parse(url));
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
+    final http.BaseRequest req;
+    if (cancellationToken != null) {
+      req = http.AbortableRequest(
+        'GET',
+        Uri.parse(url),
+        abortTrigger: cancellationToken.whenCancelled,
+      );
+    } else {
+      req = http.Request('GET', Uri.parse(url));
+    }
+
     if (headers != null) {
       req.headers.addAll(headers);
     }
-    final httpResponse = await _httpClient.send(req);
 
-    return HttpGetResponse(httpResponse);
+    try {
+      final httpResponse = await _httpClient.send(req);
+      return HttpGetResponse(httpResponse);
+    } on http.RequestAbortedException {
+      throw CancelledException();
+    }
   }
 }
 
