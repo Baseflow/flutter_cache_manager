@@ -262,7 +262,7 @@ class CacheManager implements BaseCacheManager {
 
     final file = await _config.fileSystem.createFile(cacheObject.relativePath);
     await file.writeAsBytes(fileBytes);
-    _store.putFile(cacheObject);
+    await _store.putFile(cacheObject);
     return file;
   }
 
@@ -307,7 +307,7 @@ class CacheManager implements BaseCacheManager {
         .map((event) => event)
         .pipe(sink);
 
-    _store.putFile(cacheObject);
+    await _store.putFile(cacheObject);
     return file;
   }
 

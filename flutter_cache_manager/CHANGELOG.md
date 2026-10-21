@@ -1,4 +1,16 @@
-## [Unreleased]
+## [3.5.1] - 2026-10-21
+
+* Merge upstream 3.4.5 persistence and decoding fixes, retaining cancellation.
+
+## [3.4.5] - 2026-09-18
+
+* Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
+
+## [3.4.4] - 2026-09-16
+
+* Awaits cache-info persist in `putFile`, `putFileStream`, and downloads so the stored object has an id before those calls return ([#492](https://github.com/Baseflow/flutter_cache_manager/issues/492)). A failed repository write now throws from `putFile`/`putFileStream` and errors the download stream instead of returning a usable file with no cache-info row.
+
+## [3.4.3] - 2026-09-15
 
 ### Fork (Railway-Engineering-Solutions)
 
@@ -11,12 +23,16 @@
 ### Upstream
 
 * Fixes `JsonCacheInfoRepository` losing metadata when the app exits within 3 seconds of a cache change by writing through promptly with serialized, atomic file writes ([#491](https://github.com/Baseflow/flutter_cache_manager/issues/491))
-* Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.44.4, Dependabot for actions)
+* Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.47.4, Dependabot for actions)
+* Adopts super parameters in `HttpExceptionWithStatus` to satisfy the stricter `use_super_parameters` lint in Dart 3.13 (no API or behavior change)
 * Updates example Android project to AGP 9.0.1 / Gradle 9.1 / Kotlin 2.3.20
 * Migrates example Android app to built-in Kotlin
 * Pins example `path_provider_android` to 2.2.22 to avoid transitive `jni` / `jni_flutter` AGP 9 issues
+* Adds a root `CLAUDE.md` that imports `AGENTS.md` and holds Claude Code-specific contributor notes
+* Publishes `AGENTS.md` (previously git-ignored) and trims it to technical content: architecture, directory map, fork workflow, commands, testing, and PR checklist
+* Points `homepage` at the repository root instead of a branch-specific URL
 
-## [3.4.2]
+## [3.4.2] - 2026-07-21
 
 * Fixes `removeFile` deleting from the wrong path
 * Raises minimum Dart SDK to 3.8.0 and update dependencies

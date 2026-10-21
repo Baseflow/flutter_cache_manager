@@ -248,6 +248,90 @@ void main() {
       verify(store.putFile(any)).called(1);
     });
 
+    test('downloadFile waits for persist before yielding FileInfo', () async {
+      const imageUrl = 'baseflow.com/testimage';
+
+      final persisted = Completer<void>();
+      var config = createTestConfig();
+      var store = _createStore(config);
+      when(store.putFile(any)).thenAnswer((_) => persisted.future);
+
+      final fileService = MockFileService();
+      when(fileService.get(imageUrl, headers: anyNamed('headers'))).thenAnswer((
+        _,
+      ) {
+        return Future.value(
+          MockFileFetcherResponse(
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now(),
+          ),
+        );
+      });
+
+      final webHelper = WebHelper(store, fileService);
+      var yielded = false;
+      final download =
+          webHelper
+              .downloadFile(imageUrl)
+              .firstWhere((r) => r is FileInfo, orElse: null)
+            ..whenComplete(() => yielded = true);
+      await pumpEventQueue();
+      expect(
+        yielded,
+        isFalse,
+        reason: 'downloadFile yielded FileInfo before the store persisted',
+      );
+      persisted.complete();
+      await download;
+    });
+
+    test('cancellation during persistence does not yield FileInfo', () async {
+      const imageUrl = 'baseflow.com/testimage';
+
+      final persisted = Completer<void>();
+      var config = createTestConfig();
+      var store = _createStore(config);
+      when(store.putFile(any)).thenAnswer((_) => persisted.future);
+
+      final fileService = MockFileService();
+      when(
+        fileService.get(
+          imageUrl,
+          headers: anyNamed('headers'),
+          cancellationToken: anyNamed('cancellationToken'),
+        ),
+      ).thenAnswer((_) {
+        return Future.value(
+          MockFileFetcherResponse(
+            Stream.value([0, 1, 2, 3, 4, 5]),
+            6,
+            'testv1',
+            '.jpg',
+            200,
+            DateTime.now(),
+          ),
+        );
+      });
+
+      final webHelper = WebHelper(store, fileService);
+      final token = CancellationToken();
+      final download = webHelper
+          .downloadFile(imageUrl, cancellationToken: token)
+          .toList();
+      final expectation = expectLater(
+        download,
+        throwsA(isA<CancelledException>()),
+      );
+      await pumpEventQueue();
+      token.cancel();
+      persisted.complete();
+      await expectation;
+    });
+
     test('File should be removed if extension changed', () async {
       const imageUrl = 'baseflow.com/testimage';
       var imageName = 'image.png';
