@@ -1,3 +1,7 @@
+## [3.4.7] - 2026-10-28
+
+* Fixes the cache cleanup deleting the cache info before the cached files were removed. When the app was killed in between, files stayed on disk with nothing referencing them. The cache info of a file that could not be removed is now kept, so the next cleanup retries it.
+
 ## [3.4.6] - 2026-10-27
 
 * Catches unhandled asynchronous errors when updating cache-hit metadata and during scheduled cleanup in `CacheStore` ([#535](https://github.com/Baseflow/flutter_cache_manager/issues/535)).

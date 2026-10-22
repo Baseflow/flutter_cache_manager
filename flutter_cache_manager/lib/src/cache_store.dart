@@ -201,19 +201,37 @@ class CacheStore {
     final toRemove = <int>[];
     final provider = await _cacheInfoRepository;
 
+    final removals = <Future<void>>[];
+
+    Future<void> remove(CacheObject cacheObject) async {
+      try {
+        await _removeCachedFile(cacheObject, toRemove);
+      } catch (_) {
+        // Keep the cache info of a file that could not be removed, so the next
+        // cleanup tries again instead of leaving the file behind.
+        toRemove.remove(cacheObject.id);
+        rethrow;
+      }
+    }
+
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
-    final futures = <Future>[];
     for (final cacheObject in overCapacity) {
-      futures.add(_removeCachedFile(cacheObject, toRemove));
+      removals.add(remove(cacheObject));
     }
 
     final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in oldObjects) {
-      futures.add(_removeCachedFile(cacheObject, toRemove));
+      removals.add(remove(cacheObject));
     }
 
-    await Future.wait(futures);
-    await provider.deleteAll(toRemove);
+    try {
+      await Future.wait(removals);
+    } finally {
+      // Only delete the cache info once the files are gone. When the app is
+      // killed in between, a cache info without a file is cleaned up on the next
+      // read, but a file without a cache info would never be found again.
+      await provider.deleteAll(toRemove);
+    }
   }
 
   Future<void> emptyCache() async {

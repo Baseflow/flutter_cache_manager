@@ -6,6 +6,8 @@ import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
 import 'package:flutter_cache_manager/src/logger.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
+import 'package:flutter_cache_manager/src/storage/file_system/file_system.dart'
+    as cache_file_system;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
@@ -464,6 +466,103 @@ void main() {
       ).called(1);
     });
 
+    test(
+      'Store should not remove cache info before the cached file is removed',
+      () async {
+        var config = createTestConfig();
+        var store = CacheStore(config);
+        store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+        var file = await config.returnsFile('testimage.png');
+
+        var cacheObject = CacheObject(
+          'baseflow.com/test.png',
+          relativePath: 'testimage.png',
+          id: 1,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+
+        when(
+          config.mockRepo.getObjectsOverCapacity(any),
+        ).thenAnswer((_) => Future.value([]));
+        when(
+          config.mockRepo.getOldObjects(any),
+        ).thenAnswer((_) => Future.value([cacheObject]));
+        when(
+          config.mockRepo.get('baseflow.com/test.png'),
+        ).thenAnswer((_) => Future.value(cacheObject));
+
+        expect(await store.getFile('baseflow.com/test.png'), isNotNull);
+
+        // From here on, getting to the file takes a while, like a slow disk.
+        final fileAvailable = Completer<void>();
+        store.fileSystem = _DelayedFileSystem(
+          store.fileSystem,
+          fileAvailable.future,
+        );
+
+        // Give the cleanup time to run. It must not delete the cache info
+        // while the file is still on disk.
+        await Future.delayed(const Duration(milliseconds: 50));
+        verifyNever(config.mockRepo.deleteAll(any));
+        expect(file.existsSync(), isTrue);
+
+        fileAvailable.complete();
+        await untilCalled(config.mockRepo.deleteAll(any));
+
+        expect(file.existsSync(), isFalse);
+        verify(
+          config.mockRepo.deleteAll(argThat(contains(cacheObject.id))),
+        ).called(1);
+      },
+    );
+
+    test(
+      'Store should keep cache info of a file that cannot be removed',
+      () async {
+        final fileSystem = _FailingDeleteFileSystem('broken.png');
+        final config = createTestConfig();
+        final store = CacheStore(config);
+        store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+        store.fileSystem = fileSystem;
+        await fileSystem.createFileWithData('ok.png');
+        await fileSystem.createFileWithData('broken.png');
+
+        final okObject = CacheObject(
+          'baseflow.com/ok.png',
+          relativePath: 'ok.png',
+          id: 1,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+        final brokenObject = CacheObject(
+          'baseflow.com/broken.png',
+          relativePath: 'broken.png',
+          id: 2,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+
+        when(
+          config.mockRepo.getObjectsOverCapacity(any),
+        ).thenAnswer((_) => Future.value([]));
+        when(
+          config.mockRepo.getOldObjects(any),
+        ).thenAnswer((_) => Future.value([okObject, brokenObject]));
+        when(
+          config.mockRepo.get('baseflow.com/ok.png'),
+        ).thenAnswer((_) => Future.value(okObject));
+
+        // The failed removal is still reported as a logged cleanup failure.
+        final logger = setUpTestLogger();
+        expect(await store.getFile('baseflow.com/ok.png'), isNotNull);
+        final log = await logger.waitForLog('Failed to cleanup cache');
+        expect(log, contains('Cannot delete'));
+        verify(
+          config.mockRepo.deleteAll(
+            argThat(allOf(contains(okObject.id), isNot(contains(2)))),
+          ),
+        ).called(1);
+      },
+    );
+
     test('Store should recheck cache info when file is removed', () async {
       var config = createTestConfig();
       var store = CacheStore(config);
@@ -623,4 +722,42 @@ TestCacheLogger setUpTestLogger() {
   cacheLogger = testLogger;
   addTearDown(() => cacheLogger = originalLogger);
   return testLogger;
+}
+
+/// A file system that only hands out files once [_available] has completed.
+class _DelayedFileSystem extends cache_file_system.FileSystem {
+  _DelayedFileSystem(this._inner, this._available);
+
+  final cache_file_system.FileSystem _inner;
+  final Future<void> _available;
+
+  @override
+  Future<File> createFile(String name) async {
+    await _available;
+    return _inner.createFile(name);
+  }
+}
+
+/// A file system in which deleting the file called [undeletableName] fails.
+class _FailingDeleteFileSystem extends cache_file_system.FileSystem {
+  _FailingDeleteFileSystem(String undeletableName)
+    : _fileSystem = MemoryFileSystem(
+        opHandle: (path, operation) {
+          if (operation == FileSystemOp.delete &&
+              path.endsWith(undeletableName)) {
+            throw FileSystemException('Cannot delete', path);
+          }
+        },
+      );
+
+  final MemoryFileSystem _fileSystem;
+  late final Directory _directory = _fileSystem.systemTempDirectory
+      .createTempSync('test');
+
+  @override
+  Future<File> createFile(String name) async => _directory.childFile(name);
+
+  Future<void> createFileWithData(String name) async {
+    await (await createFile(name)).writeAsBytes([1, 3]);
+  }
 }
