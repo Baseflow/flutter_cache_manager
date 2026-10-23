@@ -54,6 +54,54 @@ void main() {
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
     });
 
+    test(
+      'Store should return FileInfo and handle error when database update fails on cache hit',
+      () async {
+        var config = createTestConfig();
+        await config.returnsFile(fileName);
+        config.returnsCacheObject(
+          fileUrl,
+          fileName,
+          DateTime.now(),
+          id: fileId,
+        );
+        when(
+          config.mockRepo.updateOrInsert(any),
+        ).thenAnswer((_) => Future.error(Exception('Database update failed')));
+
+        var store = CacheStore(config);
+
+        final fileInfo = await store.getFile(fileUrl);
+        expect(fileInfo, isNotNull);
+
+        // Allow any unawaited async operations to complete without unhandled errors
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      },
+    );
+
+    test(
+      'Store should propagate error and clean up pending cache when get from database fails',
+      () async {
+        var config = createTestConfig();
+        when(
+          config.mockRepo.get(any),
+        ).thenAnswer((_) => Future.error(Exception('Database read failed')));
+
+        var store = CacheStore(config);
+
+        await expectLater(
+          () => store.retrieveCacheData('failed-key'),
+          throwsA(isA<Exception>()),
+        );
+
+        // Verify that subsequent calls are not permanently stuck on a dead completer
+        await expectLater(
+          () => store.retrieveCacheData('failed-key'),
+          throwsA(isA<Exception>()),
+        );
+      },
+    );
+
     test('Store should return null if file is not cached', () async {
       var config = createTestConfig();
       await config.returnsFile(fileName);

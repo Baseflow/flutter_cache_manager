@@ -75,21 +75,32 @@ class CacheStore {
     }
     if (!_futureCache.containsKey(key)) {
       final completer = Completer<CacheObject?>();
-      _getCacheDataFromDatabase(key).then((cacheObject) async {
-        if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
-          final provider = await _cacheInfoRepository;
-          await provider.delete(cacheObject!.id!);
-          cacheObject = null;
-        }
+      _getCacheDataFromDatabase(key).then(
+        (cacheObject) async {
+          try {
+            if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
+              final provider = await _cacheInfoRepository;
+              await provider.delete(cacheObject!.id!);
+              cacheObject = null;
+            }
 
-        if (cacheObject == null) {
-          _memCache.remove(key);
-        } else {
-          _memCache[key] = cacheObject;
-        }
-        completer.complete(cacheObject);
-        _futureCache.remove(key);
-      });
+            if (cacheObject == null) {
+              _memCache.remove(key);
+            } else {
+              _memCache[key] = cacheObject;
+            }
+            completer.complete(cacheObject);
+          } catch (e, s) {
+            completer.completeError(e, s);
+          } finally {
+            _futureCache.remove(key);
+          }
+        },
+        onError: (Object e, StackTrace s) {
+          completer.completeError(e, s);
+          _futureCache.remove(key);
+        },
+      );
       _futureCache[key] = completer.future;
     }
     return _futureCache[key];
@@ -121,7 +132,15 @@ class CacheStore {
     final provider = await _cacheInfoRepository;
     final data = await provider.get(key);
     if (await _fileExists(data)) {
-      _updateCacheDataInDatabase(data!);
+      unawaited(
+        _updateCacheDataInDatabase(data!).catchError((Object e) {
+          cacheLogger.log(
+            'CacheStore: Failed to update cache metadata for $key with error:\n$e',
+            CacheManagerLogLevel.warning,
+          );
+          return null;
+        }),
+      );
     }
     _scheduleCleanup();
     return data;
@@ -133,7 +152,14 @@ class CacheStore {
     }
     _scheduledCleanup = Timer(cleanupRunMinInterval, () {
       _scheduledCleanup = null;
-      _cleanupCache();
+      unawaited(
+        _cleanupCache().catchError((Object e) {
+          cacheLogger.log(
+            'CacheStore: Failed to cleanup cache with error:\n$e',
+            CacheManagerLogLevel.warning,
+          );
+        }),
+      );
     });
   }
 
