@@ -5,6 +5,25 @@ extension ContentTypeConverter on ContentType {
   String get fileExtension => mimeTypes[mimeType] ?? '.$subType';
 }
 
+String fileExtensionFromContentTypeOrUri(String? contentTypeHeader, Uri uri) {
+  final contentType = contentTypeHeader == null
+      ? null
+      : ContentType.parse(contentTypeHeader);
+
+  if (contentType != null &&
+      contentType.mimeType.toLowerCase() != 'application/octet-stream') {
+    return contentType.fileExtension;
+  }
+
+  final fileName = uri.pathSegments.isEmpty ? '' : uri.pathSegments.last;
+  final extensionIndex = fileName.lastIndexOf('.');
+  if (extensionIndex > 0 && extensionIndex < fileName.length - 1) {
+    return fileName.substring(extensionIndex);
+  }
+
+  return contentType?.fileExtension ?? '';
+}
+
 /// Source of MIME Types:
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 /// Updated on 20th of March in 2020 while being quarantined
