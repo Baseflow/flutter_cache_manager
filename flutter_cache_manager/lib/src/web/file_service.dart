@@ -66,12 +66,13 @@ abstract class FileServiceResponse {
 
 /// Basic implementation of a [FileServiceResponse] for http requests.
 class HttpGetResponse implements FileServiceResponse {
-  HttpGetResponse(this._response, this._uri);
+  HttpGetResponse(this._response, [Uri? uri])
+    : _uri = uri ?? _response.request?.url;
 
   final DateTime _receivedTime = clock.now();
 
   final http.StreamedResponse _response;
-  final Uri _uri;
+  final Uri? _uri;
 
   @override
   int get statusCode => _response.statusCode;

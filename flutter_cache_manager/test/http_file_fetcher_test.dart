@@ -80,6 +80,19 @@ void main() {
       expect(response.fileExtension, '.$fileExtension');
     });
 
+    test('HttpGetResponse keeps its original one-argument constructor', () {
+      final response = HttpGetResponse(
+        StreamedResponse(
+          const Stream<List<int>>.empty(),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: Request('GET', Uri.parse('https://example.com/video.mp4')),
+        ),
+      );
+
+      expect(response.fileExtension, '.mp4');
+    });
+
     test('Download uses the URL extension for generic content type', () async {
       const url = 'https://example.com/video.mp4?token=secret';
       final client = MockClient((_) async {
@@ -176,6 +189,32 @@ void main() {
 
       expect(response.fileExtension, '.bin');
     });
+
+    test(
+      'Encoded path separators are not used in cached file extensions',
+      () async {
+        const url = 'https://example.com/video.mp4%2Fpart';
+        final client = MockClient((_) async {
+          return Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+          );
+        });
+        final cacheManager = CacheManager(
+          Config(
+            'test',
+            fileSystem: TestFileSystem(),
+            repo: MockCacheInfoRepository(),
+            fileService: HttpFileService(httpClient: client),
+          ),
+        );
+
+        final result = await cacheManager.downloadFile(url);
+
+        expect(result.file.path, endsWith('.bin'));
+      },
+    );
 
     test('Test CompatFileService', () async {
       var eTag = 'test';
