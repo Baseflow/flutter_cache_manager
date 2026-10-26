@@ -21,10 +21,10 @@ class FileServiceCompat extends FileService {
 
 class CompatFileServiceGetResponse implements FileServiceResponse {
   final FileFetcherResponse legacyResponse;
-  final Uri _uri;
+  final Uri? _uri;
   final DateTime _receivedTime = clock.now();
 
-  CompatFileServiceGetResponse(this.legacyResponse, this._uri);
+  CompatFileServiceGetResponse(this.legacyResponse, [this._uri]);
 
   String? _header(String name) {
     return legacyResponse.header(name);

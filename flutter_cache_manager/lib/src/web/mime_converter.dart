@@ -5,7 +5,11 @@ extension ContentTypeConverter on ContentType {
   String get fileExtension => mimeTypes[mimeType] ?? '.$subType';
 }
 
-String fileExtensionFromContentTypeOrUri(String? contentTypeHeader, Uri uri) {
+final RegExp _invalidFileExtensionCharacters = RegExp(
+  r'[\x00-\x1f\x7f/\\:*?"<>|]',
+);
+
+String fileExtensionFromContentTypeOrUri(String? contentTypeHeader, Uri? uri) {
   final contentType = contentTypeHeader == null
       ? null
       : ContentType.parse(contentTypeHeader);
@@ -15,10 +19,17 @@ String fileExtensionFromContentTypeOrUri(String? contentTypeHeader, Uri uri) {
     return contentType.fileExtension;
   }
 
-  final fileName = uri.pathSegments.isEmpty ? '' : uri.pathSegments.last;
+  final pathSegments = uri?.pathSegments;
+  final fileName = pathSegments == null || pathSegments.isEmpty
+      ? ''
+      : pathSegments.last;
   final extensionIndex = fileName.lastIndexOf('.');
   if (extensionIndex > 0 && extensionIndex < fileName.length - 1) {
-    return fileName.substring(extensionIndex);
+    final extension = fileName.substring(extensionIndex);
+    if (!_invalidFileExtensionCharacters.hasMatch(extension) &&
+        !extension.endsWith(' ')) {
+      return extension;
+    }
   }
 
   return contentType?.fileExtension ?? '';
