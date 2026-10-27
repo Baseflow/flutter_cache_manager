@@ -6,32 +6,17 @@ import 'package:file/file.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
+/// Formats that used to be recognized by the extension of the file.
+///
+/// Whether a file can be resized is now decided by the image engine, based on
+/// the content of the file, so this list no longer reflects which files are
+/// resized. It is kept only for backwards compatibility.
+@Deprecated(
+  'Image formats are detected from the file content instead of the file '
+  'extension. This list is no longer used and will be removed in a future '
+  'version.',
+)
 const supportedFileNames = ['jpg', 'jpeg', 'png', 'tga', 'cur', 'ico'];
-
-/// Signatures (magic numbers) of the image formats that can be recognized by
-/// the first bytes of the file, instead of by its extension.
-///
-/// Gif is deliberately missing: the resizer re-encodes to png, which would turn
-/// an animation into a single frame.
-///
-/// The ico and cur values overlap with tga, which starts with the same four
-/// bytes when it has no id field and no colour map (byte 2 is then the image
-/// type, 1 for a colour mapped and 2 for a true colour image). Telling them
-/// apart takes more than four bytes, but it does not matter here: all of them
-/// are resizable, and only the answer to "is this an image" is used.
-const _imageSignatures = <List<int>>[
-  [0xFF, 0xD8], // jpeg
-  [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // png
-  [0x42, 0x4D], // bmp
-  [0x00, 0x00, 0x01, 0x00], // ico
-  [0x00, 0x00, 0x02, 0x00], // cur
-];
-
-/// Extensions of the formats that have no usable signature at the start of the
-/// file, so the only way to recognize them is by their extension. Tga only
-/// stores a signature in its footer, and wbmp starts with a two byte header
-/// (`00 00`) that is too generic to match on.
-const _extensionOnlyFormats = ['tga', 'wbmp'];
 
 mixin ImageCacheManager on BaseCacheManager {
   /// Returns a resized image file to fit within maxHeight and maxWidth. It
@@ -91,33 +76,6 @@ mixin ImageCacheManager on BaseCacheManager {
     _runningResizes.remove(resizedKey);
   }
 
-  /// Whether [file] holds an image that can be decoded and resized, based on
-  /// the content of the file rather than on the extension of its url. A
-  /// response can be served without a file extension, or with an extension
-  /// that does not match the actual content, for example when it is served
-  /// with an incorrect `Content-Type` header.
-  ///
-  /// Images that would lose something when they are re-encoded as png, such as
-  /// an animated gif or an animated webp, are not considered an image here, so
-  /// they are passed through untouched.
-  Future<bool> _isImage(File file) async {
-    if (!await file.exists()) {
-      return false;
-    }
-
-    final header = await _readHeader(file);
-    if (_imageSignatures.any((signature) => _matches(header, signature))) {
-      return true;
-    }
-    // WebP is a RIFF container: "RIFF" + 4 bytes of length + "WEBP".
-    if (_matches(header, 'RIFF'.codeUnits) &&
-        _matches(header, 'WEBP'.codeUnits, 8)) {
-      return !_isAnimatedWebp(header);
-    }
-    final extension = file.path.split('.').last.toLowerCase();
-    return _extensionOnlyFormats.contains(extension);
-  }
-
   final Map<String, Stream<FileResponse>> _runningResizes = {};
 
   Future<FileInfo> _resizeImageFile(
@@ -126,25 +84,33 @@ mixin ImageCacheManager on BaseCacheManager {
     int? maxWidth,
     int? maxHeight,
   ) async {
-    if (!await _isImage(originalFile.file)) {
+    final info = await _imageInfo(originalFile.file);
+    if (info == null) {
+      // The engine cannot decode this file, so it is not a resizable image.
+      // The original file is returned untouched instead of erroring the
+      // stream.
+      return originalFile;
+    }
+    final (frameCount, imageWidth, imageHeight) = info;
+
+    // Resizing re-encodes the image as png, which keeps a single frame, so
+    // animated images (gif, apng, animated webp, ...) are passed through
+    // untouched.
+    if (frameCount > 1) {
       return originalFile;
     }
 
-    final image = await _decodeImage(originalFile.file);
-
-    final shouldResize = maxWidth != null
-        ? image.width > maxWidth
-        : false || maxHeight != null
-        ? image.height > maxHeight
-        : false;
+    final shouldResize =
+        (maxWidth != null && imageWidth > maxWidth) ||
+        (maxHeight != null && imageHeight > maxHeight);
     if (!shouldResize) return originalFile;
     if (maxWidth != null && maxHeight != null) {
-      final resizeFactorWidth = image.width / maxWidth;
-      final resizeFactorHeight = image.height / maxHeight;
+      final resizeFactorWidth = imageWidth / maxWidth;
+      final resizeFactorHeight = imageHeight / maxHeight;
       final resizeFactor = max(resizeFactorHeight, resizeFactorWidth);
 
-      maxWidth = (image.width / resizeFactor).round();
-      maxHeight = (image.height / resizeFactor).round();
+      maxWidth = (imageWidth / resizeFactor).round();
+      maxHeight = (imageHeight / resizeFactor).round();
     }
 
     final resized = await _decodeImage(
@@ -162,10 +128,11 @@ mixin ImageCacheManager on BaseCacheManager {
       resizedFile,
       key: key,
       maxAge: maxAge,
-      // The resized image is always encoded as png. The extension of the
-      // original file cannot be used: it is derived from the url, so it can
-      // be missing, or be the last segment of the path when the url has no
-      // extension at all.
+      // The resized image is always encoded as png, so it is stored with a
+      // png extension. The extension of the original file cannot be reused:
+      // it comes from the Content-Type header of the response, which can be
+      // something generic like `application/octet-stream` instead of the
+      // format the image is actually encoded in.
       fileExtension: 'png',
     );
 
@@ -202,42 +169,32 @@ mixin ImageCacheManager on BaseCacheManager {
   }
 }
 
-/// Reads the first bytes of [file], up to [length] bytes, which is enough to
-/// hold the longest signature that is checked, including the webp flags.
-Future<List<int>> _readHeader(File file, {int length = 30}) async {
-  final raf = await file.open();
-  try {
-    return await raf.read(length);
-  } finally {
-    await raf.close();
-  }
-}
-
-/// Whether [bytes] holds [signature] at [offset].
-bool _matches(List<int> bytes, List<int> signature, [int offset = 0]) {
-  if (bytes.length < offset + signature.length) {
-    return false;
-  }
-  for (var i = 0; i < signature.length; i++) {
-    if (bytes[offset + i] != signature[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/// Whether [header] belongs to a webp that contains an animation.
+/// Describes the image in [file], or `null` when the engine cannot decode it.
 ///
-/// An extended webp starts with a `VP8X` chunk, whose flags byte marks the file
-/// as animated. Resizing re-encodes the image to png, which keeps a single
-/// frame, so an animated webp is left as it is, the same way gif is.
-bool _isAnimatedWebp(List<int> header) {
-  // "RIFF" + size + "WEBP" + "VP8X" + chunk size, the flags follow at 20.
-  const flagsOffset = 20;
-  const animationFlag = 0x02;
-  return header.length > flagsOffset &&
-      _matches(header, 'VP8X'.codeUnits, 12) &&
-      (header[flagsOffset] & animationFlag) != 0;
+/// Whether a file is a resizable image is decided entirely by the engine: it
+/// knows every format Flutter can decode, including platform specific ones
+/// like heif, so there is no list of signatures or extensions to maintain.
+/// The returned record holds the frame count of the image, which is how
+/// animated images are recognized, and its width and height.
+Future<(int frameCount, int width, int height)?> _imageInfo(File file) async {
+  if (!await file.exists()) {
+    return null;
+  }
+  final bytes = await file.readAsBytes();
+  final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+  ui.ImageDescriptor? descriptor;
+  ui.Codec? codec;
+  try {
+    descriptor = await ui.ImageDescriptor.encoded(buffer);
+    codec = await descriptor.instantiateCodec();
+    return (codec.frameCount, descriptor.width, descriptor.height);
+  } on Object {
+    return null;
+  } finally {
+    codec?.dispose();
+    descriptor?.dispose();
+    buffer.dispose();
+  }
 }
 
 Future<ui.Image> _decodeImage(

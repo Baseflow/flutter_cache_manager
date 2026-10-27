@@ -1,8 +1,9 @@
 ## [3.4.6] - 2026-10-19
 
-* Detects whether a downloaded file can be resized from its content instead of from the extension of its url, so images served from extension-less urls or with a non-image `Content-Type` are resized, and responses that are no longer images are returned untouched ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
-* Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension of the url — which broke resizing for urls without an extension
-* Adds webp, bmp and wbmp to the formats that are resized ([#353](https://github.com/Baseflow/flutter_cache_manager/issues/353)). An animated webp is passed through untouched, since the resized image is always encoded as png and would lose its animation, the same reason gif is not resized
+* Detects whether a downloaded file can be resized by letting the image engine decode it, instead of from the extension of the url. Images served with a generic `Content-Type` such as `application/octet-stream` are now resized, and files that are not images are returned untouched ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
+* Detects the image format from the file content, so every format the engine supports is resized, including webp and bmp ([#353](https://github.com/Baseflow/flutter_cache_manager/issues/353)). Animated images (gif, apng, animated webp) are passed through untouched, since the resized image is always encoded as png and would lose its animation
+* Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension derived from the `Content-Type` header
+* Deprecates `supportedFileNames`, which is no longer used now that detection is content based
 
 ## [3.4.5] - 2026-09-18
 

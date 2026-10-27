@@ -147,6 +147,62 @@ void main() {
       await verifySize(image, 100, 100);
     });
 
+    test('Image with a non-image extension should be resized', () async {
+      // The stored file's extension does not come from the url, but from the
+      // Content-Type header of the response. A generic type such as
+      // application/octet-stream stores the file as .bin, even when the
+      // payload is an image.
+      const urlWithBinaryExtension = 'baseflow.com/image.bin';
+      var config = createTestConfig();
+      await config.returnsFile('image.bin', data: await getExampleImage());
+      config.returnsCacheObject(urlWithBinaryExtension, 'image.bin', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager
+                  .getImageFile(urlWithBinaryExtension, maxWidth: 100)
+                  .last
+              as FileInfo;
+
+      var image = await result.file.readAsBytes();
+      await verifySize(image, 100, 100);
+      expect(result.file.path.endsWith('.png'), isTrue);
+    });
+
+    test('Static webp should be resized', () async {
+      const urlWithWebpExtension = 'baseflow.com/image.webp';
+      var config = createTestConfig();
+      await config.returnsFile('image.webp', data: await getExampleWebp());
+      config.returnsCacheObject(urlWithWebpExtension, 'image.webp', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager
+                  .getImageFile(urlWithWebpExtension, maxWidth: 100)
+                  .last
+              as FileInfo;
+
+      var image = await result.file.readAsBytes();
+      await verifySize(image, 100, 100);
+    });
+
+    test('Bmp should be resized', () async {
+      const urlWithBmpExtension = 'baseflow.com/image.bmp';
+      var config = createTestConfig();
+      await config.returnsFile('image.bmp', data: await getExampleBmp());
+      config.returnsCacheObject(urlWithBmpExtension, 'image.bmp', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager
+                  .getImageFile(urlWithBmpExtension, maxWidth: 100)
+                  .last
+              as FileInfo;
+
+      var image = await result.file.readAsBytes();
+      await verifySize(image, 100, 100);
+    });
+
     test('Non image should not be resized', () async {
       const urlWithImageExtension = 'baseflow.com/image.png';
       var payload = utf8.encode('{"message":"not an image"}');
@@ -164,9 +220,24 @@ void main() {
       expect(await result.file.readAsBytes(), payload);
     });
 
+    test('Animated gif should not be resized', () async {
+      const urlOfAnimatedGif = 'baseflow.com/animation.gif';
+      var payload = await File('test/images/animated-120.gif').readAsBytes();
+      var config = createTestConfig();
+      await config.returnsFile('animation.gif', data: payload);
+      config.returnsCacheObject(urlOfAnimatedGif, 'animation.gif', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager.getImageFile(urlOfAnimatedGif, maxWidth: 100).last
+              as FileInfo;
+
+      expect(await result.file.readAsBytes(), payload);
+    });
+
     test('Animated webp should not be resized', () async {
       const urlOfAnimatedWebp = 'baseflow.com/animation.webp';
-      var payload = animatedWebpHeader();
+      var payload = await File('test/images/animated-120.webp').readAsBytes();
       var config = createTestConfig();
       await config.returnsFile('animation.webp', data: payload);
       config.returnsCacheObject(urlOfAnimatedWebp, 'animation.webp', validTill);
@@ -174,6 +245,21 @@ void main() {
       var cacheManager = TestCacheManager(config);
       var result =
           await cacheManager.getImageFile(urlOfAnimatedWebp, maxWidth: 100).last
+              as FileInfo;
+
+      expect(await result.file.readAsBytes(), payload);
+    });
+
+    test('Animated png should not be resized', () async {
+      const urlOfAnimatedPng = 'baseflow.com/animation.png';
+      var payload = await File('test/images/animated-120.apng').readAsBytes();
+      var config = createTestConfig();
+      await config.returnsFile('animation.png', data: payload);
+      config.returnsCacheObject(urlOfAnimatedPng, 'animation.png', validTill);
+
+      var cacheManager = TestCacheManager(config);
+      var result =
+          await cacheManager.getImageFile(urlOfAnimatedPng, maxWidth: 100).last
               as FileInfo;
 
       expect(await result.file.readAsBytes(), payload);
@@ -210,16 +296,10 @@ Future<Uint8List> getExampleImage() {
   return File('test/images/image-120.png').readAsBytes();
 }
 
-/// The header of an animated webp: a `VP8X` chunk with the animation flag set.
-/// Only the header is needed, the file is never decoded because it is not
-/// resized.
-Uint8List animatedWebpHeader() {
-  return Uint8List.fromList(<int>[
-    ...'RIFF'.codeUnits, 0x1A, 0x00, 0x00, 0x00, //
-    ...'WEBP'.codeUnits, //
-    ...'VP8X'.codeUnits, 0x0A, 0x00, 0x00, 0x00, //
-    0x02, // flags: animation
-    0x00, 0x00, 0x00, // canvas width - 1
-    0x00, 0x00, 0x00, // canvas height - 1
-  ]);
+Future<Uint8List> getExampleWebp() {
+  return File('test/images/image-120.webp').readAsBytes();
+}
+
+Future<Uint8List> getExampleBmp() {
+  return File('test/images/image-120.bmp').readAsBytes();
 }
