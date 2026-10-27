@@ -5,6 +5,50 @@ extension ContentTypeConverter on ContentType {
   String get fileExtension => mimeTypes[mimeType] ?? '.$subType';
 }
 
+final RegExp _safeFileExtension = RegExp(r'^\.[A-Za-z0-9]{1,10}$');
+
+const _genericContentTypes = {
+  'application/octet-stream',
+  'application/x-octet-stream',
+  'application/force-download',
+  'application/download',
+  'binary/octet-stream',
+};
+
+const _dynamicEndpointExtensions = {'.php', '.asp', '.aspx', '.cgi', '.jsp'};
+
+/// Gets an extension from a specific content type or a safe URL path suffix.
+///
+/// Specific content types take precedence. Missing or generic content types
+/// use a short alphanumeric URL suffix when available. Known server-side
+/// endpoint suffixes are ignored. The result falls back to `.bin` for generic
+/// types or an empty string when the content type is absent.
+String fileExtensionFromContentTypeOrUri(String? contentTypeHeader, Uri? uri) {
+  final contentType = contentTypeHeader == null
+      ? null
+      : ContentType.parse(contentTypeHeader);
+
+  if (contentType != null &&
+      !_genericContentTypes.contains(contentType.mimeType)) {
+    return contentType.fileExtension;
+  }
+
+  final pathSegments = uri?.pathSegments;
+  final fileName = pathSegments == null || pathSegments.isEmpty
+      ? ''
+      : pathSegments.last;
+  final extensionIndex = fileName.lastIndexOf('.');
+  if (extensionIndex > 0 && extensionIndex < fileName.length - 1) {
+    final extension = fileName.substring(extensionIndex);
+    if (_safeFileExtension.hasMatch(extension) &&
+        !_dynamicEndpointExtensions.contains(extension.toLowerCase())) {
+      return extension;
+    }
+  }
+
+  return contentType == null ? '' : '.bin';
+}
+
 /// Source of MIME Types:
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 /// Updated on 20th of March in 2020 while being quarantined

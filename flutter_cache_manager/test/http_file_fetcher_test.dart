@@ -7,6 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
 import 'package:http/testing.dart';
 
+import 'helpers/mock_cache_info_repository.dart';
+import 'helpers/test_configuration.dart' show TestFileSystem;
+
 void main() {
   group('Check header values', () {
     test('Valid headers should be parsed normally', () async {
@@ -76,6 +79,244 @@ void main() {
 
       expect(response.fileExtension, '.$fileExtension');
     });
+
+    test('HttpGetResponse keeps its original one-argument constructor', () {
+      final response = HttpGetResponse(
+        StreamedResponse(
+          const Stream<List<int>>.empty(),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: Request('GET', Uri.parse('https://example.com/video.mp4')),
+        ),
+      );
+
+      expect(response.fileExtension, '.mp4');
+    });
+
+    test('Download uses the URL extension for generic content type', () async {
+      const url = 'https://example.com/video.mp4?token=secret';
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: request,
+        );
+      });
+      final cacheManager = CacheManager(
+        Config(
+          'test',
+          fileSystem: TestFileSystem(),
+          repo: MockCacheInfoRepository(),
+          fileService: HttpFileService(httpClient: client),
+        ),
+      );
+
+      final result = await cacheManager.downloadFile(url);
+
+      expect(result.file.path, endsWith('.mp4'));
+    });
+
+    test('URL extension is used when content type is missing', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(Uint8List(16), 200, request: request);
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/document.pdf?download=1');
+
+      expect(response.fileExtension, '.pdf');
+    });
+
+    test('Specific content type takes precedence over URL extension', () async {
+      final client = MockClient((_) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'image/jpeg'},
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/video.mp4');
+
+      expect(response.fileExtension, '.jpg');
+    });
+
+    test(
+      'Legacy file service uses URL extension for generic content type',
+      () async {
+        final client = MockClient((_) async {
+          return Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+          );
+        });
+
+        Future<FileFetcherResponse> defaultHttpGetter(
+          String url, {
+          Map<String, String>? headers,
+        }) async {
+          final httpResponse = await client.get(
+            Uri.parse(url),
+            headers: headers,
+          );
+          return HttpFileFetcherResponse(httpResponse);
+        }
+
+        final response = await FileServiceCompat(
+          defaultHttpGetter,
+        ).get('https://example.com/video.mp4');
+
+        expect(response.fileExtension, '.mp4');
+      },
+    );
+
+    test('Generic content type without URL extension remains .bin', () async {
+      final client = MockClient((_) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/download');
+
+      expect(response.fileExtension, '.bin');
+    });
+
+    for (final contentType in const [
+      'application/octet-stream',
+      'binary/octet-stream',
+      'application/x-octet-stream',
+      'application/force-download',
+      'application/download',
+    ]) {
+      test(
+        'URL extension is used for generic MIME type $contentType',
+        () async {
+          final client = MockClient((request) async {
+            return Response.bytes(
+              Uint8List(16),
+              200,
+              headers: {'content-type': contentType},
+              request: request,
+            );
+          });
+
+          final response = await HttpFileService(
+            httpClient: client,
+          ).get('https://example.com/video.mp4');
+
+          expect(response.fileExtension, '.mp4');
+        },
+      );
+    }
+
+    test('URL extension is limited to short alphanumeric suffixes', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: request,
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/file.${'a' * 250}');
+
+      expect(response.fileExtension, '.bin');
+    });
+
+    test('URL version suffix is not treated as a file extension', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: request,
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/files/v1.2-beta');
+
+      expect(response.fileExtension, '.bin');
+    });
+
+    test(
+      'Dynamic download endpoint is not used as the file extension',
+      () async {
+        final client = MockClient((request) async {
+          return Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+            request: request,
+          );
+        });
+
+        final response = await HttpFileService(
+          httpClient: client,
+        ).get('https://example.com/download.php?id=7');
+
+        expect(response.fileExtension, '.bin');
+      },
+    );
+
+    test(
+      'Malformed legacy URL does not fail after the fetch succeeds',
+      () async {
+        final legacyResponse = HttpFileFetcherResponse(
+          Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+          ),
+        );
+        final response = await FileServiceCompat(
+          (url, {headers}) async => legacyResponse,
+        ).get('https://[::1/video.mp4');
+
+        expect(response.fileExtension, '.bin');
+      },
+    );
+
+    test(
+      'Encoded path separators are not used in cached file extensions',
+      () async {
+        const url = 'https://example.com/video.mp4%2Fpart';
+        final client = MockClient((request) async {
+          return Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+            request: request,
+          );
+        });
+        final cacheManager = CacheManager(
+          Config(
+            'test',
+            fileSystem: TestFileSystem(),
+            repo: MockCacheInfoRepository(),
+            fileService: HttpFileService(httpClient: client),
+          ),
+        );
+
+        final result = await cacheManager.downloadFile(url);
+
+        expect(result.file.path, endsWith('.bin'));
+      },
+    );
 
     test('Test CompatFileService', () async {
       var eTag = 'test';
