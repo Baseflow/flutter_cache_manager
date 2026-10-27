@@ -289,6 +289,50 @@ void main() {
       await download;
     });
 
+    test(
+      'downloadFile cleans up downloaded file if store persist fails',
+      () async {
+        const imageUrl = 'baseflow.com/testimage';
+
+        final config = createTestConfig();
+        final store = CacheStore(config);
+
+        when(
+          config.mockRepo.updateOrInsert(any),
+        ).thenAnswer((_) => Future.error(Exception('Persist failed')));
+
+        final fileService = MockFileService();
+        when(
+          fileService.get(imageUrl, headers: anyNamed('headers')),
+        ).thenAnswer((_) {
+          return Future.value(
+            MockFileFetcherResponse(
+              Stream.value([0, 1, 2, 3, 4, 5]),
+              6,
+              'testv1',
+              '.jpg',
+              200,
+              DateTime.now(),
+            ),
+          );
+        });
+
+        final webHelper = WebHelper(store, fileService);
+        await expectLater(
+          () => webHelper.downloadFile(imageUrl).drain<void>(),
+          throwsA(isA<Exception>()),
+        );
+
+        final testFileSystem = config.fileSystem as TestFileSystem;
+        final dir = await testFileSystem.directoryFuture;
+        expect(
+          dir.listSync().isEmpty,
+          isTrue,
+          reason: 'Downloaded file should be deleted on putFile failure',
+        );
+      },
+    );
+
     test('File should be removed if extension changed', () async {
       const imageUrl = 'baseflow.com/testimage';
       var imageName = 'image.png';
