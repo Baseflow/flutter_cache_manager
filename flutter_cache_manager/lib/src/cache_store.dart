@@ -74,36 +74,43 @@ class CacheStore {
       }
     }
     if (!_futureCache.containsKey(key)) {
-      final completer = Completer<CacheObject?>();
-      _getCacheDataFromDatabase(key).then(
-        (cacheObject) async {
-          try {
-            if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
-              final provider = await _cacheInfoRepository;
-              await provider.delete(cacheObject!.id!);
-              cacheObject = null;
-            }
-
-            if (cacheObject == null) {
-              _memCache.remove(key);
-            } else {
-              _memCache[key] = cacheObject;
-            }
-            completer.complete(cacheObject);
-          } catch (e, s) {
-            completer.completeError(e, s);
-          } finally {
-            _futureCache.remove(key);
-          }
-        },
-        onError: (Object e, StackTrace s) {
-          completer.completeError(e, s);
-          _futureCache.remove(key);
-        },
-      );
-      _futureCache[key] = completer.future;
+      late final Future<CacheObject?> future;
+      future = _loadCacheData(key, () => future);
+      _futureCache[key] = future;
     }
     return _futureCache[key];
+  }
+
+  Future<CacheObject?> _loadCacheData(
+    String key,
+    Future<CacheObject?> Function() currentFuture,
+  ) async {
+    try {
+      var cacheObject = await _getCacheDataFromDatabase(key);
+      if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
+        try {
+          final provider = await _cacheInfoRepository;
+          await provider.delete(cacheObject!.id!);
+        } catch (e, s) {
+          cacheLogger.log(
+            'CacheStore: Failed to delete non-existing file metadata for $key with error:\n$e\n$s',
+            CacheManagerLogLevel.warning,
+          );
+        }
+        cacheObject = null;
+      }
+
+      if (cacheObject == null) {
+        _memCache.remove(key);
+      } else {
+        _memCache[key] = cacheObject;
+      }
+      return cacheObject;
+    } finally {
+      if (identical(_futureCache[key], currentFuture())) {
+        _futureCache.remove(key);
+      }
+    }
   }
 
   Future<FileInfo?> getFileFromMemory(String key) async {
@@ -129,21 +136,32 @@ class CacheStore {
   }
 
   Future<CacheObject?> _getCacheDataFromDatabase(String key) async {
-    final provider = await _cacheInfoRepository;
-    final data = await provider.get(key);
-    if (await _fileExists(data)) {
-      unawaited(
-        _updateCacheDataInDatabase(data!).catchError((Object e) {
-          cacheLogger.log(
-            'CacheStore: Failed to update cache metadata for $key with error:\n$e',
-            CacheManagerLogLevel.warning,
-          );
-          return null;
-        }),
+    try {
+      final provider = await _cacheInfoRepository;
+      final data = await provider.get(key);
+      if (await _fileExists(data)) {
+        unawaited(
+          _updateCacheDataInDatabase(data!).catchError((
+            Object e,
+            StackTrace s,
+          ) {
+            cacheLogger.log(
+              'CacheStore: Failed to update cache metadata for $key with error:\n$e\n$s',
+              CacheManagerLogLevel.warning,
+            );
+            return null;
+          }),
+        );
+      }
+      _scheduleCleanup();
+      return data;
+    } catch (e, s) {
+      cacheLogger.log(
+        'CacheStore: Failed to read cache metadata for $key with error:\n$e\n$s',
+        CacheManagerLogLevel.warning,
       );
+      return null;
     }
-    _scheduleCleanup();
-    return data;
   }
 
   void _scheduleCleanup() {
@@ -153,9 +171,9 @@ class CacheStore {
     _scheduledCleanup = Timer(cleanupRunMinInterval, () {
       _scheduledCleanup = null;
       unawaited(
-        _cleanupCache().catchError((Object e) {
+        _cleanupCache().catchError((Object e, StackTrace s) {
           cacheLogger.log(
-            'CacheStore: Failed to cleanup cache with error:\n$e',
+            'CacheStore: Failed to cleanup cache with error:\n$e\n$s',
             CacheManagerLogLevel.warning,
           );
         }),
@@ -173,15 +191,17 @@ class CacheStore {
     final provider = await _cacheInfoRepository;
 
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
+    final futures = <Future>[];
     for (final cacheObject in overCapacity) {
-      _removeCachedFile(cacheObject, toRemove);
+      futures.add(_removeCachedFile(cacheObject, toRemove));
     }
 
     final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in oldObjects) {
-      _removeCachedFile(cacheObject, toRemove);
+      futures.add(_removeCachedFile(cacheObject, toRemove));
     }
 
+    await Future.wait(futures);
     await provider.deleteAll(toRemove);
   }
 
@@ -218,9 +238,7 @@ class CacheStore {
     if (_memCache.containsKey(cacheObject.key)) {
       _memCache.remove(cacheObject.key);
     }
-    if (_futureCache.containsKey(cacheObject.key)) {
-      await _futureCache.remove(cacheObject.key);
-    }
+    _futureCache.remove(cacheObject.key);
     final file = await fileSystem.createFile(cacheObject.relativePath);
 
     if (file.existsSync()) {

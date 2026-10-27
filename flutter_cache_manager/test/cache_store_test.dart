@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/logger.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -57,6 +58,11 @@ void main() {
     test(
       'Store should return FileInfo and handle error when database update fails on cache hit',
       () async {
+        final originalLogger = cacheLogger;
+        final testLogger = TestCacheLogger();
+        cacheLogger = testLogger;
+        addTearDown(() => cacheLogger = originalLogger);
+
         var config = createTestConfig();
         await config.returnsFile(fileName);
         config.returnsCacheObject(
@@ -74,14 +80,25 @@ void main() {
         final fileInfo = await store.getFile(fileUrl);
         expect(fileInfo, isNotNull);
 
-        // Allow any unawaited async operations to complete without unhandled errors
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await untilCalled(config.mockRepo.updateOrInsert(any));
+        verify(config.mockRepo.updateOrInsert(any)).called(1);
+        expect(
+          testLogger.logs.any(
+            (l) => l.contains('Failed to update cache metadata'),
+          ),
+          isTrue,
+        );
       },
     );
 
     test(
-      'Store should propagate error and clean up pending cache when get from database fails',
+      'Store should treat failed database read as cache miss and clean up pending cache',
       () async {
+        final originalLogger = cacheLogger;
+        final testLogger = TestCacheLogger();
+        cacheLogger = testLogger;
+        addTearDown(() => cacheLogger = originalLogger);
+
         var config = createTestConfig();
         when(
           config.mockRepo.get(any),
@@ -89,15 +106,49 @@ void main() {
 
         var store = CacheStore(config);
 
-        await expectLater(
-          () => store.retrieveCacheData('failed-key'),
-          throwsA(isA<Exception>()),
-        );
+        final result1 = await store.retrieveCacheData('failed-key');
+        expect(result1, isNull);
 
-        // Verify that subsequent calls are not permanently stuck on a dead completer
-        await expectLater(
-          () => store.retrieveCacheData('failed-key'),
-          throwsA(isA<Exception>()),
+        final result2 = await store.retrieveCacheData('failed-key');
+        expect(result2, isNull);
+
+        verify(config.mockRepo.get(any)).called(2);
+        expect(
+          testLogger.logs.any(
+            (l) => l.contains('Failed to read cache metadata'),
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'Store cleanup error should be handled without unhandled async error',
+      () async {
+        final originalLogger = cacheLogger;
+        final testLogger = TestCacheLogger();
+        cacheLogger = testLogger;
+        addTearDown(() => cacheLogger = originalLogger);
+
+        var config = createTestConfig();
+        var store = CacheStore(config);
+        store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+        await config.returnsFile(fileName);
+        config.returnsCacheObject(fileUrl, fileName, validTill, id: fileId);
+
+        when(
+          config.mockRepo.getObjectsOverCapacity(any),
+        ).thenAnswer((_) => Future.error(Exception('Cleanup failure')));
+
+        expect(await store.getFile(fileUrl), isNotNull);
+
+        await untilCalled(config.mockRepo.getObjectsOverCapacity(any));
+        verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
+
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(
+          testLogger.logs.any((l) => l.contains('Failed to cleanup cache')),
+          isTrue,
         );
       },
     );
@@ -511,4 +562,13 @@ void main() {
 Future<Directory> createDir() async {
   final fileSystem = MemoryFileSystem();
   return fileSystem.systemTempDirectory.createTemp('test');
+}
+
+class TestCacheLogger extends CacheLogger {
+  final logs = <String>[];
+
+  @override
+  void log(String message, CacheManagerLogLevel level) {
+    logs.add(message);
+  }
 }
