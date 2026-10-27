@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
+import 'package:flutter_cache_manager/src/logger.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -53,6 +56,81 @@ void main() {
 
       expect(await store.getFile('baseflow.com/test.png'), isNotNull);
     });
+
+    test(
+      'Store should return FileInfo and handle error when database update fails on cache hit',
+      () async {
+        final testLogger = setUpTestLogger();
+
+        var config = createTestConfig();
+        await config.returnsFile(fileName);
+        config.returnsCacheObject(
+          fileUrl,
+          fileName,
+          DateTime.now(),
+          id: fileId,
+        );
+        when(
+          config.mockRepo.updateOrInsert(any),
+        ).thenAnswer((_) => Future.error(Exception('Database update failed')));
+
+        var store = CacheStore(config);
+
+        final fileInfo = await store.getFile(fileUrl);
+        expect(fileInfo, isNotNull);
+
+        await untilCalled(config.mockRepo.updateOrInsert(any));
+        verify(config.mockRepo.updateOrInsert(any)).called(1);
+        await testLogger.waitForLog('Failed to update cache metadata');
+      },
+    );
+
+    test(
+      'Store should treat failed database read as cache miss and clean up pending cache',
+      () async {
+        final testLogger = setUpTestLogger();
+
+        var config = createTestConfig();
+        when(
+          config.mockRepo.get(any),
+        ).thenAnswer((_) => Future.error(Exception('Database read failed')));
+
+        var store = CacheStore(config);
+
+        final result1 = await store.retrieveCacheData('failed-key');
+        expect(result1, isNull);
+
+        final result2 = await store.retrieveCacheData('failed-key');
+        expect(result2, isNull);
+
+        verify(config.mockRepo.get(any)).called(2);
+        await testLogger.waitForLog('Failed to read cache metadata');
+      },
+    );
+
+    test(
+      'Store cleanup error should be handled without unhandled async error',
+      () async {
+        final testLogger = setUpTestLogger();
+
+        var config = createTestConfig();
+        var store = CacheStore(config);
+        store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+        await config.returnsFile(fileName);
+        config.returnsCacheObject(fileUrl, fileName, validTill, id: fileId);
+
+        when(
+          config.mockRepo.getObjectsOverCapacity(any),
+        ).thenAnswer((_) => Future.error(Exception('Cleanup failure')));
+
+        expect(await store.getFile(fileUrl), isNotNull);
+
+        await untilCalled(config.mockRepo.getObjectsOverCapacity(any));
+        verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
+
+        await testLogger.waitForLog('Failed to cleanup cache');
+      },
+    );
 
     test('Store should return null if file is not cached', () async {
       var config = createTestConfig();
@@ -209,6 +287,54 @@ void main() {
 
         final result = await store.retrieveCacheData(cacheObject.key);
         expect(result!.id, isNotNull);
+      },
+    );
+
+    test(
+      'putFile restores or removes memory cache entry when updateOrInsert fails',
+      () async {
+        var config = createTestConfig();
+        var store = CacheStore(config);
+
+        var initialObject = CacheObject(
+          'baseflow.com/test.png',
+          relativePath: 'testimage_old.png',
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+        var newObject = CacheObject(
+          'baseflow.com/test.png',
+          relativePath: 'testimage_new.png',
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+
+        // Case 1: Nothing was in memory cache before, putFile fails
+        when(
+          config.mockRepo.updateOrInsert(newObject),
+        ).thenAnswer((_) => Future.error(Exception('DB error')));
+
+        await expectLater(
+          () => store.putFile(newObject),
+          throwsA(isA<Exception>()),
+        );
+        expect(store.memoryCacheContainsKey(newObject.key), isFalse);
+
+        // Case 2: initialObject succeeded, then updating to newObject fails
+        when(
+          config.mockRepo.updateOrInsert(initialObject),
+        ).thenAnswer((_) => Future.value(initialObject));
+        await store.putFile(initialObject);
+        expect(store.memoryCacheContainsKey(initialObject.key), isTrue);
+
+        await expectLater(
+          () => store.putFile(newObject),
+          throwsA(isA<Exception>()),
+        );
+        // Should have restored initialObject, not left pointing at newObject
+        expect(store.memoryCacheContainsKey(initialObject.key), isTrue);
+        expect(
+          (await store.getFileFromMemory(initialObject.key))?.file.path,
+          contains('testimage_old.png'),
+        );
       },
     );
   });
@@ -463,4 +589,38 @@ void main() {
 Future<Directory> createDir() async {
   final fileSystem = MemoryFileSystem();
   return fileSystem.systemTempDirectory.createTemp('test');
+}
+
+class TestCacheLogger extends CacheLogger {
+  final logs = <String>[];
+  Completer<String>? _nextLogCompleter;
+
+  Future<String> waitForLog([Pattern? pattern]) async {
+    while (true) {
+      if (pattern != null) {
+        final existing = logs.where((l) => l.contains(pattern)).firstOrNull;
+        if (existing != null) return existing;
+      } else if (logs.isNotEmpty) {
+        return logs.first;
+      }
+      _nextLogCompleter ??= Completer<String>();
+      await _nextLogCompleter!.future;
+    }
+  }
+
+  @override
+  void log(String message, CacheManagerLogLevel level) {
+    logs.add(message);
+    final c = _nextLogCompleter;
+    _nextLogCompleter = null;
+    c?.complete(message);
+  }
+}
+
+TestCacheLogger setUpTestLogger() {
+  final originalLogger = cacheLogger;
+  final testLogger = TestCacheLogger();
+  cacheLogger = testLogger;
+  addTearDown(() => cacheLogger = originalLogger);
+  return testLogger;
 }
