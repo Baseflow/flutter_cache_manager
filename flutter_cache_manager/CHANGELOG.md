@@ -1,6 +1,7 @@
 ## [3.4.6] - 2026-10-23
 
 * Catches unhandled asynchronous errors when updating cache-hit metadata and during scheduled cleanup in `CacheStore` ([#535](https://github.com/Baseflow/flutter_cache_manager/issues/535)).
+* Treats failed metadata reads as a cache miss with a warning log so downloads can fall back to the network, and cleans up downloaded files if persisting fails.
 
 ## [3.4.5] - 2026-09-18
 

@@ -156,7 +156,14 @@ class WebHelper {
       newCacheObject = newCacheObject.copyWith(length: savedBytes);
     }
 
-    await _store.putFile(newCacheObject);
+    try {
+      await _store.putFile(newCacheObject);
+    } catch (e) {
+      if (statusCodesNewFile.contains(response.statusCode)) {
+        await _removeOldFile(newCacheObject.relativePath);
+      }
+      rethrow;
+    }
     if (newCacheObject.relativePath != oldCacheObject.relativePath) {
       await _removeOldFile(oldCacheObject.relativePath);
     }

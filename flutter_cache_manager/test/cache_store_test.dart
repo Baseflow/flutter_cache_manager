@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
@@ -58,10 +60,7 @@ void main() {
     test(
       'Store should return FileInfo and handle error when database update fails on cache hit',
       () async {
-        final originalLogger = cacheLogger;
-        final testLogger = TestCacheLogger();
-        cacheLogger = testLogger;
-        addTearDown(() => cacheLogger = originalLogger);
+        final testLogger = setUpTestLogger();
 
         var config = createTestConfig();
         await config.returnsFile(fileName);
@@ -82,22 +81,14 @@ void main() {
 
         await untilCalled(config.mockRepo.updateOrInsert(any));
         verify(config.mockRepo.updateOrInsert(any)).called(1);
-        expect(
-          testLogger.logs.any(
-            (l) => l.contains('Failed to update cache metadata'),
-          ),
-          isTrue,
-        );
+        await testLogger.waitForLog('Failed to update cache metadata');
       },
     );
 
     test(
       'Store should treat failed database read as cache miss and clean up pending cache',
       () async {
-        final originalLogger = cacheLogger;
-        final testLogger = TestCacheLogger();
-        cacheLogger = testLogger;
-        addTearDown(() => cacheLogger = originalLogger);
+        final testLogger = setUpTestLogger();
 
         var config = createTestConfig();
         when(
@@ -113,22 +104,14 @@ void main() {
         expect(result2, isNull);
 
         verify(config.mockRepo.get(any)).called(2);
-        expect(
-          testLogger.logs.any(
-            (l) => l.contains('Failed to read cache metadata'),
-          ),
-          isTrue,
-        );
+        await testLogger.waitForLog('Failed to read cache metadata');
       },
     );
 
     test(
       'Store cleanup error should be handled without unhandled async error',
       () async {
-        final originalLogger = cacheLogger;
-        final testLogger = TestCacheLogger();
-        cacheLogger = testLogger;
-        addTearDown(() => cacheLogger = originalLogger);
+        final testLogger = setUpTestLogger();
 
         var config = createTestConfig();
         var store = CacheStore(config);
@@ -145,11 +128,7 @@ void main() {
         await untilCalled(config.mockRepo.getObjectsOverCapacity(any));
         verify(config.mockRepo.getObjectsOverCapacity(any)).called(1);
 
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-        expect(
-          testLogger.logs.any((l) => l.contains('Failed to cleanup cache')),
-          isTrue,
-        );
+        await testLogger.waitForLog('Failed to cleanup cache');
       },
     );
 
@@ -566,9 +545,34 @@ Future<Directory> createDir() async {
 
 class TestCacheLogger extends CacheLogger {
   final logs = <String>[];
+  Completer<String>? _nextLogCompleter;
+
+  Future<String> waitForLog([Pattern? pattern]) async {
+    while (true) {
+      if (pattern != null) {
+        final existing = logs.where((l) => l.contains(pattern)).firstOrNull;
+        if (existing != null) return existing;
+      } else if (logs.isNotEmpty) {
+        return logs.first;
+      }
+      _nextLogCompleter ??= Completer<String>();
+      await _nextLogCompleter!.future;
+    }
+  }
 
   @override
   void log(String message, CacheManagerLogLevel level) {
     logs.add(message);
+    final c = _nextLogCompleter;
+    _nextLogCompleter = null;
+    c?.complete(message);
   }
+}
+
+TestCacheLogger setUpTestLogger() {
+  final originalLogger = cacheLogger;
+  final testLogger = TestCacheLogger();
+  cacheLogger = testLogger;
+  addTearDown(() => cacheLogger = originalLogger);
+  return testLogger;
 }
