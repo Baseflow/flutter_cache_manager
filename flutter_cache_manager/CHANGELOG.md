@@ -1,3 +1,7 @@
+## [3.4.7] - 2026-10-27
+
+* Preserves short, safe URL extensions for downloads with missing or generic content types, ignores dynamic endpoint suffixes, and tolerates malformed legacy URLs ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
+
 ## [3.4.6] - 2026-10-27
 
 * Catches unhandled asynchronous errors when updating cache-hit metadata and during scheduled cleanup in `CacheStore` ([#535](https://github.com/Baseflow/flutter_cache_manager/issues/535)).
