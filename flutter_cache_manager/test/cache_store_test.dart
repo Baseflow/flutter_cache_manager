@@ -289,6 +289,54 @@ void main() {
         expect(result!.id, isNotNull);
       },
     );
+
+    test(
+      'putFile restores or removes memory cache entry when updateOrInsert fails',
+      () async {
+        var config = createTestConfig();
+        var store = CacheStore(config);
+
+        var initialObject = CacheObject(
+          'baseflow.com/test.png',
+          relativePath: 'testimage_old.png',
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+        var newObject = CacheObject(
+          'baseflow.com/test.png',
+          relativePath: 'testimage_new.png',
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+
+        // Case 1: Nothing was in memory cache before, putFile fails
+        when(
+          config.mockRepo.updateOrInsert(newObject),
+        ).thenAnswer((_) => Future.error(Exception('DB error')));
+
+        await expectLater(
+          () => store.putFile(newObject),
+          throwsA(isA<Exception>()),
+        );
+        expect(store.memoryCacheContainsKey(newObject.key), isFalse);
+
+        // Case 2: initialObject succeeded, then updating to newObject fails
+        when(
+          config.mockRepo.updateOrInsert(initialObject),
+        ).thenAnswer((_) => Future.value(initialObject));
+        await store.putFile(initialObject);
+        expect(store.memoryCacheContainsKey(initialObject.key), isTrue);
+
+        await expectLater(
+          () => store.putFile(newObject),
+          throwsA(isA<Exception>()),
+        );
+        // Should have restored initialObject, not left pointing at newObject
+        expect(store.memoryCacheContainsKey(initialObject.key), isTrue);
+        expect(
+          (await store.getFileFromMemory(initialObject.key))?.file.path,
+          contains('testimage_old.png'),
+        );
+      },
+    );
   });
 
   group('Removing files in store', () {
