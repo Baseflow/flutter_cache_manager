@@ -15,7 +15,7 @@ class FileServiceCompat extends FileService {
     Map<String, String>? headers,
   }) async {
     final legacyResponse = await fileFetcher(url, headers: headers);
-    return CompatFileServiceGetResponse(legacyResponse, Uri.parse(url));
+    return CompatFileServiceGetResponse(legacyResponse, Uri.tryParse(url));
   }
 }
 

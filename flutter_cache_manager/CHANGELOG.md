@@ -1,3 +1,7 @@
+## [3.4.8] - 2026-10-27
+
+* Preserves short, safe URL extensions for downloads with missing or generic content types, ignores dynamic endpoint suffixes, and tolerates malformed legacy URLs ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
+
 ## [3.4.7] - 2026-10-31
 
 * Keeps cache cleanup going when a cached file cannot be deleted: the cache info of the other removed files is still deleted, and only the failed file's cache info is kept so the next cleanup retries it.

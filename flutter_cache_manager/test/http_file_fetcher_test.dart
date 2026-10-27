@@ -95,11 +95,12 @@ void main() {
 
     test('Download uses the URL extension for generic content type', () async {
       const url = 'https://example.com/video.mp4?token=secret';
-      final client = MockClient((_) async {
+      final client = MockClient((request) async {
         return Response.bytes(
           Uint8List(16),
           200,
           headers: {'content-type': 'application/octet-stream'},
+          request: request,
         );
       });
       final cacheManager = CacheManager(
@@ -117,8 +118,8 @@ void main() {
     });
 
     test('URL extension is used when content type is missing', () async {
-      final client = MockClient((_) async {
-        return Response.bytes(Uint8List(16), 200);
+      final client = MockClient((request) async {
+        return Response.bytes(Uint8List(16), 200, request: request);
       });
 
       final response = await HttpFileService(
@@ -190,15 +191,116 @@ void main() {
       expect(response.fileExtension, '.bin');
     });
 
+    for (final contentType in const [
+      'application/octet-stream',
+      'binary/octet-stream',
+      'application/x-octet-stream',
+      'application/force-download',
+      'application/download',
+    ]) {
+      test(
+        'URL extension is used for generic MIME type $contentType',
+        () async {
+          final client = MockClient((request) async {
+            return Response.bytes(
+              Uint8List(16),
+              200,
+              headers: {'content-type': contentType},
+              request: request,
+            );
+          });
+
+          final response = await HttpFileService(
+            httpClient: client,
+          ).get('https://example.com/video.mp4');
+
+          expect(response.fileExtension, '.mp4');
+        },
+      );
+    }
+
+    test('URL extension is limited to short alphanumeric suffixes', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: request,
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/file.${'a' * 250}');
+
+      expect(response.fileExtension, '.bin');
+    });
+
+    test('URL version suffix is not treated as a file extension', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: request,
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/files/v1.2-beta');
+
+      expect(response.fileExtension, '.bin');
+    });
+
     test(
-      'Encoded path separators are not used in cached file extensions',
+      'Dynamic download endpoint is not used as the file extension',
       () async {
-        const url = 'https://example.com/video.mp4%2Fpart';
-        final client = MockClient((_) async {
+        final client = MockClient((request) async {
           return Response.bytes(
             Uint8List(16),
             200,
             headers: {'content-type': 'application/octet-stream'},
+            request: request,
+          );
+        });
+
+        final response = await HttpFileService(
+          httpClient: client,
+        ).get('https://example.com/download.php?id=7');
+
+        expect(response.fileExtension, '.bin');
+      },
+    );
+
+    test(
+      'Malformed legacy URL does not fail after the fetch succeeds',
+      () async {
+        final legacyResponse = HttpFileFetcherResponse(
+          Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+          ),
+        );
+        final response = await FileServiceCompat(
+          (url, {headers}) async => legacyResponse,
+        ).get('https://[::1/video.mp4');
+
+        expect(response.fileExtension, '.bin');
+      },
+    );
+
+    test(
+      'Encoded path separators are not used in cached file extensions',
+      () async {
+        const url = 'https://example.com/video.mp4%2Fpart';
+        final client = MockClient((request) async {
+          return Response.bytes(
+            Uint8List(16),
+            200,
+            headers: {'content-type': 'application/octet-stream'},
+            request: request,
           );
         });
         final cacheManager = CacheManager(
