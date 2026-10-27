@@ -5,9 +5,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
 
 import 'cache_manager_test.dart';
 import 'helpers/config_extensions.dart';
+import 'helpers/mock_file_fetcher_response.dart';
 import 'helpers/test_configuration.dart';
 
 const fileName = 'test.jpg';
@@ -71,6 +73,51 @@ void main() {
     );
   });
   group('Test resized image caching', () {
+    test('Failed resize download can be retried', () async {
+      final config = createTestConfig();
+      final cacheManager = TestCacheManager(config);
+      var downloadCount = 0;
+      when(
+        config.mockFileService.get(fileUrl, headers: anyNamed('headers')),
+      ).thenAnswer((_) async {
+        downloadCount++;
+        if (downloadCount == 1) {
+          return MockFileFetcherResponse(
+            const Stream.empty(),
+            0,
+            null,
+            '',
+            404,
+            DateTime.now(),
+          );
+        }
+
+        final imageBytes = await getExampleImage();
+        return MockFileFetcherResponse(
+          Stream.value(imageBytes),
+          imageBytes.length,
+          'testv1',
+          '.png',
+          200,
+          DateTime.now().add(const Duration(days: 1)),
+        );
+      });
+
+      await expectLater(
+        cacheManager.getImageFile(fileUrl, maxHeight: 100).toList(),
+        throwsA(isA<HttpExceptionWithStatus>()),
+      );
+
+      final results = await cacheManager
+          .getImageFile(fileUrl, maxHeight: 100)
+          .timeout(const Duration(seconds: 1))
+          .toList();
+
+      expect(downloadCount, 2);
+      expect(results, hasLength(1));
+      expect(results.single, isA<FileInfo>());
+    });
+
     test('Resized image should be fetched from cache', () async {
       var config = await setupConfig(cacheKey: 'resized_w100_h80_$fileUrl');
       var cacheManager = TestCacheManager(config);
