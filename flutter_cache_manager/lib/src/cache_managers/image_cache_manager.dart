@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:file/file.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -180,20 +181,47 @@ Future<(int frameCount, int width, int height)?> _imageInfo(File file) async {
   if (!await file.exists()) {
     return null;
   }
-  final bytes = await file.readAsBytes();
-  final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+  final buffer = await _bufferFor(file);
   ui.ImageDescriptor? descriptor;
   ui.Codec? codec;
   try {
     descriptor = await ui.ImageDescriptor.encoded(buffer);
     codec = await descriptor.instantiateCodec();
-    return (codec.frameCount, descriptor.width, descriptor.height);
+    // `descriptor.width` and `descriptor.height` are not supported on web
+    // (they throw), so the size is taken from the first frame instead. This
+    // fully decodes that frame, which costs the same as the decode the
+    // resize performs anyway.
+    final frame = await codec.getNextFrame();
+    try {
+      return (codec.frameCount, frame.image.width, frame.image.height);
+    } finally {
+      frame.image.dispose();
+    }
   } on Object {
     return null;
   } finally {
     codec?.dispose();
     descriptor?.dispose();
     buffer.dispose();
+  }
+}
+
+/// Creates the buffer for [file].
+///
+/// On web there is no file path to read from, so the bytes are read into
+/// memory. On IO the path is preferred, so the bytes are not copied into
+/// memory before we know whether the file is an image at all (it can be a
+/// large video or pdf). Tests run against a mocked file system where the
+/// path does not exist on the real file system, so reading the bytes is the
+/// fallback there.
+Future<ui.ImmutableBuffer> _bufferFor(File file) async {
+  if (kIsWeb) {
+    return ui.ImmutableBuffer.fromUint8List(await file.readAsBytes());
+  }
+  try {
+    return await ui.ImmutableBuffer.fromFilePath(file.path);
+  } on Object {
+    return ui.ImmutableBuffer.fromUint8List(await file.readAsBytes());
   }
 }
 
