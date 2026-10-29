@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -10,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'cache_manager_test.dart';
 import 'helpers/config_extensions.dart';
 import 'helpers/test_configuration.dart';
+import 'test_images.dart';
 
 const fileName = 'test.jpg';
 const fileUrl = 'baseflow.com/test';
@@ -25,7 +25,7 @@ void main() {
 
   group('Test image resizing', () {
     test('Test original image size', () async {
-      final bytes = await getExampleImage();
+      final bytes = exampleImage;
       await verifySize(bytes, 120, 120);
     });
 
@@ -133,7 +133,7 @@ void main() {
     test('Image without file extension should be resized', () async {
       const urlWithoutExtension = 'baseflow.com/avatar/123456';
       var config = createTestConfig();
-      await config.returnsFile('avatar', data: await getExampleImage());
+      await config.returnsFile('avatar', data: exampleImage);
       config.returnsCacheObject(urlWithoutExtension, 'avatar', validTill);
 
       var cacheManager = TestCacheManager(config);
@@ -154,7 +154,7 @@ void main() {
       // payload is an image.
       const urlWithBinaryExtension = 'baseflow.com/image.bin';
       var config = createTestConfig();
-      await config.returnsFile('image.bin', data: await getExampleImage());
+      await config.returnsFile('image.bin', data: exampleImage);
       config.returnsCacheObject(urlWithBinaryExtension, 'image.bin', validTill);
 
       var cacheManager = TestCacheManager(config);
@@ -172,7 +172,7 @@ void main() {
     test('Static webp should be resized', () async {
       const urlWithWebpExtension = 'baseflow.com/image.webp';
       var config = createTestConfig();
-      await config.returnsFile('image.webp', data: await getExampleWebp());
+      await config.returnsFile('image.webp', data: exampleWebp);
       config.returnsCacheObject(urlWithWebpExtension, 'image.webp', validTill);
 
       var cacheManager = TestCacheManager(config);
@@ -189,7 +189,7 @@ void main() {
     test('Bmp should be resized', () async {
       const urlWithBmpExtension = 'baseflow.com/image.bmp';
       var config = createTestConfig();
-      await config.returnsFile('image.bmp', data: await getExampleBmp());
+      await config.returnsFile('image.bmp', data: exampleBmp);
       config.returnsCacheObject(urlWithBmpExtension, 'image.bmp', validTill);
 
       var cacheManager = TestCacheManager(config);
@@ -222,7 +222,7 @@ void main() {
 
     test('Animated gif should not be resized', () async {
       const urlOfAnimatedGif = 'baseflow.com/animation.gif';
-      var payload = await File('test/images/animated-120.gif').readAsBytes();
+      var payload = animatedGif;
       var config = createTestConfig();
       await config.returnsFile('animation.gif', data: payload);
       config.returnsCacheObject(urlOfAnimatedGif, 'animation.gif', validTill);
@@ -237,7 +237,7 @@ void main() {
 
     test('Animated webp should not be resized', () async {
       const urlOfAnimatedWebp = 'baseflow.com/animation.webp';
-      var payload = await File('test/images/animated-120.webp').readAsBytes();
+      var payload = animatedWebp;
       var config = createTestConfig();
       await config.returnsFile('animation.webp', data: payload);
       config.returnsCacheObject(urlOfAnimatedWebp, 'animation.webp', validTill);
@@ -252,7 +252,7 @@ void main() {
 
     test('Animated png should not be resized', () async {
       const urlOfAnimatedPng = 'baseflow.com/animation.png';
-      var payload = await File('test/images/animated-120.apng').readAsBytes();
+      var payload = animatedApng;
       var config = createTestConfig();
       await config.returnsFile('animation.png', data: payload);
       config.returnsCacheObject(urlOfAnimatedPng, 'animation.png', validTill);
@@ -274,7 +274,7 @@ Future<TestCacheManager> setupCacheManager() async {
 Future<Config> setupConfig({String? cacheKey}) async {
   var validTill = DateTime.now().add(const Duration(days: 1));
   var config = createTestConfig();
-  await config.returnsFile(fileName, data: await getExampleImage());
+  await config.returnsFile(fileName, data: exampleImage);
   config.returnsCacheObject(fileUrl, fileName, validTill, key: cacheKey);
   return config;
 }
@@ -292,14 +292,9 @@ Future verifySize(
   expect(height, expectedHeight);
 }
 
-Future<Uint8List> getExampleImage() {
-  return File('test/images/image-120.png').readAsBytes();
-}
-
-Future<Uint8List> getExampleWebp() {
-  return File('test/images/image-120.webp').readAsBytes();
-}
-
-Future<Uint8List> getExampleBmp() {
-  return File('test/images/image-120.bmp').readAsBytes();
-}
+final Uint8List exampleImage = base64Decode(imagePng120);
+final Uint8List exampleWebp = base64Decode(imageWebp120);
+final Uint8List exampleBmp = base64Decode(imageBmp120);
+final Uint8List animatedGif = base64Decode(animatedGif120);
+final Uint8List animatedWebp = base64Decode(animatedWebp120);
+final Uint8List animatedApng = base64Decode(animatedApng120);
