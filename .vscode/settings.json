@@ -1,0 +1,11 @@
+{
+    "multiCommand.commands": [
+        {
+            "command": "multiCommand.dartSave",
+            "interval": 100,
+            "sequence": [
+                "workbench.action.files.save"
+            ]
+        }
+    ],
+}
