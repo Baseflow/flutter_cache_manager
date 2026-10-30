@@ -198,52 +198,48 @@ class CacheStore {
   }
 
   Future<void> _cleanupCache() async {
-    final toRemove = <int>[];
+    final started = <int>{};
+    final removed = <int>[];
     final provider = await _cacheInfoRepository;
-
     final removals = <Future<void>>[];
-
-    Future<void> remove(CacheObject cacheObject) async {
-      try {
-        await _removeCachedFile(cacheObject, toRemove);
-      } catch (_) {
-        // Keep the cache info of a file that could not be removed, so the next
-        // cleanup tries again instead of leaving the file behind.
-        toRemove.remove(cacheObject.id);
-        rethrow;
-      }
-    }
 
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
     for (final cacheObject in overCapacity) {
-      removals.add(remove(cacheObject));
+      removals.add(
+        _removeCachedFile(cacheObject, started: started, removed: removed),
+      );
     }
 
     final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in oldObjects) {
-      removals.add(remove(cacheObject));
+      removals.add(
+        _removeCachedFile(cacheObject, started: started, removed: removed),
+      );
     }
 
-    try {
-      await Future.wait(removals);
-    } finally {
-      // Only delete the cache info once the files are gone. When the app is
-      // killed in between, a cache info without a file is cleaned up on the next
-      // read, but a file without a cache info would never be found again.
-      await provider.deleteAll(toRemove);
-    }
+    await _deleteCacheInfoOfRemoved(
+      provider: provider,
+      removals: removals,
+      removed: removed,
+    );
   }
 
   Future<void> emptyCache() async {
     final provider = await _cacheInfoRepository;
-    final toRemove = <int>[];
+    final started = <int>{};
+    final removed = <int>[];
     final allObjects = await provider.getAllObjects();
-    var futures = <Future>[];
+    final removals = <Future<void>>[];
     for (final cacheObject in allObjects) {
-      futures.add(_removeCachedFile(cacheObject, toRemove));
+      removals.add(
+        _removeCachedFile(cacheObject, started: started, removed: removed),
+      );
     }
-    await Future.wait(futures);
-    await provider.deleteAll(toRemove);
+    await _deleteCacheInfoOfRemoved(
+      provider: provider,
+      removals: removals,
+      removed: removed,
+    );
   }
 
   void emptyMemoryCache() {
@@ -252,18 +248,61 @@ class CacheStore {
 
   Future<void> removeCachedFile(CacheObject cacheObject) async {
     final provider = await _cacheInfoRepository;
-    final toRemove = <int>[];
-    await _removeCachedFile(cacheObject, toRemove);
-    await provider.deleteAll(toRemove);
+    final removed = <int>[];
+    final removal = _removeCachedFile(
+      cacheObject,
+      started: <int>{},
+      removed: removed,
+    );
+    await _deleteCacheInfoOfRemoved(
+      provider: provider,
+      removals: [removal],
+      removed: removed,
+    );
   }
 
-  Future<void> _removeCachedFile(
-    CacheObject cacheObject,
-    List<int> toRemove,
-  ) async {
-    if (toRemove.contains(cacheObject.id)) return;
+  /// Waits for [removals] and then deletes the cache info of the files in
+  /// [removed], even when some removals failed.
+  Future<void> _deleteCacheInfoOfRemoved({
+    required CacheInfoRepository provider,
+    required List<Future<void>> removals,
+    required List<int> removed,
+  }) async {
+    Object? removalError;
+    StackTrace? removalStack;
+    try {
+      await Future.wait(removals);
+    } catch (e, s) {
+      removalError = e;
+      removalStack = s;
+    }
 
-    toRemove.add(cacheObject.id!);
+    try {
+      await provider.deleteAll(removed);
+    } catch (e, s) {
+      if (removalError == null) rethrow;
+      cacheLogger.log(
+        'CacheStore: Failed to delete cache info with error:\n$e\n$s',
+        CacheManagerLogLevel.warning,
+      );
+    }
+
+    if (removalError != null) {
+      Error.throwWithStackTrace(removalError, removalStack!);
+    }
+  }
+
+  /// Adds the id to [removed] only once the file is gone, so the cache info of
+  /// a file that could not be deleted is kept and retried. [started] stops the
+  /// same object from being removed twice.
+  Future<void> _removeCachedFile(
+    CacheObject cacheObject, {
+    required Set<int> started,
+    required List<int> removed,
+  }) async {
+    final id = cacheObject.id!;
+    if (!started.add(id)) return;
+
     if (_memCache.containsKey(cacheObject.key)) {
       _memCache.remove(cacheObject.key);
     }
@@ -278,6 +317,7 @@ class CacheStore {
         // File has already been deleted. Do nothing #184
       }
     }
+    removed.add(id);
   }
 
   bool memoryCacheContainsKey(String key) {

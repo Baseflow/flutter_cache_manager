@@ -1,6 +1,6 @@
 ## [3.4.7] - 2026-10-28
 
-* Fixes the cache cleanup deleting the cache info before the cached files were removed. When the app was killed in between, files stayed on disk with nothing referencing them. The cache info of a file that could not be removed is now kept, so the next cleanup retries it.
+* Keeps cache cleanup going when a cached file cannot be deleted: the cache info of the other removed files is still deleted, and only the failed file's cache info is kept so the next cleanup retries it.
 
 ## [3.4.6] - 2026-10-27
 

@@ -557,7 +557,100 @@ void main() {
         expect(log, contains('Cannot delete'));
         verify(
           config.mockRepo.deleteAll(
-            argThat(allOf(contains(okObject.id), isNot(contains(2)))),
+            argThat(
+              allOf(contains(okObject.id), isNot(contains(brokenObject.id))),
+            ),
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'Store should report the file error when deleting the cache info also fails',
+      () async {
+        final fileSystem = _FailingDeleteFileSystem('broken.png');
+        final config = createTestConfig();
+        final store = CacheStore(config);
+        store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+        store.fileSystem = fileSystem;
+        await fileSystem.createFileWithData('ok.png');
+        await fileSystem.createFileWithData('broken.png');
+
+        final okObject = CacheObject(
+          'baseflow.com/ok.png',
+          relativePath: 'ok.png',
+          id: 1,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+        final brokenObject = CacheObject(
+          'baseflow.com/broken.png',
+          relativePath: 'broken.png',
+          id: 2,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+
+        when(
+          config.mockRepo.getObjectsOverCapacity(any),
+        ).thenAnswer((_) => Future.value([]));
+        when(
+          config.mockRepo.getOldObjects(any),
+        ).thenAnswer((_) => Future.value([okObject, brokenObject]));
+        when(
+          config.mockRepo.get('baseflow.com/ok.png'),
+        ).thenAnswer((_) => Future.value(okObject));
+        when(
+          config.mockRepo.deleteAll(any),
+        ).thenAnswer((_) => Future.error(Exception('database is locked')));
+
+        final logger = setUpTestLogger();
+        expect(await store.getFile('baseflow.com/ok.png'), isNotNull);
+
+        final cleanupLog = await logger.waitForLog('Failed to cleanup cache');
+        expect(cleanupLog, contains('Cannot delete'));
+        final deleteLog = await logger.waitForLog(
+          'Failed to delete cache info',
+        );
+        expect(deleteLog, contains('database is locked'));
+      },
+    );
+
+    test(
+      'Store should keep cache info of a file that cannot be removed when emptying cache',
+      () async {
+        final fileSystem = _FailingDeleteFileSystem('broken.png');
+        final config = createTestConfig();
+        final store = CacheStore(config);
+        store.fileSystem = fileSystem;
+        await fileSystem.createFileWithData('ok.png');
+        await fileSystem.createFileWithData('broken.png');
+
+        final okObject = CacheObject(
+          'baseflow.com/ok.png',
+          relativePath: 'ok.png',
+          id: 1,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+        final brokenObject = CacheObject(
+          'baseflow.com/broken.png',
+          relativePath: 'broken.png',
+          id: 2,
+          validTill: clock.now().add(const Duration(days: 7)),
+        );
+
+        when(
+          config.mockRepo.getAllObjects(),
+        ).thenAnswer((_) => Future.value([okObject, brokenObject]));
+
+        await expectLater(
+          store.emptyCache(),
+          throwsA(isA<FileSystemException>()),
+        );
+
+        verify(
+          config.mockRepo.deleteAll(
+            argThat(
+              allOf(contains(okObject.id), isNot(contains(brokenObject.id))),
+            ),
           ),
         ).called(1);
       },
