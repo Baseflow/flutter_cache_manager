@@ -24,6 +24,9 @@ class CacheStore {
 
   Duration get _maxAge => _config.stalePeriod;
 
+  Duration get _maxCapacityAgeFilterDuration =>
+      _config.maxCapacityAgeFilterDuration ?? const Duration(days: 1);
+
   DateTime lastCleanupRun = DateTime.now();
   Timer? _scheduledCleanup;
 
@@ -203,7 +206,10 @@ class CacheStore {
     final provider = await _cacheInfoRepository;
     final removals = <Future<void>>[];
 
-    final overCapacity = await provider.getObjectsOverCapacity(_capacity);
+    final overCapacity = await provider.getObjectsOverCapacity(
+      _capacity,
+      maxAge: _maxCapacityAgeFilterDuration,
+    );
     for (final cacheObject in overCapacity) {
       removals.add(
         _removeCachedFile(cacheObject, started: started, removed: removed),

@@ -160,7 +160,10 @@ class CacheObjectProvider extends CacheInfoRepository
   }
 
   @override
-  Future<List<CacheObject>> getObjectsOverCapacity(int capacity) async {
+  Future<List<CacheObject>> getObjectsOverCapacity(
+    int capacity, {
+    Duration? maxAge,
+  }) async {
     return CacheObject.fromMapList(
       await db!.query(
         _tableCacheObject,
@@ -169,7 +172,7 @@ class CacheObjectProvider extends CacheInfoRepository
         where: '${CacheObject.columnTouched} < ?',
         whereArgs: [
           DateTime.now()
-              .subtract(const Duration(days: 1))
+              .subtract(maxAge ?? const Duration(days: 1))
               .millisecondsSinceEpoch,
         ],
         limit: 100,
