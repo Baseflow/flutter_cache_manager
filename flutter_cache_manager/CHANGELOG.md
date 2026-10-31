@@ -1,4 +1,4 @@
-## [3.4.7] - 2026-10-28
+## [3.4.7] - 2026-10-31
 
 * Keeps cache cleanup going when a cached file cannot be deleted: the cache info of the other removed files is still deleted, and only the failed file's cache info is kept so the next cleanup retries it.
 
