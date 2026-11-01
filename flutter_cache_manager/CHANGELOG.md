@@ -1,6 +1,6 @@
 ## [3.4.8] - 2026-10-27
 
-* Preserves short, safe URL extensions for downloads with missing or generic content types, ignores dynamic endpoint suffixes, and tolerates malformed legacy URLs ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
+* Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
 
 ## [3.4.7] - 2026-10-31
 
