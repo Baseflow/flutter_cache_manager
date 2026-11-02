@@ -1,3 +1,7 @@
+## [3.4.8] - 2026-11-02
+
+* Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
+
 ## [3.4.7] - 2026-10-31
 
 * Keeps cache cleanup going when a cached file cannot be deleted: the cache info of the other removed files is still deleted, and only the failed file's cache info is kept so the next cleanup retries it.
