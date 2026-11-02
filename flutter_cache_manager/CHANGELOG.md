@@ -1,4 +1,4 @@
-## [3.4.8] - 2026-10-27
+## [3.4.8] - 2026-11-02
 
 * Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
 

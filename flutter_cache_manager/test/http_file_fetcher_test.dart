@@ -129,12 +129,29 @@ void main() {
       expect(response.fileExtension, '.pdf');
     });
 
-    test('Specific content type takes precedence over URL extension', () async {
+    test('URL fallback works when the response has no request', () async {
       final client = MockClient((_) async {
         return Response.bytes(
           Uint8List(16),
           200,
+          headers: {'content-type': 'application/octet-stream'},
+        );
+      });
+
+      final response = await HttpFileService(
+        httpClient: client,
+      ).get('https://example.com/video.mp4');
+
+      expect(response.fileExtension, '.mp4');
+    });
+
+    test('Specific content type takes precedence over URL extension', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
           headers: {'content-type': 'image/jpeg'},
+          request: request,
         );
       });
 
@@ -148,11 +165,12 @@ void main() {
     test(
       'Legacy file service uses URL extension for generic content type',
       () async {
-        final client = MockClient((_) async {
+        final client = MockClient((request) async {
           return Response.bytes(
             Uint8List(16),
             200,
             headers: {'content-type': 'application/octet-stream'},
+            request: request,
           );
         });
 
@@ -176,11 +194,12 @@ void main() {
     );
 
     test('Generic content type without URL extension remains .bin', () async {
-      final client = MockClient((_) async {
+      final client = MockClient((request) async {
         return Response.bytes(
           Uint8List(16),
           200,
           headers: {'content-type': 'application/octet-stream'},
+          request: request,
         );
       });
 
@@ -251,6 +270,27 @@ void main() {
       ).get('https://example.com/files/v1.2-beta');
 
       expect(response.fileExtension, '.bin');
+    });
+
+    test('Numeric URL suffix is not treated as a file extension', () async {
+      final client = MockClient((request) async {
+        return Response.bytes(
+          Uint8List(16),
+          200,
+          headers: {'content-type': 'application/octet-stream'},
+          request: request,
+        );
+      });
+
+      final service = HttpFileService(httpClient: client);
+      expect(
+        (await service.get('https://example.com/api/v1.2')).fileExtension,
+        '.bin',
+      );
+      expect(
+        (await service.get('https://example.com/file.7z')).fileExtension,
+        '.7z',
+      );
     });
 
     test(

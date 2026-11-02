@@ -38,7 +38,7 @@ class HttpFileService extends FileService {
     }
     final httpResponse = await _httpClient.send(req);
 
-    return HttpGetResponse(httpResponse);
+    return HttpGetResponse(httpResponse, req.url);
   }
 }
 
