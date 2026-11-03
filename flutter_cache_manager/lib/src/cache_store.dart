@@ -55,24 +55,11 @@ class CacheStore {
   }
 
   Future<void> putFile(CacheObject cacheObject) async {
-    final previousCacheObject = _memCache[cacheObject.key];
-    _memCache[cacheObject.key] = cacheObject;
-    final dynamic out;
-    try {
-      out = await _updateCacheDataInDatabase(cacheObject);
-    } catch (e) {
-      if (previousCacheObject != null) {
-        _memCache[cacheObject.key] = previousCacheObject;
-      } else {
-        _memCache.remove(cacheObject.key);
-      }
-      rethrow;
-    }
-
-    // We update the cache object with the id if returned by the repository
-    if (out is CacheObject && out.id != null) {
-      _memCache[cacheObject.key] = cacheObject.copyWith(id: out.id);
-    }
+    final out = await _updateCacheDataInDatabase(cacheObject);
+    // Do not expose a replacement in memory before its metadata is persisted.
+    _memCache[cacheObject.key] = out is CacheObject && out.id != null
+        ? cacheObject.copyWith(id: out.id)
+        : cacheObject;
   }
 
   Future<CacheObject?> retrieveCacheData(
@@ -152,10 +139,7 @@ class CacheStore {
       final data = await provider.get(key);
       if (await _fileExists(data)) {
         unawaited(
-          _updateCacheDataInDatabase(data!).catchError((
-            Object e,
-            StackTrace s,
-          ) {
+          _touchCacheData(provider, data!).catchError((Object e, StackTrace s) {
             cacheLogger.log(
               'CacheStore: Failed to update cache metadata for $key with error:\n$e\n$s',
               CacheManagerLogLevel.warning,
@@ -174,6 +158,13 @@ class CacheStore {
       return null;
     }
   }
+
+  Future<dynamic> _touchCacheData(
+    CacheInfoRepository provider,
+    CacheObject data,
+  ) => provider is JsonCacheInfoRepository
+      ? provider.touch(data.key)
+      : provider.updateOrInsert(data);
 
   void _scheduleCleanup() {
     if (_scheduledCleanup != null) {

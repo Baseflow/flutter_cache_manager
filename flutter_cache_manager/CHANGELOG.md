@@ -1,3 +1,7 @@
+## [3.4.9] - 2026-11-03
+
+* Fixes JSON cache metadata consistency when persistence fails.
+
 ## [3.4.8] - 2026-11-02
 
 * Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).

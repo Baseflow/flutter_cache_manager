@@ -31,7 +31,6 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   final Map<String, CacheObject> _cacheObjects = {};
   final Map<int, Map<String, dynamic>> _jsonCache = {};
 
-  bool _dirty = false;
   Future<void> _writeQueue = Future.value();
 
   @override
@@ -64,12 +63,11 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     if (cacheObject.id != null) {
       throw ArgumentError("Inserted objects shouldn't have an existing id.");
     }
-    final keys = _jsonCache.keys;
-    final lastId = keys.isEmpty ? 0 : keys.reduce(max);
-    final id = lastId + 1;
-
-    cacheObject = cacheObject.copyWith(id: id);
-    return _put(cacheObject, setTouchedToNow);
+    return _enqueue(() async {
+      final keys = _jsonCache.keys;
+      final id = (keys.isEmpty ? 0 : keys.reduce(max)) + 1;
+      return _put(cacheObject.copyWith(id: id), setTouchedToNow);
+    });
   }
 
   @override
@@ -80,9 +78,17 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     if (cacheObject.id == null) {
       throw ArgumentError('Updated objects should have an existing id.');
     }
-    await _put(cacheObject, setTouchedToNow);
-    return 1;
+    return _enqueue(() async {
+      await _put(cacheObject, setTouchedToNow);
+      return 1;
+    });
   }
+
+  /// Updates the access time of the current entry without writing a stale path.
+  Future<void> touch(String key) => _enqueue(() async {
+    final current = _cacheObjects[key];
+    if (current != null) await _put(current, true);
+  });
 
   @override
   Future<dynamic> updateOrInsert(CacheObject cacheObject) {
@@ -106,34 +112,34 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   }
 
   @override
-  Future<int> delete(int id) async {
-    if (!_removeById(id)) {
-      return 0;
-    }
-    await _schedulePersist();
-    return 1;
-  }
+  Future<int> delete(int id) => deleteAll([id]);
 
   @override
-  Future<int> deleteAll(Iterable<int> ids) async {
-    var deleted = 0;
-    for (final id in ids) {
-      if (_removeById(id)) deleted++;
-    }
-    if (deleted > 0) {
-      await _schedulePersist();
-    }
-    return deleted;
+  Future<int> deleteAll(Iterable<int> ids) {
+    final requestedIds = ids.toSet();
+    return _enqueue(() async {
+      final nextObjects = Map<String, CacheObject>.of(_cacheObjects);
+      final nextJson = Map<int, Map<String, dynamic>>.of(_jsonCache);
+      var deleted = 0;
+      for (final id in requestedIds) {
+        final object = nextObjects.values.firstWhereOrNull(
+          (item) => item.id == id,
+        );
+        if (object != null) {
+          nextObjects.remove(object.key);
+          nextJson.remove(id);
+          deleted++;
+        }
+      }
+      if (deleted > 0) await _commit(nextObjects, nextJson);
+      return deleted;
+    });
   }
 
   @override
   Future<bool> close() async {
     final shouldCloseRepo = shouldClose();
-    if (_dirty) {
-      await _schedulePersist();
-    } else {
-      await _writeQueue;
-    }
+    await _writeQueue;
     return shouldCloseRepo;
   }
 
@@ -172,65 +178,57 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     bool setTouchedToNow,
   ) async {
     final map = cacheObject.toMap(setTouchedToNow: setTouchedToNow);
-    _jsonCache[cacheObject.id!] = map;
-    final updatedCacheObject = CacheObject.fromMap(map);
-    _cacheObjects[cacheObject.key] = updatedCacheObject;
-    await _schedulePersist();
-    return updatedCacheObject;
+    final updated = CacheObject.fromMap(map);
+    final nextObjects = Map<String, CacheObject>.of(_cacheObjects)
+      ..[updated.key] = updated;
+    final nextJson = Map<int, Map<String, dynamic>>.of(_jsonCache)
+      ..[updated.id!] = map;
+    await _commit(nextObjects, nextJson);
+    return updated;
   }
 
-  bool _removeById(int id) {
-    final cacheObject = _cacheObjects.values.firstWhereOrNull(
-      (element) => element.id == id,
+  /// Each operation derives its snapshot from the last successful operation.
+  /// The recovery future keeps a failure from poisoning later queued writes;
+  /// the operation's own future still reports its error to its caller.
+  Future<T> _enqueue<T>(Future<T> Function() operation) {
+    final result = _writeQueue.then((_) => operation());
+    _writeQueue = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
     );
-    if (cacheObject == null) {
-      return false;
-    }
-    _cacheObjects.remove(cacheObject.key);
-    _jsonCache.remove(cacheObject.id);
-    return true;
+    return result;
   }
 
-  /// Queues a write of the current cache info.
-  ///
-  /// The returned future completes when the changes are on disk. Changes made
-  /// while a write is in progress are written by that same write or the one
-  /// directly after it, so a burst of changes doesn't cause a write per change.
-  Future<void> _schedulePersist() {
-    _dirty = true;
-    _writeQueue = _writeQueue.then((_) => _flushIfDirty());
-    return _writeQueue;
-  }
-
-  Future<void> _flushIfDirty() async {
-    while (_dirty) {
-      _dirty = false;
-      try {
-        await _saveFile();
-      } on Object catch (e, stacktrace) {
-        // Keep the changes dirty so a later change or close retries the write,
-        // but stop here to avoid retrying a persistent failure in a loop.
-        _dirty = true;
-        FlutterError.reportError(
-          FlutterErrorDetails(
-            exception: e,
-            stack: stacktrace,
-            library: 'flutter cache manager',
-            context: ErrorDescription(
-              'Thrown when writing the file containing cache info. '
-              'The cache info could not be persisted and may be lost when the '
-              'app is closed.',
-            ),
+  Future<void> _commit(
+    Map<String, CacheObject> nextObjects,
+    Map<int, Map<String, dynamic>> nextJson,
+  ) async {
+    try {
+      await _saveFile(nextJson);
+    } on Object catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'flutter cache manager',
+          context: ErrorDescription(
+            'Thrown when writing the file containing cache info.',
           ),
-        );
-        return;
-      }
+        ),
+      );
+      rethrow;
     }
+    _cacheObjects
+      ..clear()
+      ..addAll(nextObjects);
+    _jsonCache
+      ..clear()
+      ..addAll(nextJson);
   }
 
-  Future<void> _saveFile() async {
+  Future<void> _saveFile(Map<int, Map<String, dynamic>> snapshot) async {
     final file = await _getFile();
-    final content = jsonEncode(_jsonCache.values.toList());
+    final content = jsonEncode(snapshot.values.toList());
     final tempFile = _createSiblingFile('${file.path}.tmp');
     await tempFile.writeAsString(content, flush: true);
     await tempFile.rename(file.path);
@@ -249,7 +247,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   }
 
   @override
-  Future<void> deleteDataFile() async {
+  Future<void> deleteDataFile() => _enqueue(() async {
     final file = await _getFile();
     if (await file.exists()) {
       await file.delete();
@@ -258,7 +256,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     if (await tempFile.exists()) {
       await tempFile.delete();
     }
-  }
+  });
 
   @override
   Future<bool> exists() async {
