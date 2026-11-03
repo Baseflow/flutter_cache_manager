@@ -188,10 +188,6 @@ class WebHelper {
     var filePath = cacheObject.relativePath;
 
     if (!statusCodesFileNotChanged.contains(response.statusCode)) {
-      if (!filePath.endsWith(fileExtension)) {
-        //Delete old file directly when file extension changed
-        _removeOldFile(filePath);
-      }
       // Store new file on different path
       filePath = '${const Uuid().v1()}$fileExtension';
     }

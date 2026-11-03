@@ -1,6 +1,6 @@
 ## [3.4.9] - 2026-11-03
 
-* Fixes JSON cache metadata consistency when persistence fails.
+* Fixes JSON cache metadata consistency and preserves the previous file when replacement persistence fails.
 
 ## [3.4.8] - 2026-11-02
 
