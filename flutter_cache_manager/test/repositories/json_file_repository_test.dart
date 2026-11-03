@@ -258,30 +258,39 @@ void main() {
       expect(jsonDecode(await file.readAsString()), isA<List<dynamic>>());
     });
 
-    test('A failing write is reported and retried on close', () async {
-      final file = await JsonRepoHelpers.createDatabaseFile();
-      final repo = JsonCacheInfoRepository.withFile(file);
-      await repo.open();
-
-      // Writing is impossible while the containing directory is gone.
-      await file.parent.delete(recursive: true);
-
-      final errors = <FlutterErrorDetails>[];
-      final originalOnError = FlutterError.onError;
-      FlutterError.onError = errors.add;
-      await repo.insert(JsonRepoHelpers.extraCacheObject);
-      FlutterError.onError = originalOnError;
-
-      expect(errors, hasLength(1));
-
-      await file.parent.create(recursive: true);
-      expect(await repo.close(), true);
-
-      final repo2 = JsonCacheInfoRepository.withFile(file);
-      await repo2.open();
-      final allObjects = await repo2.getAllObjects();
-      expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
-    });
+    test(
+      'A failing write is reported and a later explicit retry succeeds',
+      () async {
+        final file = await JsonRepoHelpers.createDatabaseFile();
+        final repo = JsonCacheInfoRepository.withFile(file);
+        await repo.open();
+        final obstruction = file.fileSystem.directory('${file.path}.tmp');
+        await obstruction.create();
+        final errors = <FlutterErrorDetails>[];
+        final originalOnError = FlutterError.onError;
+        FlutterError.onError = errors.add;
+        try {
+          await expectLater(
+            repo.insert(JsonRepoHelpers.extraCacheObject),
+            throwsA(isA<FileSystemException>()),
+          );
+          expect(errors, hasLength(1));
+          expect(await repo.get(testurl4), isNull);
+          await obstruction.delete();
+          await repo.insert(JsonRepoHelpers.extraCacheObject);
+          await repo.close();
+          final repo2 = JsonCacheInfoRepository.withFile(file);
+          await repo2.open();
+          expect(
+            (await repo2.getAllObjects()).length,
+            JsonRepoHelpers.startCacheObjects.length + 1,
+          );
+          await repo2.close();
+        } finally {
+          FlutterError.onError = originalOnError;
+        }
+      },
+    );
   });
 }
 
