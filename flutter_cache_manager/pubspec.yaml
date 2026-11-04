@@ -6,7 +6,7 @@ topics:
   - cache
   - cache-manager
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
   clock: ^1.1.2

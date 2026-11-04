@@ -17,7 +17,7 @@ class ProgressIndicator extends StatelessWidget {
           SizedBox(
             width: 50,
             height: 50,
-            child: CircularProgressIndicator.adaptive(
+            child: CircularProgressIndicator(
               value: progress?.progress,
             ),
           ),

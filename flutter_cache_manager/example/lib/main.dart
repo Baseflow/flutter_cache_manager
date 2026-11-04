@@ -17,7 +17,9 @@ void main() {
   CacheManager.logLevel = CacheManagerLogLevel.verbose;
 }
 
-const url = 'https://picsum.photos/200/300';
+const url =
+    // 'https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg';
+    'https://images.pexels.com/photos/1037992/pexels-photo-1037992.jpeg';
 
 /// Example [Widget] showing the functionalities of flutter_cache_manager
 class CacheManagerPage extends StatefulWidget {
