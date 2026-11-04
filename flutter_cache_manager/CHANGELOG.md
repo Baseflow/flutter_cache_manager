@@ -1,4 +1,8 @@
-## [3.4.7] - 2026-10-28
+## [3.4.8] - 2026-11-02
+
+* Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
+
+## [3.4.7] - 2026-10-31
 
 * Detects whether a downloaded file can be resized by letting the image engine decode it, instead of from the file extension derived from the `Content-Type` header of the response. Images served with a generic `Content-Type` such as `application/octet-stream` are now resized, files that are not images are returned untouched, and every format the engine supports is resized, including webp and bmp ([#353](https://github.com/Baseflow/flutter_cache_manager/issues/353)). Animated images (gif, apng, animated webp) are passed through untouched, since the resized image is always encoded as png and would lose its animation ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
 * Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension derived from the `Content-Type` header
