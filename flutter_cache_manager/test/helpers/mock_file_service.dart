@@ -1,10 +1,11 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/web/file_service.dart';
 import 'package:mockito/mockito.dart';
 
 import '../mock.mocks.dart';
+import '../test_images.dart';
 
 class MockFileService extends MockFileServiceBase {
   MockFileService._();
@@ -26,7 +27,7 @@ class MockFileService extends MockFileServiceBase {
 class TestResponse extends FileServiceResponse {
   @override
   Stream<List<int>> get content async* {
-    var bytes = await File('test/images/image-120.png').readAsBytes();
+    var bytes = base64Decode(imagePng120);
     var length = bytes.length;
     var firstPart = (length / 2).floor();
     yield bytes.sublist(0, firstPart);

@@ -1,3 +1,11 @@
+## [3.5.0] - 2026-11-04
+
+* **DEPRECATION** Deprecates `supportedFileNames`: whether an image is resized is now decided by the image engine from the file's content instead of from the file extension derived from the `Content-Type` header of the response ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
+* Resizes every format the engine can decode, including webp and bmp ([#353](https://github.com/Baseflow/flutter_cache_manager/issues/353)), and images served with a generic `Content-Type` such as `application/octet-stream`; files that are not images are returned untouched
+* Passes animated images (gif, apng, animated webp) through untouched, since the resized image is always encoded as png and would lose its animation
+* Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension derived from the `Content-Type` header
+* Returns the original file with a warning log through `cacheLogger` when an image cannot be decoded or resized, instead of erroring the stream. This reverses the decode error propagation introduced in 3.4.5 for [#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)
+
 ## [3.4.8] - 2026-11-02
 
 * Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
