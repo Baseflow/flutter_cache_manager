@@ -93,7 +93,7 @@ void main() {
           );
         }
 
-        final imageBytes = await getExampleImage();
+        final imageBytes = exampleImage;
         return MockFileFetcherResponse(
           Stream.value(imageBytes),
           imageBytes.length,

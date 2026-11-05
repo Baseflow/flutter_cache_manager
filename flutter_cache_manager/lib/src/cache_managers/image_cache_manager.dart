@@ -119,7 +119,6 @@ mixin ImageCacheManager on BaseCacheManager {
     return trackedStream;
   }
 
-
   Stream<FileResponse> _fetchedResizedFile(
     String url,
     String originalKey,
