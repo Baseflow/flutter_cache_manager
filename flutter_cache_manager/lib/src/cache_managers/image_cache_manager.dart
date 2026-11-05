@@ -62,19 +62,21 @@ mixin ImageCacheManager on BaseCacheManager {
     }
     var runningResize = _runningResizes[resizedKey];
     if (runningResize == null) {
-      runningResize = _fetchedResizedFile(
-        url,
-        key,
+      runningResize = _trackResizeStream(
         resizedKey,
-        headers,
-        withProgress,
-        maxWidth: maxWidth,
-        maxHeight: maxHeight,
-      ).asBroadcastStream();
+        _fetchedResizedFile(
+          url,
+          key,
+          resizedKey,
+          headers,
+          withProgress,
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
+        ),
+      );
       _runningResizes[resizedKey] = runningResize;
     }
     yield* runningResize;
-    _runningResizes.remove(resizedKey);
   }
 
   final Map<String, Stream<FileResponse>> _runningResizes = {};
@@ -88,6 +90,34 @@ mixin ImageCacheManager on BaseCacheManager {
   /// with different content; they are reset when a resize does succeed or
   /// when the manager instance is recreated.
   final Set<String> _notResizableKeys = {};
+
+  Stream<FileResponse> _trackResizeStream(
+    String resizedKey,
+    Stream<FileResponse> stream,
+  ) {
+    // Clear the in-flight entry on both success and error so failures can be
+    // retried by a later request.
+    late final Stream<FileResponse> trackedStream;
+    trackedStream = stream
+        .transform(
+          StreamTransformer<FileResponse, FileResponse>.fromHandlers(
+            handleError: (Object error, StackTrace stackTrace, sink) {
+              if (identical(_runningResizes[resizedKey], trackedStream)) {
+                _runningResizes.remove(resizedKey);
+              }
+              sink.addError(error, stackTrace);
+            },
+            handleDone: (sink) {
+              if (identical(_runningResizes[resizedKey], trackedStream)) {
+                _runningResizes.remove(resizedKey);
+              }
+              sink.close();
+            },
+          ),
+        )
+        .asBroadcastStream();
+    return trackedStream;
+  }
 
   Stream<FileResponse> _fetchedResizedFile(
     String url,
