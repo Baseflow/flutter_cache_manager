@@ -1,3 +1,8 @@
+## [2.2.0] - 2026-10-03
+
+* Adds `timeout` parameter to `FirebaseHttpFileService.get` and forwards `headers` and `timeout` to `HttpFileService`.
+* Updates `flutter_cache_manager` dependency constraint to `^3.5.0`.
+
 ## [2.1.4] - 2026-09-15
 
 * Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.47.4, Dependabot for actions)
