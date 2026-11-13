@@ -1,3 +1,11 @@
+## [3.6.0] - 2026-11-14
+
+* Adds an optional `CancellationToken` to `getFileStream`, `getSingleFile`, `downloadFile` and `ImageCacheManager.getImageFile`. Cancelling ends that call with a `CancelledException`.
+* Applies cancellation per caller: callers that request the same url share one download, which stops only once every caller has cancelled. A caller without a token keeps the download running.
+* Deletes the partial file of a cancelled or failed download. The previously cached file stays valid.
+* Keeps `FileService.get` and `BaseCacheManager` unchanged: `HttpFileService` aborts its request on cancellation, and a custom `FileService` can read the token through `CancellationToken.current`.
+* Closes the download sink when the response stream errors.
+
 ## [3.5.0] - 2026-11-04
 
 * **DEPRECATION** Deprecates `supportedFileNames`: whether an image is resized is now decided by the image engine from the file's content instead of from the file extension derived from the `Content-Type` header of the response ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))

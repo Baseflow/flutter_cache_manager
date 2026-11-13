@@ -9,6 +9,73 @@ import 'package:http/http.dart' as http;
 ///Copyright (c) 2019 Rene Floor
 ///Released under MIT License.
 
+/// Token that cancels a request made through a cache manager.
+///
+/// Pass it to [CacheManager.getFileStream], [CacheManager.getSingleFile],
+/// [CacheManager.downloadFile] or `ImageCacheManager.getImageFile`.
+/// Cancellation applies to that caller only: the caller's stream ends with a
+/// [CancelledException], and a download shared with other callers keeps
+/// running until every caller has cancelled.
+///
+/// While a download runs, the token that stops it is available to the
+/// [FileService] as [CancellationToken.current], so a service can abort its
+/// request without any change to [FileService.get]'s signature.
+class CancellationToken {
+  bool _isCancelled = false;
+  Completer<void>? _completer;
+
+  static final Object _zoneKey = Object();
+
+  /// The token of the download the current [FileService.get] call belongs to,
+  /// or null when the request cannot be cancelled.
+  static CancellationToken? get current =>
+      Zone.current[_zoneKey] as CancellationToken?;
+
+  /// Runs [body] with this token as [current].
+  R runScoped<R>(R Function() body) =>
+      runZoned(body, zoneValues: {_zoneKey: this});
+
+  /// Whether this token has been cancelled.
+  bool get isCancelled => _isCancelled;
+
+  /// Cancel the request associated with this token.
+  void cancel() {
+    if (_isCancelled) return;
+    _isCancelled = true;
+    if (_completer != null && !_completer!.isCompleted) {
+      _completer!.complete();
+    }
+  }
+
+  /// A future that completes when this token is cancelled.
+  Future<void> get whenCancelled {
+    if (_completer == null) {
+      _completer = Completer<void>();
+      if (_isCancelled) {
+        _completer!.complete();
+      }
+    }
+    return _completer!.future;
+  }
+
+  /// Throws a [CancelledException] when this token has been cancelled.
+  void throwIfCancelled() {
+    if (_isCancelled) throw CancelledException();
+  }
+}
+
+/// Exception thrown when a request is cancelled.
+class CancelledException implements Exception {
+  /// Creates a new [CancelledException] with an optional message.
+  CancelledException([this.message = 'Request was cancelled']);
+
+  /// The error message.
+  final String message;
+
+  @override
+  String toString() => 'CancelledException: $message';
+}
+
 /// Defines the interface for a file service.
 /// Most common file service will be an [HttpFileService], however one can
 /// also make something more specialized. For example you could fetch files
@@ -16,6 +83,11 @@ import 'package:http/http.dart' as http;
 abstract class FileService {
   int concurrentFetches = 10;
 
+  /// Fetches [url], sending [headers] with the request.
+  ///
+  /// When the download is cancelled by all of its callers,
+  /// [CancellationToken.current] is cancelled; implementations may use it to
+  /// abort the request. Ignoring it is safe: the response is then discarded.
   Future<FileServiceResponse> get(String url, {Map<String, String>? headers});
 }
 
@@ -32,13 +104,32 @@ class HttpFileService extends FileService {
     String url, {
     Map<String, String>? headers,
   }) async {
-    final req = http.Request('GET', Uri.parse(url));
+    final cancellationToken = CancellationToken.current;
+    if (cancellationToken?.isCancelled ?? false) {
+      throw CancelledException();
+    }
+
+    final http.BaseRequest req;
+    if (cancellationToken != null) {
+      req = http.AbortableRequest(
+        'GET',
+        Uri.parse(url),
+        abortTrigger: cancellationToken.whenCancelled,
+      );
+    } else {
+      req = http.Request('GET', Uri.parse(url));
+    }
+
     if (headers != null) {
       req.headers.addAll(headers);
     }
-    final httpResponse = await _httpClient.send(req);
 
-    return HttpGetResponse(httpResponse, req.url);
+    try {
+      final httpResponse = await _httpClient.send(req);
+      return HttpGetResponse(httpResponse, req.url);
+    } on http.RequestAbortedException {
+      throw CancelledException();
+    }
   }
 }
 

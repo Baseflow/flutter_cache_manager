@@ -6,6 +6,7 @@ import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_cache_manager/src/web/shared_cancellation.dart';
 
 /// Formats that used to be recognized by the extension of the file.
 ///
@@ -36,13 +37,15 @@ mixin ImageCacheManager on BaseCacheManager {
     bool withProgress = false,
     int? maxHeight,
     int? maxWidth,
+    CancellationToken? cancellationToken,
   }) async* {
     if (maxHeight == null && maxWidth == null) {
-      yield* getFileStream(
+      yield* _getFileStream(
         url,
         key: key,
         headers: headers,
         withProgress: withProgress,
+        cancellationToken: cancellationToken,
       );
       return;
     }
@@ -60,24 +63,72 @@ mixin ImageCacheManager on BaseCacheManager {
       }
       withProgress = false;
     }
-    var runningResize = _runningResizes[resizedKey];
-    if (runningResize == null) {
-      runningResize = _fetchedResizedFile(
-        url,
-        key,
-        resizedKey,
-        headers,
-        withProgress,
-        maxWidth: maxWidth,
-        maxHeight: maxHeight,
-      ).asBroadcastStream();
-      _runningResizes[resizedKey] = runningResize;
+    var running = _runningResizes[resizedKey];
+    if (running == null) {
+      final cancellation = SharedCancellation();
+      final created = _RunningResize(
+        _fetchedResizedFile(
+          url,
+          key,
+          resizedKey,
+          headers,
+          withProgress,
+          cancellationToken: cancellation.token,
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
+        ).asBroadcastStream(),
+        cancellation,
+      );
+      cancellation.onAllCancelled = () {
+        if (identical(_runningResizes[resizedKey], created)) {
+          _runningResizes.remove(resizedKey);
+        }
+      };
+      _runningResizes[resizedKey] = created;
+      running = created;
     }
-    yield* runningResize;
-    _runningResizes.remove(resizedKey);
+    // Each caller cancels only its own view; the resize (and the download
+    // behind it) stops once every caller has cancelled.
+    try {
+      yield* running.cancellation.join(running.stream, cancellationToken);
+    } finally {
+      // A caller that cancelled leaves the resize to the others.
+      final cancelled = cancellationToken?.isCancelled ?? false;
+      if (!cancelled && identical(_runningResizes[resizedKey], running)) {
+        _runningResizes.remove(resizedKey);
+      }
+    }
   }
 
-  final Map<String, Stream<FileResponse>> _runningResizes = {};
+  /// [getFileStream] with [cancellationToken] applied. [BaseCacheManager]
+  /// does not take a token, so it is passed as [CancellationToken.current],
+  /// which [CacheManager] picks up.
+  Stream<FileResponse> _getFileStream(
+    String url, {
+    String? key,
+    Map<String, String>? headers,
+    bool withProgress = false,
+    CancellationToken? cancellationToken,
+  }) {
+    if (cancellationToken == null) {
+      return getFileStream(
+        url,
+        key: key,
+        headers: headers,
+        withProgress: withProgress,
+      );
+    }
+    return cancellationToken.runScoped(
+      () => getFileStream(
+        url,
+        key: key,
+        headers: headers,
+        withProgress: withProgress,
+      ),
+    );
+  }
+
+  final Map<String, _RunningResize> _runningResizes = {};
 
   /// Keys whose original file is known not to be resizable: it is not an
   /// image the engine can decode, it is animated, or it already fits within
@@ -97,12 +148,14 @@ mixin ImageCacheManager on BaseCacheManager {
     bool withProgress, {
     int? maxWidth,
     int? maxHeight,
+    CancellationToken? cancellationToken,
   }) async* {
-    await for (final response in getFileStream(
+    await for (final response in _getFileStream(
       url,
       key: originalKey,
       headers: headers,
       withProgress: withProgress,
+      cancellationToken: cancellationToken,
     )) {
       if (response is DownloadProgress) {
         yield response;
@@ -295,4 +348,11 @@ void _logResizeWarning(File file, Object error) {
     'returning the original file ($error)',
     CacheManagerLogLevel.warning,
   );
+}
+
+class _RunningResize {
+  _RunningResize(this.stream, this.cancellation);
+
+  final Stream<FileResponse> stream;
+  final SharedCancellation cancellation;
 }
