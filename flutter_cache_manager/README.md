@@ -85,6 +85,7 @@ class CustomCacheManager {
 - [How are the cache files stored?](#how-are-the-cache-files-stored)
 - [When are the cached files updated?](#when-are-the-cached-files-updated)
 - [When are cached files removed?](#when-are-cached-files-removed)
+- [How do I cancel a download?](#how-do-i-cancel-a-download)
 
 
 ### How are the cache files stored?
@@ -112,6 +113,13 @@ The cache manager uses 2 variables to determine when to delete a file, the `maxN
 The cache knows when files have been used latest. When cleaning the cache (which happens continuously), the cache
 deletes files when there are too many, ordered by last use, and when files just haven't been used for longer than
 the stale period.
+
+### How do I cancel a download?
+Pass a `CancellationToken` to `getFileStream`, `getSingleFile`, `downloadFile` or `ImageCacheManager.getImageFile`
+and call `cancel()` on it. Cancellation applies per caller: when several callers request the same url they share one
+download, which only stops once every caller has cancelled, and a caller without a token keeps it running. A
+cancelled download's partial file is deleted and the previously cached file stays valid. A custom `FileService`
+can read the token through `CancellationToken.current` to abort its own request.
 
 
 ## Breaking changes in v2
