@@ -16,9 +16,11 @@ abstract class Config {
   /// time will be removed.
   /// [repo] is the [CacheInfoRepository] which stores the cache metadata. On
   /// Android, iOS and macOS this defaults to [CacheObjectProvider], a
-  /// sqflite implementation due to legacy. On web this defaults to
-  /// [NonStoringObjectProvider]. On the other platforms this defaults to
-  /// [JsonCacheInfoRepository].
+  /// sqflite implementation due to legacy. On web this defaults to an
+  /// IndexedDB repository, and [fileSystem] to IndexedDB storage, so the
+  /// cache persists across reloads; pass [NonStoringObjectProvider] and
+  /// [MemoryCacheSystem] for the previous in-memory behaviour. On the other
+  /// platforms this defaults to [JsonCacheInfoRepository].
   /// The [fileSystem] defines where the cached files are stored and the
   /// [fileService] defines where files are fetched, for example online.
   factory Config(

@@ -93,6 +93,12 @@ By default the cached files are stored in the temporary directory of the app. Th
 Information about the files is stored in a database using sqflite on Android, iOS and macOs, or in a plain JSON file
  on other platforms. The file name of the database is the key of the cacheManager, that's why that has to be unique.
 
+On web the files and their information are stored in **IndexedDB**, so the cache persists across page reloads and
+browser restarts. Each cache manager gets its own database named `flutter_cache_manager_<key>`. Files are written in
+chunks as they download, and when the browser's storage quota is reached the least recently used files are evicted.
+Browsers can still clear this storage, for example when the user clears site data. To keep the old in-memory
+behaviour, pass `fileSystem: MemoryCacheSystem()` and `repo: NonStoringObjectProvider()` to `Config`.
+
 ### When are the cached files updated?
 A valid url response should contain a Cache-Control header. More info on the header can be found 
 [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control), but in summary it says for how long

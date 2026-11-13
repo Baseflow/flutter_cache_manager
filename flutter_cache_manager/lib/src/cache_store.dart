@@ -309,12 +309,15 @@ class CacheStore {
     _futureCache.remove(cacheObject.key);
     final file = await fileSystem.createFile(cacheObject.relativePath);
 
-    if (file.existsSync()) {
+    if (await file.exists()) {
       try {
         await file.delete();
-        // ignore: unused_catch_clause
-      } on PathNotFoundException catch (e) {
-        // File has already been deleted. Do nothing #184
+      } on FileSystemException {
+        // A concurrent removal can delete the file between the exists() check
+        // and delete(), since both are awaited. Already gone is the outcome we
+        // wanted (#184); anything else is a real failure. Not every backend
+        // throws PathNotFoundException for this (MemoryFileSystem does not).
+        if (await file.exists()) rethrow;
       }
     }
     removed.add(id);

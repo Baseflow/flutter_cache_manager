@@ -1,3 +1,9 @@
+## [3.6.0] - 2026-11-14
+
+* Persists the cache on web in IndexedDB, so cached files survive page reloads and browser restarts ([#480](https://github.com/Baseflow/flutter_cache_manager/issues/480), [#339](https://github.com/Baseflow/flutter_cache_manager/issues/339), [#361](https://github.com/Baseflow/flutter_cache_manager/issues/361), [#122](https://github.com/Baseflow/flutter_cache_manager/issues/122)). This changes the web default from in-memory storage; pass `fileSystem: MemoryCacheSystem()` and `repo: NonStoringObjectProvider()` to `Config` to keep the previous behavior.
+* Writes and reads web files in chunks, and when the browser's storage quota is reached evicts the least recently used files together with their data.
+* Checks for a cached file with `await file.exists()` on every platform, and treats a file that a concurrent removal already deleted as removed.
+
 ## [3.5.0] - 2026-11-04
 
 * **DEPRECATION** Deprecates `supportedFileNames`: whether an image is resized is now decided by the image engine from the file's content instead of from the file extension derived from the `Content-Type` header of the response ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
