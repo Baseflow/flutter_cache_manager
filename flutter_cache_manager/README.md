@@ -108,10 +108,12 @@ Cache-Control headers the manager tries to update the file and store the new one
 The files can be removed by the cache manager or by the operating system. By default the files are stored in a cache
  folder, which is sometimes cleaned for example on Android with an app update.
 
-The cache manager uses 2 variables to determine when to delete a file, the `maxNrOfCacheObjects` and the `stalePeriod`.
-The cache knows when files have been used latest. When cleaning the cache (which happens continuously), the cache
-deletes files when there are too many, ordered by last use, and when files just haven't been used for longer than
-the stale period.
+During cleanup, the cache manager uses `maxNrOfCacheObjects` to limit the number of cached files,
+removing the least recently used files first when the cache is over capacity. It also removes files
+that have been unused for longer than `stalePeriod`.
+
+Cache metadata lookups schedule cleanup. A file can stay in the cache after its `stalePeriod`
+has elapsed, until a cleanup pass removes it.
 
 
 ## Breaking changes in v2
