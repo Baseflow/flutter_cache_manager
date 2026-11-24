@@ -8,29 +8,31 @@ import 'firebase_http_file_service.dart';
 class FirebaseCacheManager extends CacheManager {
   static const key = 'firebaseCache';
 
-  static final FirebaseCacheManager _instance = FirebaseCacheManager._(
-    retryOptions: _retryOptions,
-    bucket: _bucket,
-  );
-
-  static RetryOptions? _retryOptions;
-
-  static String? _bucket;
+  static final Map<String, FirebaseCacheManager> _instances = {};
 
   factory FirebaseCacheManager({RetryOptions? retryOptions, String? bucket}) {
-    _bucket = bucket;
-    _retryOptions = retryOptions;
-    return _instance;
+    final cacheKey = bucket ?? key;
+    return _instances.putIfAbsent(
+      cacheKey,
+      () => FirebaseCacheManager._(
+        key: cacheKey,
+        retryOptions: retryOptions,
+        bucket: bucket,
+      ),
+    );
   }
 
-  FirebaseCacheManager._({RetryOptions? retryOptions, String? bucket})
-    : super(
-        Config(
-          key,
-          fileService: FirebaseHttpFileService(
-            retryOptions: retryOptions,
-            bucket: bucket,
-          ),
-        ),
-      );
+  FirebaseCacheManager._({
+    required String key,
+    RetryOptions? retryOptions,
+    String? bucket,
+  }) : super(
+         Config(
+           key,
+           fileService: FirebaseHttpFileService(
+             retryOptions: retryOptions,
+             bucket: bucket,
+           ),
+         ),
+       );
 }
