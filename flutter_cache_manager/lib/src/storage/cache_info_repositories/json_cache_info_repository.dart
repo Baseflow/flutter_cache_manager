@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:file/file.dart' as pf;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/helper_methods.dart';
@@ -30,6 +30,9 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   File? _file;
   final Map<String, CacheObject> _cacheObjects = {};
   final Map<int, Map<String, dynamic>> _jsonCache = {};
+
+  bool _dirty = false;
+  Future<void> _writeQueue = Future.value();
 
   @override
   Future<bool> open() async {
@@ -77,7 +80,7 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     if (cacheObject.id == null) {
       throw ArgumentError('Updated objects should have an existing id.');
     }
-    _put(cacheObject, setTouchedToNow);
+    await _put(cacheObject, setTouchedToNow);
     return 1;
   }
 
@@ -104,13 +107,10 @@ class JsonCacheInfoRepository extends CacheInfoRepository
 
   @override
   Future<int> delete(int id) async {
-    final cacheObject = _cacheObjects.values.firstWhereOrNull(
-      (element) => element.id == id,
-    );
-    if (cacheObject == null) {
+    if (!_removeById(id)) {
       return 0;
     }
-    _remove(cacheObject);
+    await _schedulePersist();
     return 1;
   }
 
@@ -118,18 +118,23 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   Future<int> deleteAll(Iterable<int> ids) async {
     var deleted = 0;
     for (final id in ids) {
-      deleted += await delete(id);
+      if (_removeById(id)) deleted++;
+    }
+    if (deleted > 0) {
+      await _schedulePersist();
     }
     return deleted;
   }
 
   @override
   Future<bool> close() async {
-    if (!shouldClose()) {
-      return false;
+    final shouldCloseRepo = shouldClose();
+    if (_dirty) {
+      await _schedulePersist();
+    } else {
+      await _writeQueue;
     }
-    await _saveFile();
-    return true;
+    return shouldCloseRepo;
   }
 
   Future<void> _readFile(File file) async {
@@ -162,33 +167,85 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     }
   }
 
-  CacheObject _put(CacheObject cacheObject, bool setTouchedToNow) {
+  Future<CacheObject> _put(
+    CacheObject cacheObject,
+    bool setTouchedToNow,
+  ) async {
     final map = cacheObject.toMap(setTouchedToNow: setTouchedToNow);
     _jsonCache[cacheObject.id!] = map;
     final updatedCacheObject = CacheObject.fromMap(map);
     _cacheObjects[cacheObject.key] = updatedCacheObject;
-    _cacheUpdated();
+    await _schedulePersist();
     return updatedCacheObject;
   }
 
-  void _remove(CacheObject cacheObject) {
+  bool _removeById(int id) {
+    final cacheObject = _cacheObjects.values.firstWhereOrNull(
+      (element) => element.id == id,
+    );
+    if (cacheObject == null) {
+      return false;
+    }
     _cacheObjects.remove(cacheObject.key);
     _jsonCache.remove(cacheObject.id);
-    _cacheUpdated();
+    return true;
   }
 
-  void _cacheUpdated() {
-    timer?.cancel();
-    timer = Timer(timerDuration, _saveFile);
+  /// Queues a write of the current cache info.
+  ///
+  /// The returned future completes when the changes are on disk. Changes made
+  /// while a write is in progress are written by that same write or the one
+  /// directly after it, so a burst of changes doesn't cause a write per change.
+  Future<void> _schedulePersist() {
+    _dirty = true;
+    _writeQueue = _writeQueue.then((_) => _flushIfDirty());
+    return _writeQueue;
   }
 
-  Timer? timer;
-  Duration timerDuration = const Duration(seconds: 3);
+  Future<void> _flushIfDirty() async {
+    while (_dirty) {
+      _dirty = false;
+      try {
+        await _saveFile();
+      } on Object catch (e, stacktrace) {
+        // Keep the changes dirty so a later change or close retries the write,
+        // but stop here to avoid retrying a persistent failure in a loop.
+        _dirty = true;
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: stacktrace,
+            library: 'flutter cache manager',
+            context: ErrorDescription(
+              'Thrown when writing the file containing cache info. '
+              'The cache info could not be persisted and may be lost when the '
+              'app is closed.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+  }
 
   Future<void> _saveFile() async {
-    timer?.cancel();
-    timer = null;
-    await _file!.writeAsString(jsonEncode(_jsonCache.values.toList()));
+    final file = await _getFile();
+    final content = jsonEncode(_jsonCache.values.toList());
+    final tempFile = _createSiblingFile('${file.path}.tmp');
+    await tempFile.writeAsString(content, flush: true);
+    await tempFile.rename(file.path);
+  }
+
+  /// Creates a file next to [_file] on the same file system.
+  ///
+  /// [_file] can be backed by an alternative [pf.FileSystem], in which case a
+  /// plain [File] would resolve against the local file system instead.
+  File _createSiblingFile(String siblingPath) {
+    final file = _file!;
+    if (file is pf.File) {
+      return file.fileSystem.file(siblingPath);
+    }
+    return File(siblingPath);
   }
 
   @override
@@ -196,6 +253,10 @@ class JsonCacheInfoRepository extends CacheInfoRepository
     final file = await _getFile();
     if (await file.exists()) {
       await file.delete();
+    }
+    final tempFile = _createSiblingFile('${file.path}.tmp');
+    if (await tempFile.exists()) {
+      await tempFile.delete();
     }
   }
 
@@ -206,18 +267,20 @@ class JsonCacheInfoRepository extends CacheInfoRepository
   }
 
   Future<File> _getFile() async {
-    if (_file == null) {
-      if (path != null) {
-        directory = File(path!).parent;
-      } else {
-        directory ??= await getApplicationSupportDirectory();
-      }
-      await directory!.create(recursive: true);
-      if (path == null || !path!.endsWith('.json')) {
-        path = join(directory!.path, '$databaseName.json');
-      }
-      _file = File(path!);
+    if (_file != null) {
+      return _file!;
     }
+
+    if (path != null) {
+      directory = File(path!).parent;
+    } else {
+      directory ??= await getApplicationSupportDirectory();
+    }
+    await directory!.create(recursive: true);
+    if (path == null || !path!.endsWith('.json')) {
+      path = join(directory!.path, '$databaseName.json');
+    }
+    _file = File(path!);
     return _file!;
   }
 }

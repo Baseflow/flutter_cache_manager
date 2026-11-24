@@ -18,11 +18,15 @@ class JsonRepoHelpers {
   static Future<JsonCacheInfoRepository> createRepository({
     bool open = true,
   }) async {
-    var directory = await _createDirectory();
-    var file = await _createFile(directory);
+    var file = await createDatabaseFile();
     var repository = JsonCacheInfoRepository.withFile(file);
     if (open) await repository.open();
     return repository;
+  }
+
+  static Future<File> createDatabaseFile() async {
+    var directory = await _createDirectory();
+    return _createFile(directory);
   }
 
   static Future<Directory> _createDirectory() async {

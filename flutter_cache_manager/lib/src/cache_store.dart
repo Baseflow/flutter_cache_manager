@@ -55,8 +55,19 @@ class CacheStore {
   }
 
   Future<void> putFile(CacheObject cacheObject) async {
+    final previousCacheObject = _memCache[cacheObject.key];
     _memCache[cacheObject.key] = cacheObject;
-    final dynamic out = await _updateCacheDataInDatabase(cacheObject);
+    final dynamic out;
+    try {
+      out = await _updateCacheDataInDatabase(cacheObject);
+    } catch (e) {
+      if (previousCacheObject != null) {
+        _memCache[cacheObject.key] = previousCacheObject;
+      } else {
+        _memCache.remove(cacheObject.key);
+      }
+      rethrow;
+    }
 
     // We update the cache object with the id if returned by the repository
     if (out is CacheObject && out.id != null) {
@@ -74,25 +85,43 @@ class CacheStore {
       }
     }
     if (!_futureCache.containsKey(key)) {
-      final completer = Completer<CacheObject?>();
-      _getCacheDataFromDatabase(key).then((cacheObject) async {
-        if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
-          final provider = await _cacheInfoRepository;
-          await provider.delete(cacheObject!.id!);
-          cacheObject = null;
-        }
-
-        if (cacheObject == null) {
-          _memCache.remove(key);
-        } else {
-          _memCache[key] = cacheObject;
-        }
-        completer.complete(cacheObject);
-        _futureCache.remove(key);
-      });
-      _futureCache[key] = completer.future;
+      late final Future<CacheObject?> future;
+      future = _loadCacheData(key, () => future);
+      _futureCache[key] = future;
     }
     return _futureCache[key];
+  }
+
+  Future<CacheObject?> _loadCacheData(
+    String key,
+    Future<CacheObject?> Function() currentFuture,
+  ) async {
+    try {
+      var cacheObject = await _getCacheDataFromDatabase(key);
+      if (cacheObject?.id != null && !await _fileExists(cacheObject)) {
+        try {
+          final provider = await _cacheInfoRepository;
+          await provider.delete(cacheObject!.id!);
+        } catch (e, s) {
+          cacheLogger.log(
+            'CacheStore: Failed to delete non-existing file metadata for $key with error:\n$e\n$s',
+            CacheManagerLogLevel.warning,
+          );
+        }
+        cacheObject = null;
+      }
+
+      if (cacheObject == null) {
+        _memCache.remove(key);
+      } else {
+        _memCache[key] = cacheObject;
+      }
+      return cacheObject;
+    } finally {
+      if (identical(_futureCache[key], currentFuture())) {
+        _futureCache.remove(key);
+      }
+    }
   }
 
   Future<FileInfo?> getFileFromMemory(String key) async {
@@ -118,13 +147,32 @@ class CacheStore {
   }
 
   Future<CacheObject?> _getCacheDataFromDatabase(String key) async {
-    final provider = await _cacheInfoRepository;
-    final data = await provider.get(key);
-    if (await _fileExists(data)) {
-      _updateCacheDataInDatabase(data!);
+    try {
+      final provider = await _cacheInfoRepository;
+      final data = await provider.get(key);
+      if (await _fileExists(data)) {
+        unawaited(
+          _updateCacheDataInDatabase(data!).catchError((
+            Object e,
+            StackTrace s,
+          ) {
+            cacheLogger.log(
+              'CacheStore: Failed to update cache metadata for $key with error:\n$e\n$s',
+              CacheManagerLogLevel.warning,
+            );
+            return null;
+          }),
+        );
+      }
+      _scheduleCleanup();
+      return data;
+    } catch (e, s) {
+      cacheLogger.log(
+        'CacheStore: Failed to read cache metadata for $key with error:\n$e\n$s',
+        CacheManagerLogLevel.warning,
+      );
+      return null;
     }
-    _scheduleCleanup();
-    return data;
   }
 
   void _scheduleCleanup() {
@@ -133,7 +181,14 @@ class CacheStore {
     }
     _scheduledCleanup = Timer(cleanupRunMinInterval, () {
       _scheduledCleanup = null;
-      _cleanupCache();
+      unawaited(
+        _cleanupCache().catchError((Object e, StackTrace s) {
+          cacheLogger.log(
+            'CacheStore: Failed to cleanup cache with error:\n$e\n$s',
+            CacheManagerLogLevel.warning,
+          );
+        }),
+      );
     });
   }
 
@@ -143,32 +198,48 @@ class CacheStore {
   }
 
   Future<void> _cleanupCache() async {
-    final toRemove = <int>[];
+    final started = <int>{};
+    final removed = <int>[];
     final provider = await _cacheInfoRepository;
+    final removals = <Future<void>>[];
 
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
     for (final cacheObject in overCapacity) {
-      _removeCachedFile(cacheObject, toRemove);
+      removals.add(
+        _removeCachedFile(cacheObject, started: started, removed: removed),
+      );
     }
 
     final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in oldObjects) {
-      _removeCachedFile(cacheObject, toRemove);
+      removals.add(
+        _removeCachedFile(cacheObject, started: started, removed: removed),
+      );
     }
 
-    await provider.deleteAll(toRemove);
+    await _deleteCacheInfoOfRemoved(
+      provider: provider,
+      removals: removals,
+      removed: removed,
+    );
   }
 
   Future<void> emptyCache() async {
     final provider = await _cacheInfoRepository;
-    final toRemove = <int>[];
+    final started = <int>{};
+    final removed = <int>[];
     final allObjects = await provider.getAllObjects();
-    var futures = <Future>[];
+    final removals = <Future<void>>[];
     for (final cacheObject in allObjects) {
-      futures.add(_removeCachedFile(cacheObject, toRemove));
+      removals.add(
+        _removeCachedFile(cacheObject, started: started, removed: removed),
+      );
     }
-    await Future.wait(futures);
-    await provider.deleteAll(toRemove);
+    await _deleteCacheInfoOfRemoved(
+      provider: provider,
+      removals: removals,
+      removed: removed,
+    );
   }
 
   void emptyMemoryCache() {
@@ -177,24 +248,65 @@ class CacheStore {
 
   Future<void> removeCachedFile(CacheObject cacheObject) async {
     final provider = await _cacheInfoRepository;
-    final toRemove = <int>[];
-    await _removeCachedFile(cacheObject, toRemove);
-    await provider.deleteAll(toRemove);
+    final removed = <int>[];
+    final removal = _removeCachedFile(
+      cacheObject,
+      started: <int>{},
+      removed: removed,
+    );
+    await _deleteCacheInfoOfRemoved(
+      provider: provider,
+      removals: [removal],
+      removed: removed,
+    );
   }
 
-  Future<void> _removeCachedFile(
-    CacheObject cacheObject,
-    List<int> toRemove,
-  ) async {
-    if (toRemove.contains(cacheObject.id)) return;
+  /// Waits for [removals] and then deletes the cache info of the files in
+  /// [removed], even when some removals failed.
+  Future<void> _deleteCacheInfoOfRemoved({
+    required CacheInfoRepository provider,
+    required List<Future<void>> removals,
+    required List<int> removed,
+  }) async {
+    Object? removalError;
+    StackTrace? removalStack;
+    try {
+      await Future.wait(removals);
+    } catch (e, s) {
+      removalError = e;
+      removalStack = s;
+    }
 
-    toRemove.add(cacheObject.id!);
+    try {
+      await provider.deleteAll(removed);
+    } catch (e, s) {
+      if (removalError == null) rethrow;
+      cacheLogger.log(
+        'CacheStore: Failed to delete cache info with error:\n$e\n$s',
+        CacheManagerLogLevel.warning,
+      );
+    }
+
+    if (removalError != null) {
+      Error.throwWithStackTrace(removalError, removalStack!);
+    }
+  }
+
+  /// Adds the id to [removed] only once the file is gone, so the cache info of
+  /// a file that could not be deleted is kept and retried. [started] stops the
+  /// same object from being removed twice.
+  Future<void> _removeCachedFile(
+    CacheObject cacheObject, {
+    required Set<int> started,
+    required List<int> removed,
+  }) async {
+    final id = cacheObject.id!;
+    if (!started.add(id)) return;
+
     if (_memCache.containsKey(cacheObject.key)) {
       _memCache.remove(cacheObject.key);
     }
-    if (_futureCache.containsKey(cacheObject.key)) {
-      await _futureCache.remove(cacheObject.key);
-    }
+    _futureCache.remove(cacheObject.key);
     final file = await fileSystem.createFile(cacheObject.relativePath);
 
     if (file.existsSync()) {
@@ -205,6 +317,7 @@ class CacheStore {
         // File has already been deleted. Do nothing #184
       }
     }
+    removed.add(id);
   }
 
   bool memoryCacheContainsKey(String key) {

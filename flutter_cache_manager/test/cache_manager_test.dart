@@ -5,13 +5,14 @@ import 'package:clock/clock.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cache_manager/src/cache_store.dart';
-import 'package:flutter_cache_manager/src/web/web_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 import 'helpers/config_extensions.dart';
+import 'helpers/json_repo_helpers.dart';
 import 'helpers/mock_cache_store.dart';
 import 'helpers/mock_file_fetcher_response.dart';
+import 'helpers/mock_file_service.dart';
 import 'helpers/test_configuration.dart';
 import 'mock.mocks.dart';
 
@@ -424,6 +425,44 @@ void main() {
       expect(arg.key, fileKey);
       expect(arg.url, fileUrl);
     });
+
+    test('putFile waits for store persist before returning', () async {
+      final persisted = Completer<void>();
+      final store = MockCacheStore();
+      when(store.putFile(any)).thenAnswer((_) => persisted.future);
+      final cacheManager = TestCacheManager(createTestConfig(), store: store);
+      var returned = false;
+      final put = cacheManager.putFile('baseflow.com/test', Uint8List(8))
+        ..whenComplete(() => returned = true);
+      await pumpEventQueue();
+      expect(
+        returned,
+        isFalse,
+        reason: 'putFile returned before the store persisted',
+      );
+      persisted.complete();
+      await put;
+    });
+
+    test('putFileStream waits for store persist before returning', () async {
+      final persisted = Completer<void>();
+      final store = MockCacheStore();
+      when(store.putFile(any)).thenAnswer((_) => persisted.future);
+      final cacheManager = TestCacheManager(createTestConfig(), store: store);
+      var returned = false;
+      final put = cacheManager.putFileStream(
+        'baseflow.com/test',
+        Stream<List<int>>.value([1, 2, 3]),
+      )..whenComplete(() => returned = true);
+      await pumpEventQueue();
+      expect(
+        returned,
+        isFalse,
+        reason: 'putFileStream returned before the store persisted',
+      );
+      persisted.complete();
+      await put;
+    });
   });
 
   group('Testing remove files from cache', () {
@@ -460,6 +499,29 @@ void main() {
 
       await cacheManager.removeFile(fileUrl);
       verifyNever(store.removeCachedFile(any));
+    });
+
+    test('removeFile deletes the entry right after putFile', () async {
+      final repo = JsonCacheInfoRepository.withFile(
+        await JsonRepoHelpers.createDatabaseFile(),
+      );
+      final config = Config(
+        'test',
+        fileSystem: TestFileSystem(),
+        repo: repo,
+        fileService: MockFileService(),
+      );
+      final cacheManager = TestCacheManager(config);
+      const url = 'baseflow.com/test';
+      final file = await cacheManager.putFile(
+        url,
+        Uint8List(8),
+        fileExtension: 'jpg',
+      );
+      await cacheManager.removeFile(url);
+      await pumpEventQueue();
+      expect(await repo.get(url), isNull);
+      expect(await file.exists(), isFalse);
     });
 
     test("Don't crash if the cached object doesn't have an id", () async {
@@ -623,10 +685,6 @@ void main() {
 }
 
 class TestCacheManager extends CacheManager with ImageCacheManager {
-  TestCacheManager(Config? config, {CacheStore? store, WebHelper? webHelper})
-    : super.custom(
-        config ?? createTestConfig(),
-        cacheStore: store,
-        webHelper: webHelper,
-      );
+  TestCacheManager(Config? config, {CacheStore? store, super.webHelper})
+    : super.custom(config ?? createTestConfig(), cacheStore: store);
 }

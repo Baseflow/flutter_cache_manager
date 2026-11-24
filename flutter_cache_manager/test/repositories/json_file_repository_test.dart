@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/src/storage/cache_info_repositories/json_cache_info_repository.dart';
 import 'package:flutter_cache_manager/src/storage/cache_object.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -229,6 +231,56 @@ void main() {
         allObjectsAfterOpen.length,
         JsonRepoHelpers.startCacheObjects.length + 1,
       );
+    });
+
+    test('Changes are persisted when the mutating future completes', () async {
+      final file = await JsonRepoHelpers.createDatabaseFile();
+      final repo = JsonCacheInfoRepository.withFile(file);
+      await repo.open();
+      await repo.insert(JsonRepoHelpers.extraCacheObject);
+
+      // New instance reads from disk without closing the first repository.
+      final repo2 = JsonCacheInfoRepository.withFile(file);
+      await repo2.open();
+      final allObjects = await repo2.getAllObjects();
+      expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
+    });
+
+    test('Persist does not leave a temp file', () async {
+      final file = await JsonRepoHelpers.createDatabaseFile();
+      final repo = JsonCacheInfoRepository.withFile(file);
+      await repo.open();
+      await repo.insert(JsonRepoHelpers.extraCacheObject);
+
+      final tempFile = file.fileSystem.file('${file.path}.tmp');
+      expect(await tempFile.exists(), false);
+      expect(await file.exists(), true);
+      expect(jsonDecode(await file.readAsString()), isA<List<dynamic>>());
+    });
+
+    test('A failing write is reported and retried on close', () async {
+      final file = await JsonRepoHelpers.createDatabaseFile();
+      final repo = JsonCacheInfoRepository.withFile(file);
+      await repo.open();
+
+      // Writing is impossible while the containing directory is gone.
+      await file.parent.delete(recursive: true);
+
+      final errors = <FlutterErrorDetails>[];
+      final originalOnError = FlutterError.onError;
+      FlutterError.onError = errors.add;
+      await repo.insert(JsonRepoHelpers.extraCacheObject);
+      FlutterError.onError = originalOnError;
+
+      expect(errors, hasLength(1));
+
+      await file.parent.create(recursive: true);
+      expect(await repo.close(), true);
+
+      final repo2 = JsonCacheInfoRepository.withFile(file);
+      await repo2.open();
+      final allObjects = await repo2.getAllObjects();
+      expect(allObjects.length, JsonRepoHelpers.startCacheObjects.length + 1);
     });
   });
 }

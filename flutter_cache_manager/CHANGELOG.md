@@ -1,9 +1,51 @@
-## [Unreleased]
+## [3.5.0] - 2026-11-04
 
-* Raise minimum Dart SDK to 3.8.0 and update dependencies ([#512](https://github.com/Baseflow/flutter_cache_manager/pull/512))
-* Update example Android project for Flutter 3.44 (Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20, Java 17) ([#510](https://github.com/Baseflow/flutter_cache_manager/pull/510))
-* Migrate example Android app to built-in Kotlin ([#510](https://github.com/Baseflow/flutter_cache_manager/pull/510))
-* Migrate example iOS app from CocoaPods to Swift Package Manager ([#511](https://github.com/Baseflow/flutter_cache_manager/pull/511))
+* **DEPRECATION** Deprecates `supportedFileNames`: whether an image is resized is now decided by the image engine from the file's content instead of from the file extension derived from the `Content-Type` header of the response ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))
+* Resizes every format the engine can decode, including webp and bmp ([#353](https://github.com/Baseflow/flutter_cache_manager/issues/353)), and images served with a generic `Content-Type` such as `application/octet-stream`; files that are not images are returned untouched
+* Passes animated images (gif, apng, animated webp) through untouched, since the resized image is always encoded as png and would lose its animation
+* Stores resized images with a `.png` extension, matching the encoding that is used, instead of reusing the extension derived from the `Content-Type` header
+* Returns the original file with a warning log through `cacheLogger` when an image cannot be decoded or resized, instead of erroring the stream. This reverses the decode error propagation introduced in 3.4.5 for [#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)
+
+## [3.4.8] - 2026-11-02
+
+* Uses the URL's file extension when a download's content type is missing or generic, such as `application/octet-stream` or `binary/octet-stream` ([#489](https://github.com/Baseflow/flutter_cache_manager/issues/489)).
+
+## [3.4.7] - 2026-10-31
+
+* Keeps cache cleanup going when a cached file cannot be deleted: the cache info of the other removed files is still deleted, and only the failed file's cache info is kept so the next cleanup retries it.
+
+## [3.4.6] - 2026-10-27
+
+* Catches unhandled asynchronous errors when updating cache-hit metadata and during scheduled cleanup in `CacheStore` ([#535](https://github.com/Baseflow/flutter_cache_manager/issues/535)).
+* Treats failed metadata reads as a cache miss with a warning log so downloads can fall back to the network, and cleans up downloaded files if persisting fails.
+
+## [3.4.5] - 2026-09-18
+
+* Prevents image resize decoding from completing more than once and propagates decoding errors ([#400](https://github.com/Baseflow/flutter_cache_manager/issues/400)).
+
+## [3.4.4] - 2026-09-16
+
+* Awaits cache-info persist in `putFile`, `putFileStream`, and downloads so the stored object has an id before those calls return ([#492](https://github.com/Baseflow/flutter_cache_manager/issues/492)). A failed repository write now throws from `putFile`/`putFileStream` and errors the download stream instead of returning a usable file with no cache-info row.
+
+## [3.4.3] - 2026-09-15
+
+* Fixes `JsonCacheInfoRepository` losing metadata when the app exits within 3 seconds of a cache change by writing through promptly with serialized, atomic file writes ([#491](https://github.com/Baseflow/flutter_cache_manager/issues/491))
+* Modernizes GitHub Actions CI (combined quality job, pinned Flutter 3.47.4, Dependabot for actions)
+* Adopts super parameters in `HttpExceptionWithStatus` to satisfy the stricter `use_super_parameters` lint in Dart 3.13 (no API or behavior change)
+* Updates example Android project to AGP 9.0.1 / Gradle 9.1 / Kotlin 2.3.20
+* Migrates example Android app to built-in Kotlin
+* Pins example `path_provider_android` to 2.2.22 to avoid transitive `jni` / `jni_flutter` AGP 9 issues
+* Adds a root `CLAUDE.md` that imports `AGENTS.md` and holds Claude Code-specific contributor notes
+* Publishes `AGENTS.md` (previously git-ignored) and trims it to technical content: architecture, directory map, fork workflow, commands, testing, and PR checklist
+* Points `homepage` at the repository root instead of a branch-specific URL
+
+## [3.4.2] - 2026-07-21
+
+* Fixes `removeFile` deleting from the wrong path
+* Raises minimum Dart SDK to 3.8.0 and update dependencies
+* Updates example Android project for Flutter 3.44 (Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20, Java 17)
+* Migrates example Android app to built-in Kotlin
+* Migrates example iOS app from CocoaPods to Swift Package Manager
 
 ## [3.4.1] - 2024-08-13
 
