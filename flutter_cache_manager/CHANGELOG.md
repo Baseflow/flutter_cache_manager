@@ -1,3 +1,7 @@
+## [3.5.1] - 2026-11-25
+
+* Prevents unhandled asynchronous errors when scheduled cleanup starts removing files before all cleanup metadata queries finish.
+
 ## [3.5.0] - 2026-11-04
 
 * **DEPRECATION** Deprecates `supportedFileNames`: whether an image is resized is now decided by the image engine from the file's content instead of from the file extension derived from the `Content-Type` header of the response ([#475](https://github.com/Baseflow/flutter_cache_manager/pull/475))

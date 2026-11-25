@@ -134,6 +134,71 @@ void main() {
       },
     );
 
+    test(
+      'Store should handle removal errors while waiting for old objects',
+      () async {
+        final unhandledErrors = <Object>[];
+        final oldObjectsRequested = Completer<void>();
+        final oldObjectsResult = Completer<List<CacheObject>>();
+        final testCompleted = Completer<void>();
+
+        runZonedGuarded(() {
+          () async {
+            final fileSystem = _FailingDeleteFileSystem('broken.png');
+            final config = createTestConfig();
+            final store = CacheStore(config);
+            store.cleanupRunMinInterval = const Duration(milliseconds: 1);
+            store.fileSystem = fileSystem;
+            await fileSystem.createFileWithData('broken.png');
+
+            final brokenObject = CacheObject(
+              fileUrl,
+              relativePath: 'broken.png',
+              id: fileId,
+              validTill: validTill,
+            );
+            config.returnsCacheObject(
+              fileUrl,
+              'broken.png',
+              validTill,
+              id: fileId,
+            );
+            when(
+              config.mockRepo.getObjectsOverCapacity(any),
+            ).thenAnswer((_) async => [brokenObject]);
+            when(config.mockRepo.getOldObjects(any)).thenAnswer((_) {
+              oldObjectsRequested.complete();
+              return oldObjectsResult.future;
+            });
+
+            final logger = setUpTestLogger();
+            expect(await store.getFile(fileUrl), isNotNull);
+            await oldObjectsRequested.future;
+
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            final errorsBeforeOldObjectsReturned = List<Object>.of(
+              unhandledErrors,
+            );
+            oldObjectsResult.complete([]);
+
+            final cleanupLog = await logger.waitForLog(
+              'Failed to cleanup cache',
+            );
+            expect(cleanupLog, contains('Cannot delete'));
+            await Future<void>.delayed(Duration.zero);
+            expect(errorsBeforeOldObjectsReturned, isEmpty);
+            expect(unhandledErrors, isEmpty);
+          }().then<void>(
+            (_) => testCompleted.complete(),
+            onError: (Object error, StackTrace stackTrace) {
+              testCompleted.completeError(error, stackTrace);
+            },
+          );
+        }, (error, _) => unhandledErrors.add(error));
+        await testCompleted.future;
+      },
+    );
+
     test('Store should return null if file is not cached', () async {
       var config = createTestConfig();
       await config.returnsFile(fileName);
