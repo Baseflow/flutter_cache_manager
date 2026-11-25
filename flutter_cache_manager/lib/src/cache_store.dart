@@ -204,13 +204,13 @@ class CacheStore {
     final removals = <Future<void>>[];
 
     final overCapacity = await provider.getObjectsOverCapacity(_capacity);
+    final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in overCapacity) {
       removals.add(
         _removeCachedFile(cacheObject, started: started, removed: removed),
       );
     }
 
-    final oldObjects = await provider.getOldObjects(_maxAge);
     for (final cacheObject in oldObjects) {
       removals.add(
         _removeCachedFile(cacheObject, started: started, removed: removed),
